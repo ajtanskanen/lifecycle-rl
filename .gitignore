@@ -1,0 +1,11 @@
+__pycache__/*
+*.pyc
+old/*
+gym_unemployment/.DS_Store
+gym_unemployment/__pycache__/*
+gym_unemployment/envs/__pycache__/*
+*.pyc
+*.pyc
+.ipynb_checkpoints/*
+gym_unemployment.egg-info/*
+.DS_Store
