@@ -53,14 +53,10 @@ class Lifecycle():
         self.initial_parameters()
         self.setup_parameters(**kwargs)
 
-        self.inv_timestep=int(np.round(1/self.timestep)) # pitäisi olla kokonaisluku
-        self.n_age = self.max_age-self.min_age+1
-        self.n_time = int(np.round((self.n_age-1)*self.inv_timestep))+1
-
         # alustetaan gym-environment
         if self.minimal:
             self.gym_kwargs={'step': self.timestep,
-            'gamma':self.gamma,
+                'gamma':self.gamma,
                 'min_age': self.min_age, 
                 'max_age': self.max_age,
                 'plotdebug': self.plotdebug, 
@@ -74,10 +70,17 @@ class Lifecycle():
                 'perustulo_korvaa_toimeentulotuen': self.perustulo_korvaa_toimeentulotuen,
                 'startage': self.startage,
                 'year': self.year,
+                'random_returns': self.random_returns,
+                'r_mean': self.r_mean,
+                'r_std': self.r_std,
+                'include_investment': self.include_investment,
+                'use_utility': self.use_utility,
+                'CRRA_eta': self.CRRA_eta,
                 'silent': self.silent}
         else:
             self.gym_kwargs={'step': self.timestep,
                 'gamma':self.gamma,
+                'random_returns': self.random_returns,
                 'min_age': self.min_age, 
                 'max_age': self.max_age,
                 'min_retirementage': self.min_retirementage, 
@@ -118,7 +121,12 @@ class Lifecycle():
                 'unemp_limit_reemp': self.unemp_limit_reemp,
                 'extra_ppr': self.extra_ppr,
                 'startage': self.startage,
+                'include_investment': self.include_investment,
                 'year': self.year,
+                'r_mean': self.r_mean,
+                'r_std': self.r_std,
+                'use_utility': self.use_utility,
+                'CRRA_eta': self.CRRA_eta,
                 'silent': self.silent}
                 
         # Create log dir & results dirs
@@ -135,7 +143,11 @@ class Lifecycle():
         self.version = self.env.get_lc_version()
         self.minimal = self.env.get_minimal()
 
-        if self.version==4:
+        self.inv_timestep=int(np.round(1/self.timestep)) # pitäisi olla kokonaisluku
+        self.n_age = self.max_age-self.min_age+1
+        self.n_time = int(np.round((self.n_age-1)*self.inv_timestep))+1
+
+        if self.version in set([4,104]):
             self.min_retirementage=self.env.get_retirementage()
 
         self.episodestats=SimStats(self.timestep,self.n_time,self.n_employment,self.n_pop,
@@ -176,6 +188,7 @@ class Lifecycle():
         # apumuuttujia
         self.gamma = 0.92
         self.karenssi_kesto=0.25
+        self.include_investment=False
         self.plotdebug=False
         self.include_pinkslip=True
         self.mortality=False
@@ -217,6 +230,11 @@ class Lifecycle():
         
         self.use_tianshou=False
         self.use_standalone=False
+        self.random_returns=False
+        self.r_mean=0.0
+        self.r_std=0
+        self.CRRA_eta=1.5
+        self.use_utility=0 # log; 1 CRRA
         
     def setup_parameters(self,**kwargs):
         if 'kwargs' in kwargs:
@@ -228,9 +246,30 @@ class Lifecycle():
             if key=='callback_minsteps':
                 if value is not None:
                     self.callback_minsteps=value
+            elif key=='random_returns':
+                if value is not None:
+                    self.random_returns=value
+            elif key=='use_utility':
+                if value is not None:
+                    self.use_utility=value
+            elif key=='CRRA_eta':
+                if value is not None:
+                    self.CRRA_eta=value
+            elif key=='use_utility':
+                if value is not None:
+                    self.use_utility=value
+            elif key=='investment':
+                if value is not None:
+                    self.include_investment=value
             elif key=='library':
                 if value is not None:
                     self.library=value
+            elif key=='r_std':
+                if value is not None:
+                    self.r_std=value
+            elif key=='r_mean':
+                if value is not None:
+                    self.r_mean=value
             elif key=='extra_ppr':
                 if value is not None:
                     self.extra_ppr=value
