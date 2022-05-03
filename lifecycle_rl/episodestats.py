@@ -674,7 +674,7 @@ class EpisodeStats():
             if self.dynprog and pred_r is not None:
                 self.pop_predrew[t,n]=pred_r
 
-            self.infostats_savings[t,n]=savings
+            self.infostats_savings[t,n]=savings*self.timestep # scale it correctly
             self.actions[t,n]=act[0]
             self.sav_actions[t,n]=mod_sav_action
 

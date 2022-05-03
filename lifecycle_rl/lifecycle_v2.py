@@ -73,7 +73,8 @@ class Lifecycle():
                 'random_returns': self.random_returns,
                 'r_mean': self.r_mean,
                 'r_std': self.r_std,
-                'include_investment': self.include_investment,
+                'investment': self.include_investment,
+                'wealth': self.include_wealth,
                 'use_utility': self.use_utility,
                 'CRRA_eta': self.CRRA_eta,
                 'silent': self.silent}
@@ -121,7 +122,8 @@ class Lifecycle():
                 'unemp_limit_reemp': self.unemp_limit_reemp,
                 'extra_ppr': self.extra_ppr,
                 'startage': self.startage,
-                'include_investment': self.include_investment,
+                'investment': self.include_investment,
+                'wealth': self.include_wealth,
                 'year': self.year,
                 'r_mean': self.r_mean,
                 'r_std': self.r_std,
@@ -189,6 +191,7 @@ class Lifecycle():
         self.gamma = 0.92
         self.karenssi_kesto=0.25
         self.include_investment=False
+        self.include_wealth=False
         self.plotdebug=False
         self.include_pinkslip=True
         self.mortality=False
@@ -261,6 +264,9 @@ class Lifecycle():
             elif key=='investment':
                 if value is not None:
                     self.include_investment=value
+            elif key=='wealth':
+                if value is not None:
+                    self.include_wealth=value
             elif key=='library':
                 if value is not None:
                     self.library=value
