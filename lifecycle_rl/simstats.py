@@ -17,6 +17,7 @@ from tabulate import tabulate
 import pandas as pd
 from tqdm import tqdm_notebook as tqdm
 from .episodestats import EpisodeStats
+import fin_benefits
     
 class SimStats(EpisodeStats):
     def run_simstats(self,results,save,n,plot=True,startn=0,max_age=54,singlefile=False,grouped=False,group=0):
@@ -825,7 +826,7 @@ class SimStats(EpisodeStats):
         self.plot_unemp_durdistribs(viimekesto2)
         
     def comp_aggkannusteet(self,ben,min_salary=0,max_salary=6000,step_salary=50,n=None,savefile=None):
-        n_salary=int((max_salary-min_salary)/step_salary)
+        n_salary=int((max_salary-min_salary)/step_salary)+1
         netto=np.zeros(n_salary)
         palkka=np.zeros(n_salary)
         tva=np.zeros(n_salary)
@@ -839,10 +840,10 @@ class SimStats(EpisodeStats):
         
         num=0    
         for popp in range(n):
-            for t in np.arange(0,self.n_time,10):
+            for t in np.arange(1,self.n_time,10):
                 employment_state=int(self.popempstate[t,popp])
             
-                if employment_state in set([0,1,4,7,10,13]):
+                if employment_state in set([0,1,4,7,10,13,14]):
                     if employment_state in set([0,4]):
                         old_wage=self.infostats_unempwagebasis_acc[t,popp]
                     elif employment_state in set([13]):
@@ -854,18 +855,32 @@ class SimStats(EpisodeStats):
                         toe=1
                     else:
                         toe=0
-                    wage=self.salaries[t,popp]
+                        
+                    wage=self.infostats_pop_wage[t,popp]
                     children_under3=int(self.infostats_children_under3[t,popp])
                     children_under7=int(self.infostats_children_under7[t,popp])
                     children_under18=children_under7
+                    
+                    print(f'{t}: e {employment_state} w {wage} ow {old_wage} c3 {children_under3} c7 {children_under7} c18 {children_under18}')
+                    
                     ika=self.map_t_to_age(t)
                     num=num+1
-                    p=self.setup_p(wage,old_wage,0,employment_state,0,
-                        children_under3,children_under7,children_under18,ika)
-                        #irtisanottu=0,tyohistoria=0,karenssia_jaljella=0)
-                    p2=self.setup_p_for_unemp(p,old_wage,toe,employment_state)
-                    nettox,effx,tvax,osa_tvax=ben.comp_insentives(p=p,p2=p2,min_salary=min_salary,max_salary=max_salary,
+                    
+                    # ei huomioi parisuhteita! FIXME
+                    if employment_state in set([1,10]): # töissä
+                        p=self.setup_p(wage,old_wage,0,employment_state,0,
+                            children_under3,children_under7,children_under18,ika)
+                            #irtisanottu=0,tyohistoria=0,karenssia_jaljella=0)
+                        p2=self.setup_p_for_unemp(p,old_wage,toe,employment_state)
+                    else: # ei töissä
+                        p=self.setup_p(wage,old_wage,0,employment_state,0,
+                            children_under3,children_under7,children_under18,ika)
+                            #irtisanottu=0,tyohistoria=0,karenssia_jaljella=0)
+                        p2=p.copy()
+                        
+                    nettox,effx,tvax,osa_tvax,_=ben.comp_insentives(p0=p2,p=p,min_salary=min_salary,max_salary=max_salary,
                         step_salary=step_salary,dt=100)
+                        
                     netto+=nettox
                     eff+=effx
                     tva+=tvax
@@ -898,29 +913,31 @@ class SimStats(EpisodeStats):
 
     def plot_aggkannusteet(self,ben,loadfile,baseloadfile=None,figname=None,label=None,baselabel=None):
         f = h5py.File(loadfile, 'r')
-        netto=f.get('netto').value
-        eff=f.get('eff').value
-        tva=f.get('tva').value
-        osa_tva=f.get('osa_tva').value
-        min_salary=f.get('min_salary').value
-        max_salary=f.get('max_salary').value
-        step_salary=f.get('step_salary').value
-        n=f.get('n').value
-        f.close()        
+        netto=f['netto'][()]
+        eff=f['eff'][()]
+        tva=f['tva'][()]
+        osa_tva=f['osa_tva'][()]
+        min_salary=f['min_salary'][()]
+        max_salary=f['max_salary'][()]
+        step_salary=f['step_salary'][()]
+        n=f['n'][()]
+        f.close()
+        
+        basic_marg=fin_benefits.Marginals(ben,year=self.year)
 
         if baseloadfile is not None:
             f = h5py.File(baseloadfile, 'r')
-            basenetto=f.get('netto').value
-            baseeff=f.get('eff').value
-            basetva=f.get('tva').value
-            baseosatva=f.get('osa_tva').value
+            basenetto=f['netto'][()]
+            baseeff=f['eff'][()]
+            basetva=f['tva'][()]
+            baseosatva=f['osa_tva'][()]
             f.close()        
             
-            ben.plot_insentives(netto,eff,tva,osa_tva,min_salary=min_salary,max_salary=max_salary,figname=figname,
+            basic_marg.plot_insentives(netto,eff,tva,osa_tva,min_salary=min_salary,max_salary=max_salary+step_salary,figname=figname,
                 step_salary=step_salary,basenetto=basenetto,baseeff=baseeff,basetva=basetva,baseosatva=baseosatva,
                 otsikko=label,otsikkobase=baselabel)
         else:
-            ben.plot_insentives(netto,eff,tva,osa_tva,min_salary=min_salary,max_salary=max_salary,figname=figname,
+            basic_marg.plot_insentives(netto,eff,tva,osa_tva,min_salary=min_salary,max_salary=max_salary+step_salary,figname=figname,
                 step_salary=step_salary,otsikko=label,otsikkobase=baselabel)
             
     def setup_p(self,wage,old_wage,pension,employment_state,time_in_state,
@@ -1057,6 +1074,10 @@ class SimStats(EpisodeStats):
         elif employment_state==11: # työelämän ulkopuolella
             p['toimeentulotuki_vahennys']=0 # oletetaan että ei kieltäytynyt työstä
             p['t']=0
+        elif employment_state==14: # sv-päiväraha
+            p['t']=0
+            p['vakiintunutpalkka']=old_wage/12
+            p['sairauspaivarahalla']=1
         elif employment_state==12: # opiskelija
             p['opiskelija']=1
             p['t']=0

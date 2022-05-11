@@ -293,7 +293,6 @@ class EpisodeStats():
 
             self.poprewstate[t,n]=r
             self.popempstate[t,n]=newemp
-            #self.salaries[t,n]=newsal
             self.salaries_emp[t,newemp]+=newsal
             self.time_in_state[t,newemp]+=tis
             self.infostats_equivalent_income[t]+=q['eq']
@@ -946,7 +945,7 @@ class EpisodeStats():
 
     def load_hdf(self,filename,nimi):
         f = h5py.File(filename, 'r')
-        val=f.get(nimi).value
+        val=f[nimi][()]
         f.close()
         return val
 
@@ -1293,7 +1292,12 @@ class EpisodeStats():
             self.plot_group_emp()
             self.plot_parttime_ratio(figname=figname)
             self.plot_workforce()
+            
+        if self.version in set([1,2,3,4,104]):
+            print_html('<h2>Ryhmät</h2>')
+            self.plot_outsider()        
             self.plot_various_groups()
+            self.plot_all_pensions()
 
         if self.version in set([4,104]):
             print_html('<h2>Lapset ja puolisot</h2>')
@@ -1941,12 +1945,45 @@ class EpisodeStats():
             for k in range(1,53):
                 print('{},'.format(n[k,0]),end='')
             print(']')
-        
+
+
+        alive=np.zeros((self.galive.shape[0],1))
+        alive[:,0]=np.sum(self.galive[:,0:3],1)
+        ulkopuolella_m=np.sum(self.gempstate[:,7,0:3],axis=1)[:,None]/alive
+        tyovoimassa_m=np.sum(self.gempstate[:,6,0:3],axis=1)[:,None]/alive
+
+        alive[:,0]=np.sum(self.galive[:,3:6],1)
+        nn=np.sum(self.gempstate[:,5,3:6]+self.gempstate[:,7,3:6],axis=1)[:,None]
+        if not all:
+            nn-=self.infostats_mother_in_workforce
+        ulkopuolella_n=nn/alive
+        tyovoimassa_n=self.infostats_mother_in_workforce/alive
+
+        if show:
+            m,n=ulkopuolella_m[::skip],ulkopuolella_n[::skip]
+            print('ulkopuolella_m=[',end='')
+            for k in range(1,42):
+                print('{},'.format(m[k,0]),end='')
+            print(']')
+            print('ulkopuolella_n=[',end='')
+            for k in range(1,42):
+                print('{},'.format(n[k,0]),end='')
+            print(']')
+            m,n=tyovoimassa_m[::skip],tyovoimassa_n[::skip]
+            print('tyovoimassa_m=[',end='')
+            for k in range(1,42):
+                print('{},'.format(m[k,0]),end='')
+            print(']')
+            print('tyovoimassa_n=[',end='')
+            for k in range(1,42):
+                print('{},'.format(n[k,0]),end='')
+            print(']')
+            
         if csv is not None:
             n=muut_m[::skip].shape[0]
             x=np.linspace(self.min_age,self.min_age+n-1,n).reshape(-1,1)
-            df = pd.DataFrame(np.hstack([x,muut_m[::skip],muut_n[::skip],opisk_m[::skip],opisk_n[::skip],svpaivaraha_m[::skip],svpaivaraha_n[::skip]]), 
-                columns = ['ikä','muut_m','muut_n','opisk_m','opisk_n','svpaivaraha_m','svpaivaraha_n'])
+            df = pd.DataFrame(np.hstack([x,muut_m[::skip],muut_n[::skip],opisk_m[::skip],opisk_n[::skip],svpaivaraha_m[::skip],svpaivaraha_n[::skip],ulkopuolella_m[::skip],ulkopuolella_n[::skip],tyovoimassa_m[::skip],tyovoimassa_n[::skip]]), 
+                columns = ['ikä','muut_m','muut_n','opisk_m','opisk_n','svpaivaraha_m','svpaivaraha_n','ulkopuolella_m','ulkopuolella_n','tyovoimassa_m','tyovoimassa_n'])
             df.to_csv(csv, sep=";", decimal=",")
         
         return muut_m[::skip],muut_n[::skip]
@@ -3245,7 +3282,6 @@ class EpisodeStats():
         ax.legend()
         plt.show()
 
-        x=np.linspace(self.min_age,self.max_age,self.n_time)
         fig,ax=plt.subplots()
         ax.plot(x,100*(self.empstate[:,11])/self.alive[:,0],
             label='työvoiman ulkopuolella, ei opiskelija, ei vanh.vapaat')
@@ -3256,7 +3292,16 @@ class EpisodeStats():
         ax.legend()
         plt.show()
 
-        x=np.linspace(self.min_age,self.max_age,self.n_time)
+        fig,ax=plt.subplots()
+        ax.plot(x,100*(self.empstate[:,14])/self.alive[:,0],
+            label='sv-päivärahalla')
+        #emp_statsratio=100*self.empstats.outsider_stats()
+        #ax.plot(x,emp_statsratio,label='havainto')
+        ax.set_xlabel(self.labels['age'])
+        ax.set_ylabel(self.labels['ratio'])
+        ax.legend()
+        plt.show()
+
         fig,ax=plt.subplots()
         ax.plot(x,100*(np.sum(self.gempstate[:,11,3:6]+self.gempstate[:,5,3:6]+self.gempstate[:,7,3:6]+self.gempstate[:,14,3:6],1,keepdims=True)
             -self.infostats_mother_in_workforce)/np.sum(self.galive[:,3:6],1,keepdims=True),
@@ -4114,7 +4159,7 @@ class EpisodeStats():
 
     def plot_states(self,statistic,ylabel='',ylimit=None,show_legend=True,parent=False,unemp=False,no_ve=False,
                     start_from=None,end_at=None,stack=True,figname=None,yminlim=None,ymaxlim=None,work60=False,
-                    onlyunemp=False,reverse=False,grayscale=False,emp=False,oa_unemp=False):
+                    onlyunemp=False,reverse=False,grayscale=False,emp=False,oa_unemp=False,sv=False):
         if start_from is None:
             x=np.linspace(self.min_age,self.max_age,self.n_time)
             x=x[:statistic.shape[0]]
@@ -4213,8 +4258,9 @@ class EpisodeStats():
                     ax.plot(x,ura_osatyo,label='osa-aika')
             elif emp:
                 ax.plot(x,ura_emp,label='työssä')
-                #if self.version in set([1,2,3,4]):
                 ax.plot(x,ura_osatyo,label='osatyö')
+            elif sv:
+                ax.plot(x,ura_svpaiva,label='sv-päiväraha')
             elif work60:
                 ax.plot(x,ura_ret,label='eläke')
                 ax.plot(x,ura_emp,label='työ')
@@ -4835,6 +4881,7 @@ class EpisodeStats():
         q['peruspvraha']=0*np.sum(self.infostats_ansiopvraha*scalex)
         q['tyottomyyspvraha']=np.sum(self.infostats_ansiopvraha*scalex)
         q['asumistuki']=np.sum(self.infostats_asumistuki*scalex)
+        q['perustulo']=np.sum(self.infostats_perustulo*scalex)
         q['tyoelakemeno']=np.sum(self.infostats_tyoelake*scalex)
         q['kansanelakemeno']=np.sum(self.infostats_kansanelake*scalex)
         q['kokoelakemeno']=np.sum(self.infostats_kokoelake*scalex)
