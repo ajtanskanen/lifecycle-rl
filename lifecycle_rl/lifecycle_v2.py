@@ -26,6 +26,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from tqdm import tqdm_notebook as tqdm
 import os
 from . episodestats import EpisodeStats
+from . plotstats import PlotStats
 from . simstats import SimStats
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
@@ -77,7 +78,9 @@ class Lifecycle():
                 'wealth': self.include_wealth,
                 'use_utility': self.use_utility,
                 'CRRA_eta': self.CRRA_eta,
-                'silent': self.silent}
+                'silent': self.silent
+                #'include_emtr': self.include_emtr
+                }
         else:
             self.gym_kwargs={'step': self.timestep,
                 'gamma':self.gamma,
@@ -129,7 +132,9 @@ class Lifecycle():
                 'r_std': self.r_std,
                 'use_utility': self.use_utility,
                 'CRRA_eta': self.CRRA_eta,
-                'silent': self.silent}
+                'silent': self.silent#,
+                #'include_emtr': self.include_emtr
+                }
                 
         # Create log dir & results dirs
         self.log_dir = "tmp/" # +str(env_id)
@@ -149,10 +154,15 @@ class Lifecycle():
         self.n_age = self.max_age-self.min_age+1
         self.n_time = int(np.round((self.n_age-1)*self.inv_timestep))+1
 
-        if self.version in set([4,104]):
+        if self.version in set([4,5,104]):
             self.min_retirementage=self.env.get_retirementage()
 
         self.episodestats=SimStats(self.timestep,self.n_time,self.n_employment,self.n_pop,
+                                   self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,
+                                   version=self.version,params=self.gym_kwargs,year=self.year,gamma=self.gamma,
+                                   lang=self.lang)
+        
+        self.plotstats=PlotStats(self.episodestats,self.timestep,self.n_time,self.n_employment,self.n_pop,
                                    self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,
                                    version=self.version,params=self.gym_kwargs,year=self.year,gamma=self.gamma,
                                    lang=self.lang)
@@ -230,6 +240,7 @@ class Lifecycle():
         self.exploration=False
         self.exploration_ratio=0.10
         self.randomness=True
+        self.include_emtr=False
         
         self.use_tianshou=False
         self.use_standalone=False
@@ -393,6 +404,9 @@ class Lifecycle():
             elif key=='use_sigma_reduction':
                 if value is not None:
                     self.use_sigma_reduction=value
+            elif key=='include_emtr':
+                if value is not None:
+                    self.include_emtr=value
             elif key=='include_halftoe':
                 if value is not None:
                     self.include_halftoe=value
@@ -451,9 +465,11 @@ class Lifecycle():
    
     def render(self,load=None,figname=None,grayscale=False):
         if load is not None:
-            self.episodestats.render(load=load,figname=figname,grayscale=grayscale)
+            self.episodestats.load_sim(load)
+            self.plotstats.render(figname=figname,grayscale=grayscale)
         else:
-            self.episodestats.render(figname=figname,grayscale=grayscale)
+            self.plotstats.render(figname=figname,grayscale=grayscale)
+            #self.episodestats.render(figname=figname,grayscale=grayscale)
    
     def render_reward(self,load=None,figname=None):
         if load is not None:

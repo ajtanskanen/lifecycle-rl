@@ -451,7 +451,7 @@ class runner_stablebaselines():
                  deterministic=deterministic,arch=arch,predict=True)
 
         states = env.reset()
-        if self.version in set([4,104]):  # increase by 2
+        if self.version in set([4,5,104]):  # increase by 2
             n_add=2
             pop_num=np.array([k for k in range(0,n_add*n_cpu,n_add)])
             n=n_add*(n_cpu-1)
