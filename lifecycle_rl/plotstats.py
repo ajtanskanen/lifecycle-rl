@@ -763,8 +763,9 @@ class PlotStats():
                     wage=self.episodestats.infostats_pop_wage[t,k]
                     salx[t]=salx[t]+wage
                     saln[t]=saln[t]+1
-                    salgx[t,self.episodestats.infostats_group[k]]=salgx[t,self.episodestats.infostats_group[k]]+wage
-                    salgn[t,self.episodestats.infostats_group[k]]=salgn[t,self.episodestats.infostats_group[k]]+1
+                    g=int(self.episodestats.infostats_group[k])
+                    salgx[t,g]=salgx[t,g]+wage
+                    salgn[t,g]=salgn[t,g]+1
                     
             if self.episodestats.popempstate[self.map_age(20),k] in set([1]):
                 sal20[m20]=self.episodestats.infostats_pop_wage[self.map_age(20),k]
@@ -793,11 +794,22 @@ class PlotStats():
         salx_m[t]=np.sum(salgx[t,0:3])
         saln_m[t]=np.sum(salgn[t,0:3])
 
+        #print(salx_f)
+        #print(saln_f)
+        #print(salgn)
+
+
         salx=salx/np.maximum(1,saln)
         salgx=salgx/np.maximum(1,salgn)
         salx_f=salx_f/np.maximum(1,saln_f)
         salx_m=salx_m/np.maximum(1,saln_m)
         #print(sal25,self.episodestats.infostats_pop_wage)
+        
+        alivemask = (self.episodestats.popempstate==15).astype(bool)
+        wdata=ma.array(self.episodestats.infostats_pop_wage,mask=alivemask).compressed()
+
+        workmask = (self.episodestats.popempstate==2+self.episodestats.popempstate==15+self.episodestats.popempstate==3)
+        wdata2=ma.array(self.episodestats.infostats_pop_wage,mask=workmask).compressed()
             
         cdf_kuva(sal20,20,m20,p,palkka20)
         cdf_kuva(sal25,25,m25,p,palkka25)
@@ -813,14 +825,15 @@ class PlotStats():
         kuva2(sal65,65,m65)
 
         data_range=np.arange(self.min_age,self.max_age+1)
-        plt.plot(data_range,np.mean(self.episodestats.infostats_pop_wage[::4],axis=1),label='malli kaikki')
+        #plt.plot(data_range,np.mean(self.episodestats.infostats_pop_wage[::4],axis=1),label='malli kaikki')
+        plt.plot(data_range,np.mean(wdata[::4],axis=1),label='malli alive')
+        plt.plot(data_range,np.mean(wdata2[::4],axis=1),label='malli not ret')
         plt.plot(data_range,salx[::4],label='malli töissä')
         data_range=np.arange(self.min_age,self.max_age+2)
         plt.plot(data_range,0.5*palkat_ika_miehet+0.5*palkat_ika_naiset,label='data')
         plt.legend()
         plt.show()
 
-        data_range=np.arange(self.min_age,self.max_age+1)
         plt.plot(data_range,salx_m[::4],label='malli töissä miehet')
         plt.plot(data_range,salx_f[::4],label='malli töissä naiset')
         data_range=np.arange(self.min_age,self.max_age+2)
@@ -2688,7 +2701,9 @@ class PlotStats():
         #alivemask=(self.episodestats.popempstate not in emtr_tilat) # pois kuolleet
         emtr=ma.ravel(ma.array(self.episodestats.infostats_pop_emtr[1:maxt,:],mask=alivemask[1:maxt,:]))
         nc=ma.masked_where(np.isnan(emtr), emtr).compressed()
-        ax.hist(nc,density=True,bins=50)
+        bins=np.arange(-0.5,100.5,2)
+        bins2=np.arange(-0.5,100.5,1)
+        ax.hist(nc,density=True,bins=bins)
         ka=np.nanmean(nc)
         med=ma.median(nc)
         ax.plot(etla_x_emtr,etla_emtr,'r')
@@ -2703,7 +2718,8 @@ class PlotStats():
         ax.set_xlabel('EMTR')
         ax.set_ylabel('Density')
         #ax.hist(emtr,density=True,bins=100)
-        ax.hist(nc,density=True,bins=100)
+        ax.hist(nc,density=True,bins=bins2)
+        ax.plot(etla_x_emtr,etla_emtr,'r')
         plt.xlim(0,100)
         plt.show()
 
@@ -2716,7 +2732,7 @@ class PlotStats():
             emtr=ma.ravel(ma.array(self.episodestats.infostats_pop_emtr[1:maxt,:],mask=mask[1:maxt,:]))
             nc=ma.masked_where(np.isnan(emtr), emtr).compressed()
             if nc.shape[0]>0:
-                ax.hist(nc,density=True,bins=100)
+                ax.hist(nc,density=True,bins=bins2)
                 ka=ma.mean(nc)
                 med=ma.median(nc)
                 plt.title(f'state {k}: mean {ka:.2f} median {med:.2f}')
@@ -2775,10 +2791,23 @@ class PlotStats():
             mask=(self.episodestats.popempstate!=k) 
             tvax=ma.ravel(ma.array(self.episodestats.infostats_pop_emtr[1:maxt,:],mask=mask[1:maxt,:]))
             nc=ma.masked_where(np.isnan(tvax), tvax).compressed()
+            mask2=nc>=1
             prop=np.count_nonzero(nc<1)/max(1,nc.shape[0])*100
             print(f'{k}: (1 %) {prop}')
                     
     ## FROM simstats.py
+
+    def test_emtr(self):
+        maxt=self.map_age(64)
+        emtr_tilat=set([0,1,4,7,8,9,10,13])
+    
+        for k in emtr_tilat:
+            mask=(self.episodestats.popempstate!=k) 
+            tvax=ma.array(self.episodestats.infostats_pop_emtr[1:maxt,:],mask=mask[1:maxt,:])
+            mask2=tvax>=1
+            w=ma.array(self.episodestats.infostats_pop_wage[1:maxt,:],mask=tvax)
+            #print(f'{k}: (1 %) {prop}')
+            print('w',w)
 
     def plot_aggkannusteet(self,ben,loadfile,baseloadfile=None,figname=None,label=None,baselabel=None):
         '''
