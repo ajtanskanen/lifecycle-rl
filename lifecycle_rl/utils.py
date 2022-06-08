@@ -77,3 +77,15 @@ def modify_offsettext(ax,text):
                    horizontalalignment=horizontalalignment,
                    verticalalignment=verticalalignment)    
 
+
+    
+def print_q(a):
+    '''
+    pretty printer for dict
+    '''
+    for x in a.keys():
+        if a[x]>0 or a[x]<0:
+            print('{}:{:.2f} '.format(x,a[x]),end='')
+            
+    print('')
+        

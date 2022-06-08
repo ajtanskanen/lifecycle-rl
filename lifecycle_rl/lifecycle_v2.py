@@ -626,7 +626,7 @@ class Lifecycle():
 
         compare results obtained another model
         '''
-        self.episodestats.compare_with(cc2.episodestats,label1=label1,label2=label2,grayscale=grayscale,figname=figname,dash=dash)
+        self.plotstats.compare_with(cc2,label1=label1,label2=label2,grayscale=grayscale,figname=figname,dash=dash)
 
     def run_results(self,steps1=100,steps2=100,pop=1_000,rlmodel='acktr',twostage=False,
                save='saved/perusmalli',debug=False,simut='simut',results='results/simut_res',

@@ -739,6 +739,7 @@ class Empstats():
             q['tmtuella']=189_780  # Kelan tilasto 31.12.2018 # vuoden aikana 268 254
             q['isyysvapaalla']=59_640 # Kelan tilasto 2018
             q['kotihoidontuella']=42_042 # saajia Kelan tilasto 2018
+            q['työkyvyttömyyseläke']=198_762
             q['vanhempainvapaalla']=84_387 # Kelan tilasto 2018
             q['ovella']=39_000
         elif self.year==2019:
@@ -750,6 +751,7 @@ class Empstats():
             q['ansiosidonnaisella']=116_972+27_157  # Kelan tilasto 31.12.2018
             q['isyysvapaalla']=59_640 # Kelan tilasto 2018
             q['kotihoidontuella']=42_042 # saajia Kelan tilasto 2018
+            q['työkyvyttömyyseläke']=195_316
             q['vanhempainvapaalla']=84_387 # Kelan tilasto 2018
             q['ovella']=39_000
         elif self.year==2020:
@@ -762,6 +764,7 @@ class Empstats():
             q['tmtuella']=189_780  # Kelan tilasto 31.12.2018
             q['isyysvapaalla']=59_640 # Kelan tilasto 2018
             q['kotihoidontuella']=42_042 # saajia Kelan tilasto 2018
+            q['työkyvyttömyyseläke']=191_597
             q['vanhempainvapaalla']=84_387 # Kelan tilasto 2018
             q['ovella']=39_000
         elif self.year==2021:
@@ -774,6 +777,7 @@ class Empstats():
             q['tmtuella']=189_780  # Kelan tilasto 31.12.2018
             q['isyysvapaalla']=59_640 # Kelan tilasto 2018
             q['kotihoidontuella']=42_042 # saajia Kelan tilasto 2018
+            q['työkyvyttömyyseläke']=185_991  
             q['vanhempainvapaalla']=84_387 # Kelan tilasto 2018
             q['ovella']=39_000
         elif self.year==2022:
@@ -786,6 +790,7 @@ class Empstats():
             q['tmtuella']=189_780  # Kelan tilasto 31.12.2018
             q['isyysvapaalla']=59_640 # Kelan tilasto 2018
             q['kotihoidontuella']=42_042 # saajia Kelan tilasto 2018
+            q['työkyvyttömyyseläke']=185_991  
             q['vanhempainvapaalla']=84_387 # Kelan tilasto 2018
             q['ovella']=39_000
         elif self.year==2023:
@@ -798,6 +803,7 @@ class Empstats():
             q['tmtuella']=189_780  # Kelan tilasto 31.12.2018
             q['isyysvapaalla']=59_640 # Kelan tilasto 2018
             q['kotihoidontuella']=42_042 # saajia Kelan tilasto 2018
+            q['työkyvyttömyyseläke']=185_991  
             q['vanhempainvapaalla']=84_387 # Kelan tilasto 2018
             q['ovella']=39_000
         

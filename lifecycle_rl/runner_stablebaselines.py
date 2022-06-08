@@ -484,6 +484,7 @@ class runner_stablebaselines():
 
         print('saving results...')
 
+        self.episodestats.scale_sim()
         self.episodestats.save_sim(save)
 
         print('done')
