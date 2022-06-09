@@ -714,13 +714,13 @@ class Lifecycle():
         '''
  
         # simulate the saved best
-        self.runner.simulate(pop=pop,rlmodel=rlmodel,plot=False,debug=debug,arch=arch,
+        self.runner.simulate(pop=pop,rlmodel=rlmodel,debug=debug,arch=arch,
                       load=load,save=results,deterministic=deterministic,startage=startage)
 
     def run_distrib(self,n=5,steps1=100,steps2=100,pop=1_000,rlmodel='acktr',
                save='saved/distrib_base_',debug=False,simut='simut',results='results/distrib_',
                deterministic=True,train=True,predict=True,batch1=1,batch2=100,cont=False,
-               start_from=None,plot=False,twostage=False,callback_minsteps=None,
+               start_from=None,twostage=False,callback_minsteps=None,
                stats_results='results/distrib_stats',startn=None,verbose=1,
                learning_rate=0.25,learning_schedule='linear',log_interval=100):
    
@@ -745,7 +745,7 @@ class Lifecycle():
             self.run_results(steps1=steps1,steps2=steps2,pop=pop,rlmodel=rlmodel,
                twostage=twostage,save=bestname2,debug=debug,simut=simut,results=results2,
                deterministic=deterministic,train=train,predict=predict,
-               batch1=batch1,batch2=batch2,cont=cont,start_from=start_from,plot=False,
+               batch1=batch1,batch2=batch2,cont=cont,start_from=start_from,
                callback_minsteps=callback_minsteps,verbose=verbose,learning_rate=learning_rate,
                learning_schedule=learning_schedule,log_interval=log_interval)
 
@@ -757,7 +757,7 @@ class Lifecycle():
             
         self.episodestats.run_simstats(load,stats_results,n,startn=startn,singlefile=singlefile)
 
-    def render_distrib(self,stats_results='results/distrib_stats',plot=False,figname=None):
+    def render_distrib(self,stats_results='results/distrib_stats',figname=None):
         self.episodestats.plot_simstats(stats_results,figname=figname)
 
         # gather results ...
