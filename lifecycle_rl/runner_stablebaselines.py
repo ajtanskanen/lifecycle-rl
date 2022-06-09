@@ -444,10 +444,10 @@ class runner_stablebaselines():
 
         return model,env,n_cpu
 
-    def simulate(self,debug=False,rlmodel='acktr',plot=True,load=None,pop=None,startage=None,
+    def simulate(self,debug=False,rlmodel='acktr',load=None,pop=None,startage=None,
                  deterministic=False,save='results/testsimulate',arch=None):
 
-        model,env,n_cpu=self.setup_model(debug=debug,rlmodel=rlmodel,plot=plot,load=load,pop=pop,
+        model,env,n_cpu=self.setup_model(debug=debug,rlmodel=rlmodel,load=load,pop=pop,
                  deterministic=deterministic,arch=arch,predict=True)
 
         states = env.reset()
@@ -489,8 +489,5 @@ class runner_stablebaselines():
 
         print('done')
         
-        if plot:
-            self.render()
-
         if False:
             return self.emp        
