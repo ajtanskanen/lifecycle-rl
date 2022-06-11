@@ -1181,7 +1181,6 @@ class EpisodeStats():
             self.infostats_perustulo=f['infostats_perustulo'][()]
             self.infostats_palkkatulo=f['infostats_palkkatulo'][()]
             self.infostats_ansiopvraha=f['infostats_ansiopvraha'][()]
-            self.infostats_peruspvraha=f['infostats_peruspvraha'][()]
             self.infostats_asumistuki=f['infostats_asumistuki'][()]
             self.infostats_valtionvero=f['infostats_valtionvero'][()]
             self.infostats_kunnallisvero=f['infostats_kunnallisvero'][()]
@@ -1196,6 +1195,9 @@ class EpisodeStats():
             self.infostats_sairauspaivaraha=f['infostats_sairauspaivaraha'][()]
             self.infostats_toimeentulotuki=f['infostats_toimeentulotuki'][()]
             self.infostats_tulot_netto=f['infostats_tulot_netto'][()]
+
+        if 'infostats_peruspvraha' in f.keys(): # older runs do not have these
+            self.infostats_peruspvraha=f['infostats_peruspvraha'][()]
 
         if 'infostats_kansanelake' in f.keys(): # older runs do not have these
             self.infostats_kansanelake=f['infostats_kansanelake'][()]
