@@ -311,26 +311,53 @@ class PlotStats():
             
             
     def plot_pt_act(self):
-        mask=(self.episodestats.popempstate!=10) # osa-aika
-        arr=ma.ravel(ma.array(self.episodestats.infostats_pop_pt_act,mask=mask))
-        arr=arr.compressed()
+        mask_osaaika=(self.episodestats.popempstate!=10) # osa-aika
+        arr=ma.ravel(ma.array(self.episodestats.infostats_pop_pt_act,mask=mask_osaaika)).compressed()
         plt.hist(arr,density=True)
         plt.title('Osa-aika, pt-tila: ave {}'.format(ma.mean(arr)))
         plt.show()
 
         x=np.linspace(self.min_age,self.max_age,self.n_time)
-        mask=(self.episodestats.popempstate!=10) # osa-aika
-        arr=ma.array(self.episodestats.infostats_pop_pt_act,mask=mask)
+        arr=ma.array(self.episodestats.infostats_pop_pt_act,mask=mask_osaaika)
         plt.plot(x,ma.mean(arr,axis=1))
         plt.title('Osa-aika, pt-tila')
         plt.show()
+
+        men_mask=(self.episodestats.infostats_group<4).T
+        women_mask=~men_mask
+
+        x=np.linspace(self.min_age,self.max_age,self.n_time)
+        mask=ma.mask_or(mask_osaaika,men_mask) # miehet pois
+        arr=ma.ravel(ma.array(self.episodestats.infostats_pop_pt_act,mask=mask)).compressed()
+        plt.hist(arr,density=True)
+        plt.title('Osa-aika neiset, pt-tila: ave {}'.format(ma.mean(arr)))
+        plt.show()
+
+        x=np.linspace(self.min_age,self.max_age,self.n_time)
+        mask=ma.mask_or(mask_osaaika,women_mask) # naiset pois
+        arr=ma.ravel(ma.array(self.episodestats.infostats_pop_pt_act,mask=mask)).compressed()
+        plt.hist(arr,density=True)
+        plt.title('Osa-aika miehet, pt-tila: ave {}'.format(ma.mean(arr)))
+        plt.show()
         
-        mask=(self.episodestats.popempstate!=1) # kokoaika
-        arr=ma.ravel(ma.array(self.episodestats.infostats_pop_pt_act,mask=mask))
-        arr=arr.compressed()
+        mask_kokoaika=(self.episodestats.popempstate!=1) # kokoaika
+        mask=ma.mask_or(mask_kokoaika,women_mask) # miehet pois
+        arr=ma.ravel(ma.array(self.episodestats.infostats_pop_pt_act,mask=mask)).compressed()
         plt.hist(arr,density=True)
         plt.title('Kokoaika, pt-tila: ave {}'.format(ma.mean(arr)))
         plt.show()
+
+        mask=ma.mask_or(mask_kokoaika,women_mask) # naiset pois
+        arr=ma.ravel(ma.array(self.episodestats.infostats_pop_pt_act,mask=mask)).compressed()
+        plt.hist(arr,density=True)
+        plt.title('Kokoaika naiset, pt-tila: ave {}'.format(ma.mean(arr)))
+        plt.show()
+
+        arr=ma.ravel(ma.array(self.episodestats.infostats_pop_pt_act,mask=mask_kokoaika)).compressed()
+        plt.hist(arr,density=True)
+        plt.title('Kokoaika miehet, pt-tila: ave {}'.format(ma.mean(arr)))
+        plt.show()
+
 
         mask=(self.episodestats.popempstate!=1) # osa-aika
         arr=ma.array(self.episodestats.infostats_pop_pt_act,mask=mask)
@@ -344,6 +371,7 @@ class PlotStats():
         plt.hist(arr,density=True)
         plt.title('Kokoaika, unemp')
         plt.show()
+
 
     def plot_unemp_after_ra(self):
         self.plot_states(self.episodestats.stat_unemp_after_ra,ylabel='Unemp after ret.age',stack=False,start_from=60,end_at=70)
@@ -770,12 +798,12 @@ class PlotStats():
         salx_f=np.zeros((self.n_time+2,1))
         saln_f=np.zeros((self.n_time+2,1))
         for k in range(self.episodestats.n_pop):
+            g=int(self.episodestats.infostats_group[k])
             for t in range(self.n_time-2):
                 if self.episodestats.popempstate[t,k] in set([1]): # 9,8,10
                     wage=self.episodestats.infostats_pop_wage[t,k]
                     salx[t]=salx[t]+wage
                     saln[t]=saln[t]+1
-                    g=int(self.episodestats.infostats_group[k])
                     salgx[t,g]=salgx[t,g]+wage
                     salgn[t,g]=salgn[t,g]+1
                     
@@ -801,15 +829,10 @@ class PlotStats():
                 sal65[m65]=self.episodestats.infostats_pop_wage[self.map_age(65),k]
                 m65=m65+1
 
-        salx_f[t]=np.sum(salgx[t,3:6])
-        saln_f[t]=np.sum(salgn[t,3:6])
-        salx_m[t]=np.sum(salgx[t,0:3])
-        saln_m[t]=np.sum(salgn[t,0:3])
-
-        #print(salx_f)
-        #print(saln_f)
-        #print(salgn)
-
+        salx_f=np.sum(salgx[:,3:6],axis=1)
+        saln_f=np.sum(salgn[:,3:6],axis=1)
+        salx_m=np.sum(salgx[:,0:3],axis=1)
+        saln_m=np.sum(salgn[:,0:3],axis=1)
 
         salx=salx/np.maximum(1,saln)
         salgx=salgx/np.maximum(1,salgn)
