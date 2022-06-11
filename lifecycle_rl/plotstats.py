@@ -3008,9 +3008,9 @@ class PlotStats():
             print('Kumulatiivinen työllisyysvaikutus {:.2f} vuotiaana {:.1f} htv ({:.0f} vs {:.0f})'.format(age,cs[mx],c1[mx],c2[mx]))
             
         unemp_distrib1,emp_distrib1,unemp_distrib_bu1,tyoll_distrib1,tyoll_distrib_bu1,\
-            tyoll_virta1,tyot_virta1,tyot_virta_ansiosid1,tyot_virta_tm1,kestot1,viimkesto1=self.load_simdistribs(filename1)
+            tyoll_virta1,tyot_virta1,tyot_virta_ansiosid1,tyot_virta_tm1,kestot1,viimkesto1=self.episodestats.load_simdistribs(filename1)
         unemp_distrib2,emp_distrib2,unemp_distrib_bu2,tyoll_distrib2,tyoll_distrib_bu2,\
-            tyoll_virta2,tyot_virta2,tyot_virta_ansiosid2,tyot_virta_tm2,kestot2,viimkesto2=self.load_simdistribs(filename2)
+            tyoll_virta2,tyot_virta2,tyot_virta_ansiosid2,tyot_virta_tm2,kestot2,viimkesto2=self.episodestats.load_simdistribs(filename2)
         
         self.plot_compare_unemp_durdistribs(kestot1,kestot2,viimkesto1,viimkesto2,label1='',label2='')
         
@@ -3156,14 +3156,24 @@ class PlotStats():
         self.plot_unemp_durdistribs(viimekesto1)
         self.plot_unemp_durdistribs(viimekesto2)
                             
-       
+    def fit_norm(self,diff):
+        diff_stdval=np.std(diff)
+        diff_meanval=np.mean(diff)
+        diff_minval=np.min(diff)
+        diff_maxval=np.max(diff)
+        sz=(diff_maxval-diff_minval)/10
+        x=np.linspace(diff_minval,diff_maxval,1000)
+        y=norm.pdf(x,diff_meanval,diff_stdval)*diff.shape[0]*sz
+    
+        return x,y
+               
     def plot_simstats(self,filename,grayscale=False,figname=None):
         agg_htv,agg_tyoll,agg_rew,agg_discounted_rew,emp_tyolliset,emp_tyolliset_osuus,\
             emp_tyottomat,emp_tyottomat_osuus,emp_htv,emps,best_rew,\
-            best_emp,emps,agg_netincome,agg_equivalent_netincome=self.load_simstats(filename)
+            best_emp,emps,agg_netincome,agg_equivalent_netincome=self.episodestats.load_simstats(filename)
 
         if self.version>0:
-            print('lisäpäivillä on {:.0f} henkilöä'.format(self.count_putki_dist(emps)))
+            print('lisäpäivillä on {:.0f} henkilöä'.format(self.episodestats.count_putki_dist(emps)))
 
         if grayscale:
             plt.style.use('grayscale')
@@ -3278,7 +3288,7 @@ class PlotStats():
         unemp_distrib1,emp_distrib1,unemp_distrib_bu1,\
             tyoll_distrib1,tyoll_distrib_bu1,\
             tyoll_virta,tyot_virta,tyot_virta_ansiosid,tyot_virta_tm,\
-            unemp_dur,unemp_lastdur=self.load_simdistribs(filename)
+            unemp_dur,unemp_lastdur=self.episodestats.load_simdistribs(filename)
        
         print('Keskikestot käytettyjen ansiosidonnaisten päivärahojen mukaan')
         self.plot_unemp_durdistribs(unemp_dur)

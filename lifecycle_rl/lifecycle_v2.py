@@ -758,22 +758,22 @@ class Lifecycle():
         self.episodestats.run_simstats(load,stats_results,n,startn=startn,singlefile=singlefile)
 
     def render_distrib(self,stats_results='results/distrib_stats',figname=None):
-        self.episodestats.plot_simstats(stats_results,figname=figname)
+        self.plotstats.plot_simstats(stats_results,figname=figname)
 
         # gather results ...
         #if plot:
         #    print('plot')
             
     def compare_distrib(self,filename1,filename2,n=1,label1='perus',label2='vaihtoehto',figname=None):
-        self.episodestats.compare_simstats(filename1,filename2,label1=label1,label2=label2,figname=figname)
+        self.plotstats.compare_simstats(filename1,filename2,label1=label1,label2=label2,figname=figname)
 
     def plot_rewdist(self,age=20,sum=False,all=False):
         t=self.map_age(age)
-        self.episodestats.plot_rewdist(t=t,sum=sum,all=all)
+        self.plotstats.plot_rewdist(t=t,sum=sum,all=all)
 
     def plot_saldist(self,age=20,sum=False,all=False,n=10):
         t=self.map_age(age)
-        self.episodestats.plot_saldist(t=t,sum=sum,all=all,n=n)
+        self.plotstats.plot_saldist(t=t,sum=sum,all=all,n=n)
 
     def plot_RL_act(self,t,rlmodel='acktr',load='perus',debug=True,deterministic=True,
                         n_palkka=80,n_emppalkka=80,deltapalkka=1000,deltaemppalkka=1000,n_elake=40,deltaelake=1500,

@@ -214,17 +214,6 @@ class SimStats(EpisodeStats):
                     
         print('done')
         
-    def fit_norm(self,diff):
-        diff_stdval=np.std(diff)
-        diff_meanval=np.mean(diff)
-        diff_minval=np.min(diff)
-        diff_maxval=np.max(diff)
-        sz=(diff_maxval-diff_minval)/10
-        x=np.linspace(diff_minval,diff_maxval,1000)
-        y=norm.pdf(x,diff_meanval,diff_stdval)*diff.shape[0]*sz
-    
-        return x,y
-        
     def count_putki_dist(self,emps):
         putki=[]
     

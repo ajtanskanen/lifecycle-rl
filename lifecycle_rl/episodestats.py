@@ -1133,13 +1133,16 @@ class EpisodeStats():
         f.close()
         return val
 
-    def load_sim(self,filename,n_pop=None,print_pop=False):
+    def load_sim(self,filename,n_pop=None,print_pop=False,silent=False):
         f = h5py.File(filename, 'r')
 
         if 'version' in f.keys():
             version=int(f['version'][()])
         else:
             version=1
+            
+        if not silent:
+            print(f'Loading results from {filename} version {version}')
 
         self.empstate=f['empstate'][()]
         self.gempstate=f['gempstate'][()]
