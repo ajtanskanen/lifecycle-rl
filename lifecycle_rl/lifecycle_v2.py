@@ -78,8 +78,8 @@ class Lifecycle():
                 'wealth': self.include_wealth,
                 'use_utility': self.use_utility,
                 'CRRA_eta': self.CRRA_eta,
-                'silent': self.silent
-                #'include_emtr': self.include_emtr
+                'silent': self.silent,
+                'include_emtr': self.include_emtr
                 }
         else:
             self.gym_kwargs={'step': self.timestep,
@@ -132,8 +132,8 @@ class Lifecycle():
                 'r_std': self.r_std,
                 'use_utility': self.use_utility,
                 'CRRA_eta': self.CRRA_eta,
-                'silent': self.silent#,
-                #'include_emtr': self.include_emtr
+                'silent': self.silent,
+                'include_emtr': self.include_emtr
                 }
                 
         # Create log dir & results dirs
@@ -231,7 +231,7 @@ class Lifecycle():
         self.valtionverotaso=None
         self.include_halftoe=None
         self.porrasta_toe=None
-        self.include_ove=False
+        self.include_ove=True
         self.unemp_limit_reemp=True
         self.extra_ppr=0
         self.startage=self.min_age
@@ -474,9 +474,8 @@ class Lifecycle():
     def render_reward(self,load=None,figname=None):
         if load is not None:
             self.episodestats.load_sim(load)
-            return self.episodestats.comp_total_reward()
-        else:
-            return self.episodestats.comp_total_reward()
+            
+        return self.episodestats.comp_total_reward(),self.episodestats.comp_initial_npv()
    
     def render_laffer(self,load=None,figname=None,include_retwork=True,grouped=False,g=0):
         if load is not None:

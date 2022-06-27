@@ -163,7 +163,8 @@ class runner_stablebaselines():
             learning_rate=0.25*learning_rate
             
         #scaled_learning_rate=learning_rate*np.sqrt(batch)
-        scaled_learning_rate=learning_rate*batch
+        #scaled_learning_rate=learning_rate*batch
+        scaled_learning_rate=learning_rate*8
         print('batch {} learning rate {} scaled {} n_cpu {}'.format(batch,learning_rate,
             scaled_learning_rate,n_cpu))
 

@@ -30,6 +30,7 @@ class CustomPolicy(FeedForwardPolicy):
                                            net_arch=[dict(pi=[128, 128, 16],
                                                           vf=[512, 256, 128])],
                                            feature_extraction="mlp")
+                                           #act_fun=tf.nn.relu)
 
 class runner_stablebaselines():
     def __init__(self,environment,gamma,timestep,n_time,n_pop,
@@ -67,25 +68,67 @@ class runner_stablebaselines():
 
         # multiprocess environment
         if rlmodel=='a2c':
-            policy_kwargs = dict(act_fun=th.nn.ReLU, net_arch=[64, 64, 16])
+            policy_kwargs = dict(act_fun=tf.nn.relu, net_arch=[64, 64, 16])
             n_cpu = 4
-        elif rlmodel=='ppo':
+        elif rlmodel=='acer':
+            policy_kwargs = dict(act_fun=tf.nn.relu, net_arch=[64, 64, 16])
+            n_cpu = 4
+        elif rlmodel=='deep_acktr':
+            policy_kwargs = dict(act_fun=tf.nn.relu, net_arch=[512, 512, 256, 128, 64]) 
+            n_cpu = 8 # 12 # 20
+        elif rlmodel=='acktr':
+            policy_kwargs = dict(act_fun=tf.nn.relu, net_arch=[512, 512, 256]) 
+            n_cpu = 8 # 12 # 20
+        elif  rlmodel=='custom_acktr': # tf.nn.leakyrelu
             if arch is not None:
-                policy_kwargs = dict(act_fun=th.nn.LeakyReLU, net_arch=arch) 
+                policy_kwargs = dict(act_fun=tf.nn.leaky_relu, net_arch=arch) 
             else:
-                policy_kwargs = dict(act_fun=th.nn.LeakyReLU, net_arch=[256, 256, 16]) 
+                policy_kwargs = dict(act_fun=tf.nn.leaky_relu,net_arch=[dict(pi=[32, 32, 32],vf=[128, 128, 128])]) 
+            if predict:
+                n_cpu = 16
+            else:
+                n_cpu = 8 # 12 # 20
+        elif rlmodel=='leaky_acktr': # tf.nn.leakyrelu
+            if arch is not None:
+                policy_kwargs = dict(act_fun=tf.nn.leaky_relu, net_arch=arch) 
+            else:
+                policy_kwargs = dict(act_fun=tf.nn.leaky_relu, net_arch=[256, 256, 16]) 
+            if predict:
+                n_cpu = 16
+            else:
+                n_cpu = 8 # 12 # 20
+        elif rlmodel=='ppo': # tf.nn.leakyrelu
+            if arch is not None:
+                policy_kwargs = dict(act_fun=tf.nn.leaky_relu, net_arch=arch) 
+            else:
+                policy_kwargs = dict(act_fun=tf.nn.leaky_relu, net_arch=[256, 256, 16]) 
             if predict:
                 n_cpu = 20
             else:
                 n_cpu = 8 # 12 # 20
-        elif rlmodel=='lstm':
+        elif rlmodel=='small_leaky_acktr': # tf.nn.leakyrelu
+            if arch is not None:
+                policy_kwargs = dict(act_fun=tf.nn.leaky_relu, net_arch=arch) 
+            else:
+                policy_kwargs = dict(act_fun=tf.nn.leaky_relu, net_arch=[64, 64, 16]) 
+            if predict:
+                n_cpu = 16 
+            else:
+                n_cpu = 8 # 12 # 20
+        elif rlmodel=='small_acktr' or rlmodel=='small_lnacktr':
+            policy_kwargs = dict(act_fun=tf.nn.relu, net_arch=[256, 256, 128]) 
+            n_cpu = 4 #8
+        elif rlmodel=='large_acktr':
+            policy_kwargs = dict(act_fun=tf.nn.relu, net_arch=[256, 256, 64, 16])
+            n_cpu = 4 # 12
+        elif rlmodel=='lstm' or rlmodel=='lnacktr':
             policy_kwargs = dict()
             n_cpu = 4
         elif rlmodel=='trpo':
-            policy_kwargs = dict(act_fun=th.nn.ReLU, net_arch=[64, 64, 16])
+            policy_kwargs = dict(act_fun=tf.nn.relu, net_arch=[64, 64, 16])
             n_cpu = 4
         elif rlmodel=='dqn': # DQN
-            policy_kwargs = dict(act_fun=th.nn.ReLU, layers=[64, 64])
+            policy_kwargs = dict(act_fun=tf.nn.relu, layers=[64, 64])
             n_cpu = 1
             rlmodel='dqn'
         else:
@@ -104,6 +147,7 @@ class runner_stablebaselines():
         
         gae_lambda=0.9
         '''
+        n_cpu_tf_sess=16 #n_cpu #4 vai n_cpu??
         #batch=max(1,int(np.ceil(batch/n_cpu)))
         batch=max(1,int(np.ceil(batch/n_cpu)))
         
@@ -129,27 +173,28 @@ class runner_stablebaselines():
 
         if cont:
             if rlmodel=='a2c':
-                from stable_baselines.common.policies import MlpPolicy 
+                from stable_baselines3.common.policies import MlpPolicy 
                 if tensorboard:
                     model = A2C.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time,
-                                     tensorboard_log=self.tenb_dir, policy_kwargs=policy_kwargs,lr_schedule=learning_schedule)
+                                     tensorboard_log=self.tenb_dir, policy_kwargs=policy_kwargs,lr_schedule=learning_schedule,
+                                     n_cpu_tf_sess=n_cpu_tf_sess)
                 else:
                     model = A2C.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time,
-                                     policy_kwargs=policy_kwargs,lr_schedule=learning_schedule)
+                                     policy_kwargs=policy_kwargs,lr_schedule=learning_schedule,n_cpu_tf_sess=n_cpu_tf_sess)
             elif rlmodel in set(['ppo','PPO']):
-                from stable_baselines.common.policies import MlpPolicy 
+                from stable_baselines3.common.policies import MlpPolicy 
                 if tensorboard:
                     model = PPO2.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time,
                                        tensorboard_log=self.tenb_dir, learning_rate=scaled_learning_rate,kfac_clip=kfac_clip,
                                        policy_kwargs=policy_kwargs,max_grad_norm=max_grad_norm,gae_lambda=gae_lambda,vf_coef=vf_coef,
-                                       full_tensorboard_log=full_tensorboard_log,lr_schedule=learning_schedule)
+                                       full_tensorboard_log=full_tensorboard_log,lr_schedule=learning_schedule,n_cpu_tf_sess=n_cpu_tf_sess)
                 else:
                     model = PPO2.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time,kfac_clip=kfac_clip,
                                        learning_rate=np.sqrt(batch)*learning_rate,vf_coef=vf_coef,gae_lambda=gae_lambda,
-                                       policy_kwargs=policy_kwargs,max_grad_norm=max_grad_norm,lr_schedule=learning_schedule)
+                                       policy_kwargs=policy_kwargs,max_grad_norm=max_grad_norm,lr_schedule=learning_schedule,n_cpu_tf_sess=n_cpu_tf_sess)
             else:
                 if tensorboard:
-                    from stable_baselines.deepq.policies import MlpPolicy # for DQN
+                    from stable_baselines3.deepq.policies import MlpPolicy # for DQN
                     model = DQN.load(loadname, env=env, verbose=verbose,gamma=self.gamma,
                                      batch_size=batch,tensorboard_log=self.tenb_dir,
                                      policy_kwargs=policy_kwargs,lr_schedule=learning_schedule,
@@ -162,22 +207,22 @@ class runner_stablebaselines():
                                      learning_rate=learning_rate)
         else:
             if rlmodel=='a2c':
-                from stable_baselines.common.policies import MlpPolicy 
+                from stable_baselines3.common.policies import MlpPolicy 
                 model = A2C(MlpPolicy, env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time, 
                             tensorboard_log=self.tenb_dir, policy_kwargs=policy_kwargs,lr_schedule=learning_schedule)
             elif rlmodel in set(['ppo','PPO']):
-                from stable_baselines.common.policies import MlpPolicy 
+                from stable_baselines3.common.policies import MlpPolicy 
                 if tensorboard:
                     model = PPO2(MlpPolicy, env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time,
                                 tensorboard_log=self.tenb_dir, learning_rate=scaled_learning_rate,kfac_clip=kfac_clip,
                                 policy_kwargs=policy_kwargs,max_grad_norm=max_grad_norm,gae_lambda=gae_lambda,vf_coef=vf_coef,
-                                full_tensorboard_log=full_tensorboard_log,lr_schedule=learning_schedule)
+                                full_tensorboard_log=full_tensorboard_log,lr_schedule=learning_schedule,n_cpu_tf_sess=n_cpu_tf_sess)
                 else:
                     model = PPO2(MlpPolicy, env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time,kfac_clip=kfac_clip,
                                 learning_rate=scaled_learning_rate, max_grad_norm=max_grad_norm,gae_lambda=gae_lambda,vf_coef=vf_coef,
-                                policy_kwargs=policy_kwargs,lr_schedule=learning_schedule)
+                                policy_kwargs=policy_kwargs,lr_schedule=learning_schedule,n_cpu_tf_sess=n_cpu_tf_sess)
             else:
-                from stable_baselines.deepq.policies import MlpPolicy # for DQN
+                from stable_baselines3.deepq.policies import MlpPolicy # for DQN
                 if tensorboard:
                     model = DQN(MlpPolicy, env, verbose=verbose,gamma=self.gamma,batch_size=batch, 
                                 tensorboard_log=self.tenb_dir,learning_rate=learning_rate,
@@ -266,7 +311,7 @@ class runner_stablebaselines():
 #         f.close()
 #         return val
         
-    def setup_model(self,debug=False,rlmodel='a2c',plot=True,load=None,pop=None,
+    def setup_model(self,debug=False,rlmodel='acktr',plot=True,load=None,pop=None,
                     deterministic=False,arch=None,predict=False):
 
         if pop is not None:
@@ -287,6 +332,7 @@ class runner_stablebaselines():
 
         # multiprocess environment
         policy_kwargs,n_cpu=self.get_multiprocess_env(rlmodel,debug=debug,arch=arch,predict=predict)
+        n_cpu_tf_sess=4
 
         nonvec=False
         if nonvec:
@@ -302,26 +348,30 @@ class runner_stablebaselines():
         print('predicting...')
 
         if self.rlmodel=='a2c':
-            model = A2C.load(load, env=env, verbose=1,gamma=self.gamma, policy_kwargs=policy_kwargs)
+            model = A2C.load(load, env=env, verbose=1,gamma=self.gamma, policy_kwargs=policy_kwargs,n_cpu_tf_sess=n_cpu_tf_sess)
+        elif self.rlmodel in set(['acktr','small_acktr','lnacktr','small_lnacktr','deep_acktr','leaky_acktr','small_leaky_acktr']):
+            model = ACKTR.load(load, env=env, verbose=1,gamma=self.gamma, policy_kwargs=policy_kwargs,n_cpu_tf_sess=n_cpu_tf_sess)
         elif self.rlmodel=='trpo':
-            model = TRPO.load(load, env=env, verbose=1,gamma=self.gamma, policy_kwargs=policy_kwargs)
+            model = TRPO.load(load, env=env, verbose=1,gamma=self.gamma, policy_kwargs=policy_kwargs,n_cpu_tf_sess=n_cpu_tf_sess)
+        elif self.rlmodel=='custom_acktr':
+            model = ACKTR.load(load, env=env, verbose=1,gamma=self.gamma, policy_kwargs=policy_kwargs, n_cpu_tf_sess=n_cpu_tf_sess)
         elif self.rlmodel=='ppo':
-            model = PPO2.load(load, env=env, verbose=1,gamma=self.gamma, policy_kwargs=policy_kwargs)
+            model = PPO2.load(load, env=env, verbose=1,gamma=self.gamma, policy_kwargs=policy_kwargs,n_cpu_tf_sess=n_cpu_tf_sess)
         elif self.rlmodel=='dqn':
-            model = DQN.load(load, env=env, verbose=1,gamma=self.gamma,prioritized_replay=True,policy_kwargs=policy_kwargs)
+            model = DQN.load(load, env=env, verbose=1,gamma=self.gamma,prioritized_replay=True,policy_kwargs=policy_kwargs,n_cpu_tf_sess=n_cpu_tf_sess)
         else:
             error('unknown model')
 
         return model,env,n_cpu
 
-    def simulate(self,debug=False,rlmodel='a2c',plot=True,load=None,pop=None,startage=None,
+    def simulate(self,debug=False,rlmodel='acktr',load=None,pop=None,startage=None,
                  deterministic=False,save='results/testsimulate',arch=None):
 
-        model,env,n_cpu=self.setup_model(debug=debug,rlmodel=rlmodel,plot=plot,load=load,pop=pop,
+        model,env,n_cpu=self.setup_model(debug=debug,rlmodel=rlmodel,load=load,pop=pop,
                  deterministic=deterministic,arch=arch,predict=True)
 
         states = env.reset()
-        if self.version in set([4,104]):  # increase by 2
+        if self.version in set([4,5,104]):  # increase by 2
             n_add=2
             pop_num=np.array([k for k in range(0,n_add*n_cpu,n_add)])
             n=n_add*(n_cpu-1)
@@ -354,12 +404,10 @@ class runner_stablebaselines():
 
         print('saving results...')
 
+        self.episodestats.scale_sim()
         self.episodestats.save_sim(save)
 
         print('done')
-        
-        if plot:
-            self.render()
 
         if False:
             return self.emp        
