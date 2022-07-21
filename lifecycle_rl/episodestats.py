@@ -32,13 +32,14 @@ from .utils import empirical_cdf,print_html,modify_offsettext
 #locale.setlocale(locale.LC_ALL, 'fi_FI')
 
 class EpisodeStats():
-    def __init__(self,timestep,n_time,n_emps,n_pop,env,minimal,min_age,max_age,min_retirementage,year=2018,version=3,params=None,gamma=0.92,lang='English'):
+    def __init__(self,timestep,n_time,n_emps,n_pop,env,minimal,min_age,max_age,min_retirementage,year=2018,version=3,params=None,gamma=0.92,lang='English',silent=False):
         self.version=version
         self.gamma=gamma
         self.params=params
         self.params['n_time']=n_time
         self.params['n_emps']=n_emps
         self.lab=Labels()
+        self.silent=silent
         self.reset(timestep,n_time,n_emps,n_pop,env,minimal,min_age,max_age,min_retirementage,year,params=params,lang=lang)
         
         if self.version==0:
@@ -1130,7 +1131,7 @@ class EpisodeStats():
         else:
             version=1
             
-        if not silent:
+        if not silent and not self.silent:
             print(f'Loading results from {filename} version {version}')
 
         self.empstate=f['empstate'][()]
@@ -1913,6 +1914,7 @@ class EpisodeStats():
             q['kotihoidontuella']=np.sum(emp[:,7]*scalex_lkm)
             q['työkyvyttömyyseläke']=np.sum(emp[:retage,3]*scalex_lkm[:retage])
             q['vanhempainvapaalla']=np.sum(emp[:,5]*scalex_lkm)
+            q['opiskelijoita']=np.sum((emp[:,12])*scalex_lkm)
             q['ovella']=np.sum(np.sum(self.infostats_ove,axis=1)*scalex)
 #             else:
 #                 q['yhteensä']=np.sum(np.sum(self.empstate[:,:],axis=1)*scalex)
@@ -2121,7 +2123,7 @@ class EpisodeStats():
             x=np.linspace(self.min_age,self.min_age+n-1,n).reshape(-1,1)
             df = pd.DataFrame(np.hstack([x,muut_m[::skip],muut_n[::skip],opisk_m[::skip],opisk_n[::skip],svpaivaraha_m[::skip],svpaivaraha_n[::skip],ulkopuolella_m[::skip],ulkopuolella_n[::skip],tyovoimassa_m[::skip],tyovoimassa_n[::skip]]), 
                 columns = ['ikä','muut_m','muut_n','opisk_m','opisk_n','svpaivaraha_m','svpaivaraha_n','ulkopuolella_m','ulkopuolella_n','tyovoimassa_m','tyovoimassa_n'])
-            df.to_csv(csv, sep=";", decimal=",")
+            df.to_csv(csv, sep=";", decimal=",",index=False)
         
         return muut_m[::skip],muut_n[::skip]
 

@@ -236,6 +236,7 @@ class PlotStats():
             print_html('<h2>Ryhmät</h2>')
             self.plot_outsider()        
             self.plot_various_groups(figname=figname)
+            self.plot_group_student()
 
         if self.version in set([0,1,2,3,4,5,104]):
             print_html('<h2>Eläkkeet</h2>')
