@@ -1140,7 +1140,15 @@ class PlotStats():
         ax.set_ylabel(self.labels['ratio'])
         ax.legend()
         plt.show()
-
+        
+        fig,ax=plt.subplots()
+        ax.plot(x,100*np.sum(self.episodestats.gempstate[:,14,3:6],1,keepdims=True)/np.sum(self.episodestats.galive[:,3:6],1,keepdims=True),label='sv-päivärahalla, naiset')
+        ax.plot(x,100*np.sum(self.episodestats.gempstate[:,14,0:3],1,keepdims=True)/np.sum(self.episodestats.galive[:,0:3],1,keepdims=True),label='sv-päivärahalla, miehet')
+        ax.set_xlabel(self.labels['age'])
+        ax.set_ylabel(self.labels['ratio'])
+        ax.legend()
+        plt.show()
+        
         fig,ax=plt.subplots()
         ax.plot(x,100*(np.sum(self.episodestats.gempstate[:,11,3:6]+self.episodestats.gempstate[:,5,3:6]+self.episodestats.gempstate[:,7,3:6]+self.episodestats.gempstate[:,14,3:6],1,keepdims=True)
             -self.episodestats.infostats_mother_in_workforce)/np.sum(self.episodestats.galive[:,3:6],1,keepdims=True),

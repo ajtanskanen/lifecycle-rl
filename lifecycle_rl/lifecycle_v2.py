@@ -40,7 +40,7 @@ warnings.simplefilter(action='ignore', category=Warning)
 
 # use stable baselines
 #from .runner_tianshou import runner_tianshou
-from .runner_stablebaselines import runner_stablebaselines
+from .runner_stablebaselines2 import runner_stablebaselines2
 #from .runner_stablebaselines3 import runner_stablebaselines3
 #from .runner_standalone import runner_standalone
             
@@ -173,8 +173,11 @@ class Lifecycle():
         elif self.use_standalone:
             self.runner=runner_standalone(self.environment,self.gamma,self.timestep,self.n_time,self.n_pop,
                  self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year,self.episodestats,self.gym_kwargs)
+        elif self.use_sb3:
+            self.runner=runner_stablebaselines3(self.environment,self.gamma,self.timestep,self.n_time,self.n_pop,
+                 self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year,self.episodestats,self.gym_kwargs)
         else:
-            self.runner=runner_stablebaselines(self.environment,self.gamma,self.timestep,self.n_time,self.n_pop,
+            self.runner=runner_stablebaselines2(self.environment,self.gamma,self.timestep,self.n_time,self.n_pop,
                  self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year,self.episodestats,self.gym_kwargs)
         
                                    
@@ -244,6 +247,7 @@ class Lifecycle():
         
         self.use_tianshou=False
         self.use_standalone=False
+        self.use_sb3=False
         self.random_returns=False
         self.r_mean=0.0
         self.r_std=0

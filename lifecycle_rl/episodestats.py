@@ -27,6 +27,7 @@ from . empstats import Empstats
 from fin_benefits import Labels
 from scipy.stats import gaussian_kde
 from .utils import empirical_cdf,print_html,modify_offsettext
+import datetime
 
 
 #locale.setlocale(locale.LC_ALL, 'fi_FI')
@@ -1000,9 +1001,13 @@ class EpisodeStats():
         '''
         Save simulation results
         '''
+
+        #self.date = datetime.datetime.now()
+        
         f = h5py.File(filename, 'w')
         ftype='float64'
         _ = f.create_dataset('version', data=self.version, dtype=np.int64)
+        #_ = f.create_dataset('date', data=self.date, dtype=dtype.str)
         _ = f.create_dataset('n_pop', data=self.n_pop, dtype=np.int64)
         _ = f.create_dataset('empstate', data=self.empstate, dtype=np.int64,compression="gzip", compression_opts=9)
         _ = f.create_dataset('gempstate', data=self.gempstate, dtype=np.int64,compression="gzip", compression_opts=9)
@@ -1130,6 +1135,12 @@ class EpisodeStats():
             version=int(f['version'][()])
         else:
             version=1
+
+        if 'date' in f.keys():
+            self.date=f['date'][()]
+        else:
+            self.date=None
+
             
         if not silent and not self.silent:
             print(f'Loading results from {filename} version {version}')

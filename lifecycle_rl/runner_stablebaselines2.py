@@ -13,6 +13,7 @@ from stable_baselines.common.policies import FeedForwardPolicy, register_policy
 from .utils import make_env
 import tensorflow as tf
 
+#from tqdm import tqdm_notebook as tqdm # jos notebookissa
 from tqdm import tqdm_notebook as tqdm
 
 from . episodestats import EpisodeStats
@@ -28,7 +29,7 @@ class CustomPolicy(FeedForwardPolicy):
                                            feature_extraction="mlp")
                                            #act_fun=tf.nn.relu)
 
-class runner_stablebaselines():
+class runner_stablebaselines2():
     def __init__(self,environment,gamma,timestep,n_time,n_pop,
                  minimal,min_age,max_age,min_retirementage,year,episodestats,
                  gym_kwargs):
@@ -71,28 +72,28 @@ class runner_stablebaselines():
             n_cpu = 4
         elif rlmodel=='deep_acktr':
             policy_kwargs = dict(act_fun=tf.nn.relu, net_arch=[512, 512, 256, 128, 64]) 
-            n_cpu = 8 # 12 # 20
+            n_cpu = 10 # 12 # 20
         elif rlmodel=='acktr':
             policy_kwargs = dict(act_fun=tf.nn.relu, net_arch=[512, 512, 256]) 
-            n_cpu = 8 # 12 # 20
+            n_cpu = 10 # 12 # 20
         elif  rlmodel=='custom_acktr': # tf.nn.leakyrelu
             if arch is not None:
                 policy_kwargs = dict(act_fun=tf.nn.leaky_relu, net_arch=arch) 
             else:
                 policy_kwargs = dict(act_fun=tf.nn.leaky_relu,net_arch=[dict(pi=[32, 32, 32],vf=[128, 128, 128])]) 
             if predict:
-                n_cpu = 16
+                n_cpu = 20
             else:
-                n_cpu = 8 # 12 # 20
+                n_cpu = 10 # 12 # 20
         elif rlmodel=='leaky_acktr': # tf.nn.leakyrelu
             if arch is not None:
                 policy_kwargs = dict(act_fun=tf.nn.leaky_relu, net_arch=arch) 
             else:
                 policy_kwargs = dict(act_fun=tf.nn.leaky_relu, net_arch=[256, 256, 16]) 
             if predict:
-                n_cpu = 16
+                n_cpu = 10
             else:
-                n_cpu = 8 # 12 # 20
+                n_cpu = 10 # 12 # 20
         elif rlmodel=='ppo': # tf.nn.leakyrelu
             if arch is not None:
                 policy_kwargs = dict(act_fun=tf.nn.leaky_relu, net_arch=arch) 
@@ -164,7 +165,8 @@ class runner_stablebaselines():
             
         #scaled_learning_rate=learning_rate*np.sqrt(batch)
         #scaled_learning_rate=learning_rate*batch
-        scaled_learning_rate=learning_rate*8
+        #scaled_learning_rate=learning_rate*8
+        scaled_learning_rate=learning_rate
         print('batch {} learning rate {} scaled {} n_cpu {}'.format(batch,learning_rate,
             scaled_learning_rate,n_cpu))
 
