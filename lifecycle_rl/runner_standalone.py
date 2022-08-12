@@ -109,6 +109,9 @@ class runner_standalone():
         #optimizer=KFACOptimizer(model,lr=1e-3)
         self.optimizer=KFOptimizer(model.parameters(),model,lr=1e-4,stat_decay=0.995)
         
+    def check_env(self,env):
+        return
+
     def load_model(self,PATH):
         # Model class must be defined somewhere
         model = torch.load(PATH)

@@ -4,6 +4,7 @@ Runner for making fitting with Stable Baselines 2.0
 
 import gym, numpy as np
 from stable_baselines.common.vec_env import SubprocVecEnv,DummyVecEnv
+from stable_baselines.common.env_checker  import check_env as env_checker_check_env
 from stable_baselines import A2C, ACER, DQN, ACKTR, PPO2 #, TRPO
 from stable_baselines.bench import Monitor
 from stable_baselines.results_plotter import load_results, ts2xy
@@ -58,6 +59,9 @@ class runner_stablebaselines2():
         #                       self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,
         #                       version=self.version,params=self.gym_kwargs,year=self.year,gamma=self.gamma)
         
+    def check_env(self,env):
+        env_checker_check_env(env, warn=True)
+
     def get_multiprocess_env(self,rlmodel,debug=False,arch=None,predict=False):
 
         if arch is not None:

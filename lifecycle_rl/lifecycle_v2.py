@@ -5,7 +5,10 @@
     implements the lifecycle model that predicts how people will act in the presence of
     social security
     
-    uses tianshou instead of stable baselines
+    uses stable baselines 2 instead of stable baselines
+    - can use tianshou in principle (NOT WORKING)
+    - can use stable baselines 3 (NOT TESTED)
+    - can use self implemented algorithms
     
     recent
 
@@ -39,10 +42,18 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.simplefilter(action='ignore', category=Warning)
 
 # use stable baselines
-#from .runner_tianshou import runner_tianshou
-from .runner_stablebaselines2 import runner_stablebaselines2
-#from .runner_stablebaselines3 import runner_stablebaselines3
-#from .runner_standalone import runner_standalone
+
+# 0 sb2, 1 standalone, 2 tianshou, 3 stable baselines 3
+use_solver=0
+
+if use_solver==2:
+    from .runner_tianshou import runner_tianshou
+elif use_solver==3:
+    from .runner_stablebaselines3 import runner_stablebaselines3
+elif use_solver==1:
+    from .runner_standalone import runner_standalone
+else:
+    from .runner_stablebaselines2 import runner_stablebaselines2
             
 class Lifecycle():
 
@@ -50,7 +61,7 @@ class Lifecycle():
         '''
         Alusta muuttujat
         '''
-
+        self.setup_solver(use_solver)
         self.initial_parameters()
         self.setup_parameters(**kwargs)
 
@@ -181,7 +192,22 @@ class Lifecycle():
                  self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year,self.episodestats,self.gym_kwargs)
         
                                    
+    def setup_solver(self,use_solver):
+        self.use_tianshou=False
+        self.use_standalone=False
+        self.use_sb3=False
+        self.use_sb2=False
+        if use_solver==2:
+            self.use_tianshou=True
+        elif use_solver==3:
+            self.use_sb3=True
+        elif use_solver==1:
+            self.use_standalone=True
+        else:
+            self.use_sb2=True
+
     def initial_parameters(self):
+    
         self.min_age = 18
         self.max_age = 70
         self.figformat='pdf'
@@ -245,9 +271,6 @@ class Lifecycle():
         self.randomness=True
         self.include_emtr=False
         
-        self.use_tianshou=False
-        self.use_standalone=False
-        self.use_sb3=False
         self.random_returns=False
         self.r_mean=0.0
         self.r_std=0
@@ -645,6 +668,9 @@ class Lifecycle():
         train a model based on a protocol, and then simulate it
         plot results if needed
         '''
+        
+        if use_solver:
+            self.runner.check_env(self.env)
         
         if self.plotdebug:
             debug=True

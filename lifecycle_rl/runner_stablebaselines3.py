@@ -10,6 +10,7 @@ Initial implementation. Works but needs improvement, e.g., no lr_schedule or lea
 import gym, numpy as np
 from stable_baselines3.common.vec_env import SubprocVecEnv,DummyVecEnv
 from stable_baselines3 import A2C, DQN, PPO
+from stable_baselines3.common.env_checker  import check_env as env_checker_check_env
 #from stable_baselines3.bench import Monitor
 #from stable_baselines3.results_plotter import load_results, ts2xy
 #from stable_baselines3 import results_plotter
@@ -53,6 +54,9 @@ class runner_stablebaselines3():
         #                       self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,
         #                       version=self.version,params=self.gym_kwargs,year=self.year,gamma=self.gamma)
         
+    def check_env(self,env):
+        env_checker_check_env(env, warn=True)
+
     def get_multiprocess_env(self,rlmodel,debug=False,arch=None,predict=False,learning_schedule='linear',learning_rate=0.5):
 
         if arch is not None:

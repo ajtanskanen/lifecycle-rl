@@ -64,6 +64,9 @@ class runner_tianshou():
         #                           self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,
         #                           version=self.version,params=self.gym_kwargs,year=self.year,gamma=self.gamma)
         
+    def check_env(self,env):
+        return
+
     def setup_training(self,rlmodel,loadname,env,batch,cont):
         '''
         Alustaa RL-mallin ajoa varten
