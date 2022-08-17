@@ -166,6 +166,7 @@ class runner_stablebaselines2():
         
         if cont:
             learning_rate=0.25*learning_rate
+            #learning_rate=0.5*learning_rate
             
         #scaled_learning_rate=learning_rate*np.sqrt(batch)
         #scaled_learning_rate=learning_rate*batch

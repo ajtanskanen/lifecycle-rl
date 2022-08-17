@@ -332,9 +332,6 @@ class Lifecycle():
             elif key=='additional_income_tax_high':
                 if value is not None:
                     self.additional_income_tax_high=value
-            elif key=='additional_tyel_premium':
-                if value is not None:
-                    self.additional_tyel_premium=value
             elif key=='additional_vat':
                 if value is not None:
                     self.additional_vat=value

@@ -818,7 +818,7 @@ class Empstats():
             q['kotihoidontuella']=42_042 # saajia Kelan tilasto 2018
             q['työkyvyttömyyseläke']=198_762
             q['vanhempainvapaalla']=84_387 # Kelan tilasto 2018
-            q['opiskelijoita']=0
+            q['opiskelijoita']=109076+111441
             q['ovella']=39_000
         elif self.year==2019:
             q['yhteensä']=np.sum(demog2)*self.timestep
@@ -831,7 +831,7 @@ class Empstats():
             q['kotihoidontuella']=42_042 # saajia Kelan tilasto 2018
             q['työkyvyttömyyseläke']=195_316
             q['vanhempainvapaalla']=84_387 # Kelan tilasto 2018
-            q['opiskelijoita']=0
+            q['opiskelijoita']=114433+109652
             q['ovella']=39_000
         elif self.year==2020:
             q['yhteensä']=np.sum(demog2)*self.timestep
@@ -845,7 +845,7 @@ class Empstats():
             q['kotihoidontuella']=42_042 # saajia Kelan tilasto 2018
             q['työkyvyttömyyseläke']=191_597
             q['vanhempainvapaalla']=84_387 # Kelan tilasto 2018
-            q['opiskelijoita']=0
+            q['opiskelijoita']=126153+118325
             q['ovella']=39_000
         elif self.year==2021:
             q['yhteensä']=np.sum(demog2)*self.timestep
@@ -859,7 +859,7 @@ class Empstats():
             q['kotihoidontuella']=42_042 # saajia Kelan tilasto 2018
             q['työkyvyttömyyseläke']=185_991  
             q['vanhempainvapaalla']=84_387 # Kelan tilasto 2018
-            q['opiskelijoita']=0
+            q['opiskelijoita']=126153+118325
             q['ovella']=39_000
         elif self.year==2022:
             q['yhteensä']=np.sum(demog2)*self.timestep
@@ -873,7 +873,7 @@ class Empstats():
             q['kotihoidontuella']=42_042 # saajia Kelan tilasto 2018
             q['työkyvyttömyyseläke']=185_991  
             q['vanhempainvapaalla']=84_387 # Kelan tilasto 2018
-            q['opiskelijoita']=0
+            q['opiskelijoita']=126153+118325
             q['ovella']=39_000
         elif self.year==2023:
             q['yhteensä']=np.sum(demog2)*self.timestep
@@ -887,7 +887,7 @@ class Empstats():
             q['kotihoidontuella']=42_042 # saajia Kelan tilasto 2018
             q['työkyvyttömyyseläke']=185_991  
             q['vanhempainvapaalla']=84_387 # Kelan tilasto 2018
-            q['opiskelijoita']=0
+            q['opiskelijoita']=126153+118325
             q['ovella']=39_000
         
         return q
