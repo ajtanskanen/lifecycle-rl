@@ -1527,11 +1527,9 @@ class EpisodeStats():
         mean=ma.mean(netto)
         med60=0.60*median
         med50=0.50*median
-        #print(f'mean {mean} median {median} med50 {med50} med60 {med60}')
         ratio_med50=ma.sum(netto<med50)/alive
         ratio_med60=ma.sum(netto<med60)/alive
         pt_levl=ma.sum(netto<level)/alive
-        #print(f'ratio_med50 {ratio_med50} ratio_med60 {ratio_med60} pt_levl {pt_levl}')
         
         return ratio_med50,ratio_med60,pt_levl
                     
@@ -1702,7 +1700,6 @@ class EpisodeStats():
         else:
             tyot_osuus=(emp[:,0]+emp[:,4]+emp[:,13])/nn
 
-        #print(f'tyot_osuus {tyot_osuus}')
         unemp=self.comp_state_stats(tyot_osuus,start=start,end=end,ratio=True)
 
         return unemp
@@ -1906,7 +1903,6 @@ class EpisodeStats():
         if self.version in set([1,2,3,4,5,104]):
             retage=self.map_age(self.min_retirementage)
             if grouped:
-                #print('group=',g)
                 emp=np.squeeze(self.gempstate[:,:,g])
             else:
                 emp=self.empstate
@@ -2007,7 +2003,6 @@ class EpisodeStats():
         vaikutus=np.sum(demog2[min_cage:max_cage]*state[min_cage:max_cage])/np.sum(demog2[min_cage:max_cage])
         x=np.sum(demog2[min_cage:max_cage]*state[min_cage:max_cage])
         y=np.sum(demog2[min_cage:max_cage])
-        #print(f'vaikutus {vaikutus} x {x} y {y}\n s {state[min_cage:max_cage]} mean {np.mean(state[min_cage:max_cage])}\n d {demog2[min_cage:max_cage]}')
 
         return vaikutus
 
@@ -2313,7 +2308,7 @@ class EpisodeStats():
             # tyel-eläke ml. muiden eläkkeiden vähenteisyys
             self.infostats_irr_tyel_reduced[k]=self.reaalinen_palkkojenkasvu*100+self.comp_annual_irr(self.infostats_npv0[k,0],self.infostats_tyelpremium[:,k],self.infostats_paid_tyel_pension[:,k])
 
-    def comp_aggirr(self,gender=None):
+    def comp_aggirr(self,gender=None,full=False):
         '''
         Laskee aggregoidun sisäisen tuottoasteen (IRR)
         Indeksointi puuttuu npv:n osalta
@@ -2321,7 +2316,6 @@ class EpisodeStats():
         '''
         
         if gender is None:
-            gendername='Kaikki'
             alive=self.alive[-1]
             maxnpv=np.sum(self.infostats_npv0)/alive # keskimääräinen npv ilman diskonttausta tarkasteluvälin lopussa
 
@@ -2333,11 +2327,9 @@ class EpisodeStats():
         else:
             if gender==1: # naiset
                 gendermask = (self.infostats_group>2).astype(float).T
-                gendername='Naiset'
                 alive=np.sum(self.galive[-1,3:6])
             else: # miehet
                 gendermask = (self.infostats_group<3).astype(float).T
-                gendername='Miehet'
                 alive=np.sum(self.galive[-1,0:3])
         
             maxnpv=np.sum(self.infostats_npv0.T*gendermask)/alive # keskimääräinen npv ilman diskonttausta tarkasteluvälin lopussa
@@ -2348,17 +2340,10 @@ class EpisodeStats():
             agg_irr_tyel_full=self.reaalinen_palkkojenkasvu*100+self.comp_annual_irr(maxnpv,agg_premium,agg_pensions_full)
             agg_irr_tyel_reduced=self.reaalinen_palkkojenkasvu*100+self.comp_annual_irr(maxnpv,agg_premium,agg_pensions_reduced)
 
-        print('{}: aggregate irr tyel reduced {:.4f} % reaalisesti'.format(gendername,agg_irr_tyel_reduced))
-        print('{}: aggregate irr tyel full {:.4f} % reaalisesti'.format(gendername,agg_irr_tyel_full))
-        
-        x=np.linspace(self.min_age,self.max_age,self.n_time)
-        fig,ax=plt.subplots()
-        ax.set_xlabel('age')
-        ax.set_ylabel('pension/premium')
-        ax.plot(x[:-1],agg_pensions_full[:-1],label='työeläkemeno')
-        ax.plot(x[:-1],agg_pensions_reduced[:-1],label='yhteensovitettu työeläkemeno')
-        ax.plot(x[:-1],agg_premium[:-1],label='työeläkemaksu')
-        plt.show()
+        if full:
+            return agg_irr_tyel_full,agg_irr_tyel_reduced,agg_premium,agg_pensions_reduced,agg_pensions_full,maxnpv
+        else:
+            return agg_irr_tyel_full,agg_irr_tyel_reduced
 
     def comp_unemp_durations(self,popempstate=None,popunemprightused=None,putki=True,\
             tmtuki=False,laaja=False,outsider=False,ansiosid=True,tyott=False,kaikki=False,\
@@ -2872,7 +2857,6 @@ class EpisodeStats():
                         print('NaN',v,income,employment_state,age)
                     v=0
                 u[t]+=v
-                #print(age,v)
 
             t=self.n_time-1
             age=t+self.min_age
@@ -2917,7 +2901,6 @@ class EpisodeStats():
                     v,_=self.env.log_utility((1+x)*income,employment_state,age,debug=False) #,g=g,pinkslip=pinkslip)
                     if not np.isfinite(v):
                         v=0
-                    #print(t,k,v,income)
                     u[t]+=v
                 t=self.n_time-1
                 age=t-1+self.min_age
@@ -2932,10 +2915,7 @@ class EpisodeStats():
                 v,_=self.env.log_utility((1+x)*income,employment_state,age,debug=False) #,g=g,pinkslip=pinkslip)
                 if not np.isfinite(v):
                     v=0
-                #print(t,k,v,income)
                 u[t]+=v*factor
-
-        #print(x,ret)
 
         return ret
 

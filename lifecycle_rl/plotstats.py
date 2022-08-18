@@ -26,7 +26,7 @@ from tqdm import tqdm_notebook as tqdm
 from . empstats import Empstats
 from fin_benefits import Labels
 from scipy.stats import gaussian_kde
-from .utils import empirical_cdf,print_html,modify_offsettext
+from .utils import empirical_cdf,print_html,modify_offsettext,add_source,setup_EK_fonts
 
 
 #locale.setlocale(locale.LC_ALL, 'fi_FI')
@@ -214,7 +214,6 @@ class PlotStats():
         print_html('<h2>Sovite</h2>')
 
         print('Real discounted reward {}'.format(self.episodestats.comp_realoptimrew()))
-        #print('vrt reward {}'.format(self.episodestats.comp_scaled_consumption(np.array([0]))))
         real=self.episodestats.comp_presentvalue()
         print('Initial discounted reward {}'.format(np.mean(real[1,:])))
 
@@ -510,10 +509,7 @@ class PlotStats():
         scaled,x2=np.histogram(pens_distrib.compressed(),x)
         
         scaled=scaled/np.sum(pens_distrib)
-        #print(pens_distrib,scaled,x2)
-        #ax.bar(x2[1:-1],scaled[1:],align='center')
         ax.plot(x2[1:],scaled)
-        #ax.bar(x2[1:],scaled)
         axvcolor='gray'
         lstyle='--'
         ka=np.mean(pens_distrib)
@@ -841,7 +837,6 @@ class PlotStats():
         salgx=salgx/np.maximum(1,salgn)
         salx_f=salx_f/np.maximum(1,saln_f)
         salx_m=salx_m/np.maximum(1,saln_m)
-        #print(sal25,self.episodestats.infostats_pop_wage)
         
         alivemask = (self.episodestats.popempstate==15).astype(bool)
         wdata=ma.array(self.episodestats.infostats_pop_wage,mask=alivemask)#.compressed()
@@ -865,9 +860,6 @@ class PlotStats():
         kuva2(sal65,65,m65)
 
         data_range=np.arange(self.min_age,self.max_age+1)
-        #plt.plot(data_range,np.mean(self.episodestats.infostats_pop_wage[::4],axis=1),label='malli kaikki')
-        #print(data_range.shape,data_range[1:].shape)
-        #print(wdata.shape,self.episodestats.infostats_pop_wage.shape)
         plt.plot(data_range,ma.mean(wdata[::4,:],axis=1),label='malli alive')
         plt.plot(data_range,ma.mean(wdata2[::4,:],axis=1),label='malli not ret')
         plt.plot(data_range,salx[::4],label='malli töissä')
@@ -1164,13 +1156,10 @@ class PlotStats():
         ax.legend()
         plt.show()
         if printtaa:
-            #print('yht',100*(self.episodestats.empstate[:,11]+self.episodestats.empstate[:,5]+self.episodestats.empstate[:,6]+self.episodestats.empstate[:,7])/self.episodestats.alive[:,0])
             nn=np.sum(self.episodestats.galive[:,3:6],1,keepdims=True)
             n=np.sum(100*(self.episodestats.gempstate[:,5,3:6]+self.episodestats.gempstate[:,6,3:6]+self.episodestats.gempstate[:,7,3:6]),1,keepdims=True)/nn
             mn=np.sum(self.episodestats.galive[:,0:3],1,keepdims=True)
             m=np.sum(100*(self.episodestats.gempstate[:,5,0:3]+self.episodestats.gempstate[:,6,0:3]+self.episodestats.gempstate[:,7,0:3]),1,keepdims=True)/mn
-            #print('naiset vv',n[1::4,0])
-            #print('miehet vv',m[1::4,0])
             
     def plot_tulot(self):
         '''
@@ -2218,24 +2207,118 @@ class PlotStats():
             self.plot_tyolldistribs_both(unemp_distrib,tyoll_distrib,max=max,figname=figname)
 
     def plot_irr(self,figname=''):
-        self.episodestats.comp_aggirr()
-        self.episodestats.comp_aggirr(gender=1)
-        self.episodestats.comp_aggirr(gender=2)
+        self.plot_aggirr()
+        self.plot_aggirr(gender=1)
+        self.plot_aggirr(gender=2)
         self.episodestats.comp_irr()
         self.plot_irrdistrib(self.episodestats.infostats_irr_tyel_reduced,figname=figname+'_reduced',reduced=True)
         self.plot_irrdistrib(self.episodestats.infostats_irr_tyel_full,figname=figname+'_full')
         self.plot_irrdistrib(self.episodestats.infostats_irr_tyel_full,figname=figname+'_full_naiset',gender=1)
         self.plot_irrdistrib(self.episodestats.infostats_irr_tyel_full,figname=figname+'_full_miehet',gender=2)
 
-    def compare_irr(self,figname=''):
-        self.episodestats.comp_aggirr()
-        self.episodestats.comp_aggirr(gender=1)
-        self.episodestats.comp_aggirr(gender=2)
+    def plot_aggirr(self,gender=None):
+        '''
+        Laskee aggregoidun sisäisen tuottoasteen (IRR)
+        Indeksointi puuttuu npv:n osalta
+        Tuloksiin lisättävä inflaatio+palkkojen reaalikasvu = palkkojen nimellinen kasvu
+        '''
+        
+        if gender is None:
+            gendername='Kaikki'
+        else:
+            gendername=self.get_gendername(gender)
+
+        agg_irr_tyel_full,agg_irr_tyel_reduced,agg_premium,agg_pensions_reduced,agg_pensions_full,maxnpv=self.episodestats.comp_aggirr(full=True)
+
+        print('{}: aggregate irr tyel reduced {:.4f} % reaalisesti'.format(gendername,agg_irr_tyel_reduced))
+        print('{}: aggregate irr tyel full {:.4f} % reaalisesti'.format(gendername,agg_irr_tyel_full))
+        
+        x=np.linspace(self.min_age,self.max_age,self.n_time)
+        fig,ax=plt.subplots()
+        ax.set_xlabel('age')
+        ax.set_ylabel('pension/premium')
+        ax.plot(x[:-1],agg_pensions_full[:-1],label='työeläkemeno')
+        ax.plot(x[:-1],agg_pensions_reduced[:-1],label='yhteensovitettu työeläkemeno')
+        ax.plot(x[:-1],agg_premium[:-1],label='työeläkemaksu')
+        ax.legend()
+        plt.show()
+        
+    def compare_irr(self,cc2=None,cc3=None,cc4=None,cc5=None,cc6=None,label1='',label2='',label3='',label4='',label5='',label6='',figname='',grayscale=False):
         self.episodestats.comp_irr()
-        self.plot_irrdistrib(self.episodestats.infostats_irr_tyel_reduced,figname=figname+'_reduced',reduced=True)
-        self.plot_irrdistrib(self.episodestats.infostats_irr_tyel_full,figname=figname+'_full')
-        self.plot_irrdistrib(self.episodestats.infostats_irr_tyel_full,figname=figname+'_full_naiset',gender=1)
-        self.plot_irrdistrib(self.episodestats.infostats_irr_tyel_full,figname=figname+'_full_miehet',gender=2)
+        full1=self.episodestats.infostats_irr_tyel_full
+        reduced1=self.episodestats.infostats_irr_tyel_reduced
+        full2=None
+        reduced2=None
+        full3=None
+        reduced3=None
+        full4=None
+        reduced4=None
+        full5=None
+        reduced5=None
+        full6=None
+        reduced6=None
+        if cc2 is not None:
+            cc2.episodestats.comp_irr()
+            full2=cc2.episodestats.infostats_irr_tyel_full
+            reduced2=cc2.episodestats.infostats_irr_tyel_reduced
+        if cc3 is not None:
+            cc3.episodestats.comp_irr()
+            full3=cc3.episodestats.infostats_irr_tyel_full
+            reduced3=cc3.episodestats.infostats_irr_tyel_reduced
+        if cc4 is not None:
+            cc4.episodestats.comp_irr()
+            full4=cc4.episodestats.infostats_irr_tyel_full
+            reduced4=cc4.episodestats.infostats_irr_tyel_reduced
+        if cc5 is not None:
+            cc5.episodestats.comp_irr()
+            full5=cc5.episodestats.infostats_irr_tyel_full
+            reduced5=cc5.episodestats.infostats_irr_tyel_reduced
+        if cc6 is not None:
+            cc6.episodestats.comp_irr()
+            full6=cc6.episodestats.infostats_irr_tyel_full
+            reduced6=cc6.episodestats.infostats_irr_tyel_reduced
+        
+        self.compare_irrdistrib(cc2=cc2,cc3=cc3,cc4=cc4,cc5=cc5,cc6=cc6,label1=label1,label2=label2,label3=label3,label4=label4,label5=label5,label6=label6,reduced=False,grayscale=grayscale)
+        self.compare_irrdistrib(cc2=cc2,cc3=cc3,cc4=cc4,cc5=cc5,cc6=cc6,figname=figname+'_reduced',reduced=True,label1=label1,label2=label2,label3=label3,label4=label4,label5=label5,label6=label6,grayscale=grayscale)
+        self.compare_irrdistrib(cc2=cc2,cc3=cc3,cc4=cc4,cc5=cc5,cc6=cc6,figname=figname+'_full_naiset',label1=label1,label2=label2,label3=label3,label4=label4,label5=label5,label6=label6,reduced=False,gender=1,grayscale=grayscale)
+        self.compare_irrdistrib(cc2=cc2,cc3=cc3,cc4=cc4,cc5=cc5,cc6=cc6,figname=figname+'_full_miehet',label1=label1,label2=label2,label3=label3,label4=label4,label5=label5,label6=label6,reduced=False,gender=2,grayscale=grayscale)
+
+    def filter_irrdistrib(self,cc,gender=None,reduced=False):
+        '''
+        Suodata irrit sukupuolen mukaan
+        '''
+        mortstate=self.env.get_mortstate()
+        
+        if reduced:
+            irr_distrib=cc.episodestats.infostats_irr_tyel_reduced
+        else:
+            irr_distrib=cc.episodestats.infostats_irr_tyel_full
+        
+        gendername=self.get_gendername(gender)
+        if gender is None:
+            gendermask=np.ones_like(irr_distrib)
+        else:
+            if gender==1: # naiset
+                gendermask = cc.episodestats.infostats_group>2
+            else: # miehet
+                gendermask = cc.episodestats.infostats_group<3
+                
+        nanmask = (np.isnan(irr_distrib).astype(int)*gendermask.astype(int)).astype(bool)
+        v2_irrdata=ma.array(irr_distrib,mask=nanmask)
+        v2data=v2_irrdata.compressed() # nans dropped
+        
+        return v2data
+    
+    def get_gendername(self,gender):
+        if gender is None:
+            gendername=''
+        else:
+            if gender==1: # naiset
+                gendername=' (Naiset)'
+            else: # miehet
+                gendername=' (Miehet)'
+                
+        return gendername
 
     def plot_irrdistrib(self,irr_distrib,grayscale=True,figname='',reduced=False,gender=None):
         if grayscale:
@@ -2244,16 +2327,14 @@ class PlotStats():
 
         mortstate=self.env.get_mortstate()
         
+        gendername=self.get_gendername(gender)
         if gender is None:
             gendermask=np.ones_like(irr_distrib)
-            gendername=''
         else:
             if gender==1: # naiset
                 gendermask = self.episodestats.infostats_group>2
-                gendername=' (Naiset)'
             else: # miehet
                 gendermask = self.episodestats.infostats_group<3
-                gendername=' (Miehet)'
         
         nanmask = (np.isnan(irr_distrib).astype(int)*gendermask.astype(int)).astype(bool)
         v2_irrdata=ma.array(irr_distrib,mask=nanmask)
@@ -2286,6 +2367,8 @@ class PlotStats():
         fig,ax=plt.subplots()
         ax.hist(irr_distrib,bins=40,density=True)
         plt.show()
+        
+        self.plot_one_irrdistrib(irr_distrib)
 
         irr_distrib_wout_nans=irr_distrib.copy()
         irr_distrib_wout_nans[np.isnan(irr_distrib_wout_nans)]=0 # mostly not defined of type 0/0, hence use 0
@@ -2355,145 +2438,190 @@ class PlotStats():
         count = 1-self.episodestats.alive[-1,0]/self.episodestats.n_pop
         print('Lopussa osuus kuolleet {:.2f} % '.format(100*count))
         
-    def plot_one_irrdistrib(self,irr_distrib1,label1='1',irr_distrib2=None,label2='2',grayscale=True,figname=''):
+    def plot_one_irrdistrib(self,irr_distrib1,label1='1',
+                                 irr2=None,label2='2',
+                                 irr3=None,label3='2',
+                                 irr4=None,label4='2',
+                                 irr5=None,label5='2',
+                                 irr6=None,label6='2',
+                                 grayscale=False,figname=''):
         if grayscale:
             plt.style.use('grayscale')
             plt.rcParams['figure.facecolor'] = 'white' # Or any suitable colour...
+        
+        df1=pd.DataFrame(irr_distrib1,columns=['Sisäinen tuottoaste [%]'])
+        df1.loc[:,'label']=label1
+        if irr2 is not None:
+            df2=pd.DataFrame(irr2,columns=['Sisäinen tuottoaste [%]'])
+            df2.loc[:,'label']=label2
+            df1=pd.concat([df1,df2],ignore_index=True, sort=False)
+        if irr3 is not None:
+            df2=pd.DataFrame(irr3,columns=['Sisäinen tuottoaste [%]'])
+            df2.loc[:,'label']=label3
+            df1=pd.concat([df1,df2],ignore_index=True, sort=False)
+        if irr4 is not None:
+            df2=pd.DataFrame(irr4,columns=['Sisäinen tuottoaste [%]'])
+            df2.loc[:,'label']=label4
+            df1=pd.concat([df1,df2],ignore_index=True, sort=False)
+        if irr5 is not None:
+            df2=pd.DataFrame(irr5,columns=['Sisäinen tuottoaste [%]'])
+            df2.loc[:,'label']=label5
+            df1=pd.concat([df1,df2],ignore_index=True, sort=False)
+        if irr6 is not None:
+            df2=pd.DataFrame(irr6,columns=['Sisäinen tuottoaste [%]'])
+            df2.loc[:,'label']=label6
+            df1=pd.concat([df1,df2],ignore_index=True, sort=False)
 
-        fig,ax=plt.subplots()
-        ax.set_xlabel('Sisäinen tuottoaste [%]')
-        lbl=ax.set_ylabel('Taajuus')
-        x=np.linspace(-7,7,100)
-        scaled,x2=np.histogram(irr_distrib,x)
-        ax.bar(x2[1:-1],scaled[1:],align='center')
+        sns.displot(df1, x="Sisäinen tuottoaste [%]", hue="label", kind="kde", fill=True,gridsize=10000, bw_adjust=.05)
+        plt.xlim(-10, 10)
         if figname is not None:
-            plt.savefig(figname+'irrdistrib.'+self.figformat, bbox_inches='tight', format=self.figformat)
+            plt.savefig(figname+'_kde.'+self.figformat, format=self.figformat)
         plt.show()
         
-        df1=pd.dataframe(irr_distrib1,columns=['irr'])
-        df1.loc['label',:]=label1
-        df2=pd.dataframe(irr_distrib2,columns=['irr'])
-        df2.loc['label',:]=label2
-        df1.append(df2)
-        sns.displot(df, x="flipper_length_mm", hue="label", kind="kde", fill=True)
+        sns.displot(df1, x="Sisäinen tuottoaste [%]", hue="label", stat="density", fill=True,common_norm=False)
+        plt.xlim(-10, 10)
+        if figname is not None:
+            plt.savefig(figname+'density.'+self.figformat, format=self.figformat)
+        plt.show()
+
+    def compare_gender_irr(self,figname=None,reduced=False,grayscale=False):
+        self.episodestats.comp_irr()
+        irr1=self.filter_irrdistrib(self,reduced=reduced,gender=1)
+        irr2=self.filter_irrdistrib(self,reduced=reduced,gender=2)
+
+        display(irr1)
+        display(irr2)
+
+        self.plot_one_irrdistrib(irr1,label1='naiset',irr2=irr2,label2='miehet',
+                                 grayscale=grayscale,figname=figname)
+
+    def compare_reduced_irr(self,figname=None,gender=None,grayscale=False):
+        self.episodestats.comp_irr()
+        irr1=self.filter_irrdistrib(self,reduced=True,gender=gender)
+        irr2=self.filter_irrdistrib(self,reduced=False,gender=gender)
+
+        display(irr1)
+        display(irr2)
+
+        self.plot_one_irrdistrib(irr1,label1='Yhteensovitettu',irr2=irr2,label2='Pelkkä työeläke',
+                                 grayscale=grayscale,figname=figname)
         
-    def compare_irrdistrib(self,irr_distrib,grayscale=True,figname='',reduced=False,gender=None):
+    def compare_irrdistrib(self,cc2=None,cc3=None,cc4=None,cc5=None,cc6=None,
+            label1='',label2='',label3='',label4='',label5='',label6='',figname=None,reduced=False,gender=None,grayscale=False):
         if grayscale:
             plt.style.use('grayscale')
             plt.rcParams['figure.facecolor'] = 'white' # Or any suitable colour...
 
-        mortstate=self.env.get_mortstate()
-        
-        if gender is None:
-            gendermask=np.ones_like(irr_distrib)
-            gendername=''
-        else:
-            if gender==1: # naiset
-                gendermask = self.episodestats.infostats_group>2
-                gendername=' (Naiset)'
-            else: # miehet
-                gendermask = self.episodestats.infostats_group<3
-                gendername=' (Miehet)'
-        
-        nanmask = (np.isnan(irr_distrib).astype(int)*gendermask.astype(int)).astype(bool)
-        v2_irrdata=ma.array(irr_distrib,mask=nanmask)
-        v2data=v2_irrdata.compressed() # nans dropped
-        
-        ika=65
-        alivemask = self.episodestats.popempstate[self.map_age(ika),:]!=mortstate
-        alivemask = np.reshape(alivemask,(-1,1))
-        alivemask = (alivemask.astype(int)*gendermask.astype(int)).astype(bool)
-        
-        #nan_alivemask=alivemask*nanmask[:,0]
-        #nanalive_irrdata=ma.array(irr_distrib,mask=nan_alivemask)
-        #nanalive_data=nanalive_irrdata.compressed() # nans dropped
-
+        gendername=self.get_gendername(gender)
         if reduced:
             print('\nTyel-irr huomioiden kansan- ja takuueläkkeen yhteensovitus'+gendername)
         else:
             print('\nTyel-irr ILMAN kansan- ja takuueläkkeen yhteensovitusta'+gendername)
+            
+        irr_distrib=self.filter_irrdistrib(self,reduced=reduced,gender=gender)
+        aggirr,aggirr_reduced=self.episodestats.comp_aggirr()
+        print(f'Aggregate irr for {label1}: {aggirr} (reduced {aggirr_reduced})')
+        irr2=None
+        irr3=None
+        irr4=None
+        irr5=None
+        irr6=None
+        if cc2 is not None:
+            irr2=self.filter_irrdistrib(cc2,reduced=reduced,gender=gender)
+            aggirr,aggirr_reduced=cc2.episodestats.comp_aggirr()
+            print(f'Aggregate irr for {label2}: {aggirr} (reduced aggirr_reduced)')
+        if cc3 is not None:
+            irr3=self.filter_irrdistrib(cc3,reduced=reduced,gender=gender)
+            aggirr,aggirr_reduced=cc3.episodestats.comp_aggirr()
+            print(f'Aggregate irr for {label3}: {aggirr} (reduced aggirr_reduced)')
+        if cc4 is not None:
+            irr4=self.filter_irrdistrib(cc4,reduced=reduced,gender=gender)
+            aggirr,aggirr_reduced=cc4.episodestats.comp_aggirr()
+            print(f'Aggregate irr for {label4}: {aggirr} (reduced aggirr_reduced)')
+        if cc5 is not None:
+            irr5=self.filter_irrdistrib(cc5,reduced=reduced,gender=gender)
+            aggirr,aggirr_reduced=cc5.episodestats.comp_aggirr()
+            print(f'Aggregate irr for {label5}: {aggirr} (reduced aggirr_reduced)')
+        if cc6 is not None:
+            irr6=self.filter_irrdistrib(cc6,reduced=reduced,gender=gender)
+            aggirr,aggirr_reduced=cc6.episodestats.comp_aggirr()
+            print(f'Aggregate irr for {label6}: {aggirr} (reduced aggirr_reduced)')
 
-        fig,ax=plt.subplots()
-        ax.set_xlabel('Sisäinen tuottoaste [%]')
-        lbl=ax.set_ylabel('Taajuus')
-        x=np.linspace(-7,7,100)
-        scaled,x2=np.histogram(irr_distrib,x)
-        ax.bar(x2[1:-1],scaled[1:],align='center')
+
+        self.plot_one_irrdistrib(irr_distrib,label1=label1,
+                                 irr2=irr2,label2=label2,
+                                 irr3=irr3,label3=label3,
+                                 irr4=irr4,label4=label4,
+                                 irr5=irr5,label5=label5,
+                                 irr6=irr6,label6=label6,
+                                 grayscale=grayscale,figname=figname)
+                                 
+    def plot_scaled_irr(self,label='',figname=None,reduced=False,gender=None,grayscale=False):
+        '''
+        Laskee annetulla maksulla irr:t eri maksuille skaalaamalla
+        '''
+        if grayscale:
+            plt.style.use('grayscale')
+            plt.rcParams['figure.facecolor'] = 'white' # Or any suitable colour...
+
+        irr_distrib=self.filter_irrdistrib(self,gender=gender)
+        aggirr,aggirr_reduced,agg_premium,agg_pensions_reduced,agg_pensions_full,maxnpv=self.episodestats.comp_aggirr(full=True)
+        print(f'Aggregate irr for {label}: {aggirr} (reduced {aggirr_reduced})')
+        
+        x=np.arange(0.01,0.35,0.01)
+        agg_irr_tyel_full=np.zeros_like(x)
+        agg_irr_tyel_reduced=np.zeros_like(x)
+        for m,r in enumerate(x):
+            agg_premium2=agg_premium*r/0.244
+            agg_irr_tyel_full[m]=self.reaalinen_palkkojenkasvu*100+self.episodestats.comp_annual_irr(maxnpv,agg_premium2,agg_pensions_full)
+            agg_irr_tyel_reduced[m]=self.reaalinen_palkkojenkasvu*100+self.episodestats.comp_annual_irr(maxnpv,agg_premium2,agg_pensions_reduced)
+            
+        df1 = pd.DataFrame(agg_irr_tyel_full,columns=['pelkkä työeläke'])
+        df1.loc[:,'x']=x
+        df1.loc[:,'yhteensovitettu']=agg_irr_tyel_reduced
+            
+        ps=np.zeros_like(agg_irr_tyel_full)+1.6
+        
+        if reduced:
+            self.lineplot(x*100,agg_irr_tyel_full,y2=agg_irr_tyel_reduced,y3=ps,xlim=[10,30],ylim=[-1,6],
+                ylabel='sisäinen tuotto [%]',xlabel='maksutaso [% palkoista]',selite=True,
+                label='Pelkkä työeläke',label2='Yhteensovitettu eläke',label3='Palkkasumman kasvu',figname=figname)
+        else:
+            self.lineplot(x*100,agg_irr_tyel_full,y2=ps,xlim=[10,30],ylim=[-1,6],
+                ylabel='sisäinen tuotto [%]',xlabel='maksutaso [% palkoista]',selite=True,
+                label='Pelkkä työeläke',label2='Palkkasumman kasvu',figname=figname)
+        
+
+
+    def lineplot(self,x,y,y2=None,y3=None,label=None,label2=None,label3=None,xlabel='',ylabel='',selite=False,source=None,xlim=None,ylim=None,figname=None):
+        csfont,pal=setup_EK_fonts()
+            
+        linestyle={'linewidth': 3}
+        legendstyle={'frameon': False}
+    
+        fig, axs = plt.subplots()
+        axs.plot(x,y,label=label,**linestyle)
+        if y2 is not None:
+            axs.plot(x,y2,label=label2,**linestyle)
+        if y3 is not None:
+            axs.plot(x,y3,label=label3,**linestyle)
+        
+        if selite:
+            axs.legend(loc='upper right',**legendstyle)
+            
+        axs.set_xlabel(xlabel,**csfont)
+        axs.set_ylabel(ylabel,**csfont)
+        axs.grid(True,color='black',fillstyle='top',lw=0.5,axis='y',alpha=1.0)
+        if xlim is not None:
+            axs.set_xlim(xlim[0], xlim[1])
+        if ylim is not None:
+            axs.set_ylim(ylim[0], ylim[1])
+        if source is not None:
+            add_source(source,**csfont)
         if figname is not None:
-            plt.savefig(figname+'irrdistrib.'+self.figformat, bbox_inches='tight', format=self.figformat)
-        plt.show()
-
-        fig,ax=plt.subplots()
-        ax.hist(irr_distrib,bins=40,density=True)
-        plt.show()
-
-        irr_distrib_wout_nans=irr_distrib.copy()
-        irr_distrib_wout_nans[np.isnan(irr_distrib_wout_nans)]=0 # mostly not defined of type 0/0, hence use 0
-        
-        print('Kaikki havainnot (NaN -> 0):\n- Keskimääräinen irr {:.3f} % reaalisesti'.format(np.mean(irr_distrib_wout_nans)))
-        print('- Mediaani irr {:.3f} % reaalisesti'.format(np.median(irr_distrib_wout_nans)))
-        
-        # v2
-        print('v2 Kaikki havainnot:\n- Keskimääräinen irr {:.3f} % reaalisesti'.format(np.mean(v2data)))
-        print('- Mediaani irr {:.3f} % reaalisesti'.format(np.median(v2data)))
-
-        print('Ilman Nan:eja\n- Keskimääräinen irr {:.3f} % reaalisesti'.format(np.nanmean(irr_distrib)))
-        print('- Mediaani irr {:.3f} % reaalisesti'.format(np.nanmedian(irr_distrib)))
-        print('- Nans {} %'.format(100*np.sum(np.isnan(irr_distrib))/irr_distrib.shape[0]))
-
-        # kaikki havainnot
-        percent_m50 = 100*np.true_divide((irr_distrib <=-50).sum(axis=0),irr_distrib.shape[0])[0]
-        percent_m10 = 100*np.true_divide((irr_distrib <=-10).sum(axis=0),irr_distrib.shape[0])[0]
-        percent_0 =   100*np.true_divide((irr_distrib <=0).sum(axis=0),irr_distrib.shape[0])[0]
-        percent_p10 = 100*np.true_divide((irr_distrib >=10).sum(axis=0),irr_distrib.shape[0])[0]
-        print(f'Kaikki havainnot\nOsuudet\n- irr < -50% {percent_m50:.2f} %:lla\n- irr < -10% {percent_m10:.2f} %')
-        print(f'- irr < 0% {percent_0:.2f} %:lla\n- irr > 10% {percent_p10:.2f} %\n')
-        
-        # v2
-        percent_m50 = 100*((v2data <=-50).sum(axis=0)/v2data.shape[0])
-        percent_m10 = 100*((v2data <=-10).sum(axis=0)/v2data.shape[0])
-        percent_0 =   100*((v2data <=0).sum(axis=0)/v2data.shape[0])
-        percent_p10 = 100*((v2data >=10).sum(axis=0)/v2data.shape[0])
-        print(f'Ilman NaNeja\nOsuudet\n- irr < -50% {percent_m50:.2f} %:lla\n- irr < -10% {percent_m10:.2f} %')
-        print(f'- irr < 0% {percent_0:.2f} %:lla\n- irr > 10% {percent_p10:.2f} %\n')
-
-        count = (np.sum(self.episodestats.stat_pop_paidpension,axis=0)<0.1).sum(axis=0)
-        percent = np.true_divide(count,irr_distrib.shape[0])
-        print('Osuus mikään eläke ei lainkaan maksussa {:.2f} %'.format(100*percent))
-        
-        no_pension = (np.sum(self.episodestats.infostats_pop_tyoelake,axis=0)<0.1)
-        count = no_pension.sum(axis=0)
-        percent = np.true_divide(count,irr_distrib.shape[0])
-        print('Osuus työeläkettä ei lainkaan maksussa {:.2f} %'.format(100*percent))
-        
-        nopremium = (np.sum(self.episodestats.infostats_tyelpremium,axis=0)<0.1)
-        percent = np.true_divide(count,irr_distrib.shape[0])
-        print('Osuus työeläke ei lainkaan maksua maksettu {:.2f} %'.format(100*percent))
-        
-        count = (np.sum(self.episodestats.infostats_paid_tyel_pension,axis=0)<0.1).sum(axis=0)
-        percent = np.true_divide(count,irr_distrib.shape[0])
-        print('Osuus työeläke ei vastinetta maksulle {:.2f} %'.format(100*percent))
-        
-        nopp = no_pension*nopremium
-        count=nopp.sum(axis=0)
-        percent = np.true_divide(count,irr_distrib.shape[0])
-        print('Osuus työeläke ei lainkaan maksua eikä maksettua eläkettä {:.2f} %'.format(100*percent))
-
-        print('\nOsuudet\n')
-        arri=ma.sum(ma.array(self.episodestats.stat_pop_paidpension[self.map_age(ika),:],mask=alivemask))<0.1
-        percent = np.true_divide(ma.sum(arri),self.episodestats.alive[self.map_age(ika),0])
-        print('{}v osuus eläke ei maksussa, ei kuollut {:.2f} %'.format(ika,100*percent))
-
-        alivemask = self.episodestats.popempstate[self.map_age(ika),:]!=mortstate
-        count = (np.sum(self.episodestats.infostats_pop_tyoelake,axis=0)<0.1).sum(axis=0)
-        percent = np.true_divide(count,self.episodestats.alive[self.map_age(ika),0])
-        print('{}v osuus ei työeläkekarttumaa, ei kuollut {:.2f} %'.format(ika,100*percent))
-
-        count = 1-self.episodestats.alive[self.map_age(ika),0]/self.episodestats.n_pop
-        print('{}v osuus kuolleet {:.2f} % '.format(ika,100*count))
-
-        count = 1-self.episodestats.alive[-1,0]/self.episodestats.n_pop
-        print('Lopussa osuus kuolleet {:.2f} % '.format(100*count))
+            plt.savefig(figname+'.'+self.figformat, format='png')
+    
+                
     def get_initial_reward(self,startage=None):
         real=self.episodestats.comp_presentvalue()
         if startage is None:
@@ -2568,7 +2696,6 @@ class PlotStats():
                 if np.abs(delta[k])>0.2:
                     wage=self.episodestats.infostats_pop_wage[t,k]
                     pen=self.episodestats.infostats_pop_pension[t,k]
-                    #print(f't {t}: {obsV[t,k]} vs {self.aveV[t+1,k]} d {delta} in state {self.episodestats.popempstate[t,k]} ({k},{wage:.2f},{pen:.2f})')
 
             for state in range(2):
                 s=np.asarray(self.episodestats.popempstate[t,:]==state).nonzero()
@@ -3039,7 +3166,6 @@ class PlotStats():
             tvax=ma.array(self.episodestats.infostats_pop_emtr[1:maxt,:],mask=mask[1:maxt,:])
             mask2=tvax>=1
             w=ma.array(self.episodestats.infostats_pop_wage[1:maxt,:],mask=tvax)
-            #print(f'{k}: (1 %) {prop}')
             print('w',w)
 
     def plot_aggkannusteet(self,ben,loadfile,baseloadfile=None,figname=None,label=None,baselabel=None):
@@ -3296,7 +3422,6 @@ class PlotStats():
 
     def plot_compare_csvirta(self,m1,m2,lbl):
         nc1=np.reshape(np.cumsum(m1),m1.shape)
-        #print(m1.shape,np.cumsum(m1).shape)
         nc2=np.reshape(np.cumsum(m2),m1.shape)
         fig,ax=plt.subplots()
         x=np.linspace(self.min_age,self.max_age,self.n_time)
@@ -3312,7 +3437,6 @@ class PlotStats():
         plt.show()
 
     def plot_compare_virtadistribs(self,tyoll_virta1,tyoll_virta2,tyot_virta1,tyot_virta2,tyot_virta_ansiosid1,tyot_virta_ansiosid2,tyot_virta_tm1,tyot_virta_tm2,label1='',label2=''):
-        #print(tyoll_virta1.shape)
         m1=np.mean(tyoll_virta1,axis=0,keepdims=True).transpose()
         m2=np.mean(tyoll_virta2,axis=0,keepdims=True).transpose()
         fig,ax=plt.subplots()
@@ -3337,7 +3461,6 @@ class PlotStats():
         self.plot_compare_virrat(m1,m2,virta_label='tm-työttömyys',label1=label1,label2=label2)
         n1=(np.mean(tyoll_virta1,axis=0,keepdims=True)-np.mean(tyot_virta1,axis=0,keepdims=True)).transpose()
         n2=(np.mean(tyoll_virta2,axis=0,keepdims=True)-np.mean(tyot_virta2,axis=0,keepdims=True)).transpose()
-        #print(n1.shape,tyoll_virta1.shape)
         self.plot_compare_virrat(n1,n2,virta_label='netto',label1=label1,label2=label2,ymin=-1000,ymax=1000)
         self.plot_compare_csvirta(n1,n2,'cumsum nettovirta')
 

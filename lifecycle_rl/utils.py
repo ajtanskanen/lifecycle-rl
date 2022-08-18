@@ -9,6 +9,76 @@ from gym.utils import seeding
 from IPython.core.display import display,HTML
 #from stable_baselines.common import set_global_seeds
 
+
+import seaborn as sns
+import matplotlib.font_manager as font_manager
+
+def add_source(source,**csfont):
+    plt.annotate(source, xy=(0.88,-0.1), xytext=(0,0), xycoords='axes fraction', textcoords='offset points', va='top', **csfont)
+
+def get_palette_EK():
+    colors1=['#003326','#05283d','#ff9d6a','#599956']
+    colors2=['#295247','#2c495a','#fdaf89','#7cae79']
+    colors3=['#88b2eb','#ffcb21','#e85c03']
+    
+    colors=['#295247','#7cae79','#ffcb21','#e85c03','#88b2eb','#2c495a','#fdaf89']
+    
+    return sns.color_palette(colors)
+    
+def setup_EK_fonts():
+    pal=get_palette_EK()
+    #csfont = {'fontname':'Comic Sans MS'}
+    fontname='IBM Plex Sans'
+    csfont = {'font':fontname,'family':fontname,'fontsize':15}
+    #fontprop = font_manager.FontProperties(family=fontname,weight='normal',style='normal', size=12)
+    custom_params = {"axes.spines.right": False, "axes.spines.top": False, "axes.spines.left": False, 'ytick.left': False}
+    sns.set_theme(style="ticks", font=fontname,rc=custom_params)
+    linecolors = {'color':'red'}
+    
+    return csfont,pal
+    
+def get_style_EK():
+    axes={'axes.facecolor': 'white',
+     'axes.edgecolor': 'black',
+     'axes.grid': False,
+     'axes.axisbelow': 'line',
+     'axes.labelcolor': 'black',
+     'figure.facecolor': 'white',
+     'grid.color': '#b0b0b0',
+     'grid.linestyle': '-',
+     'text.color': 'black',
+     'xtick.color': 'black',
+     'ytick.color': 'black',
+     'xtick.direction': 'out',
+     'ytick.direction': 'out',
+     'lines.solid_capstyle': 'projecting',
+     'patch.edgecolor': 'black',
+     'patch.force_edgecolor': False,
+     'image.cmap': 'viridis',
+     'font.family': ['sans-serif'],
+     'font.sans-serif': ['IBM Plex Sans',
+      'DejaVu Sans',
+      'Bitstream Vera Sans',
+      'Computer Modern Sans Serif',
+      'Lucida Grande',
+      'Verdana',
+      'Geneva',
+      'Lucid',
+      'Arial',
+      'Helvetica',
+      'Avant Garde',
+      'sans-serif'],
+     'xtick.bottom': True,
+     'xtick.top': False,
+     'ytick.left': True,
+     'ytick.right': False,
+     'axes.spines.left': False,
+     'axes.spines.bottom': True,
+     'axes.spines.right': False,
+     'axes.spines.top': False}
+     
+    return axes
+
 def make_env(env_id, rank, kwargs, seed=None, use_monitor=True):
     """
     Utility function for multiprocessed env.#
