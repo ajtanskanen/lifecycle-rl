@@ -342,6 +342,18 @@ class PlotStats():
         plt.hist(arr,density=True)
         plt.title('Osa-aika miehet, pt-tila: ave {}'.format(ma.mean(arr)))
         plt.show()
+
+        mask_osaaika=(self.episodestats.popempstate!=8) # ve+osa-aika
+        arr=ma.ravel(ma.array(self.episodestats.infostats_pop_pt_act,mask=mask_osaaika)).compressed()
+        plt.hist(arr,density=True)
+        plt.title('ve+osa-aika, pt-tila: ave {}'.format(ma.mean(arr)))
+        plt.show()
+
+        mask_osaaika=(self.episodestats.popempstate!=9) # ve+koko-aika
+        arr=ma.ravel(ma.array(self.episodestats.infostats_pop_pt_act,mask=mask_osaaika)).compressed()
+        plt.hist(arr,density=True)
+        plt.title('ve+koko-aika, pt-tila: ave {}'.format(ma.mean(arr)))
+        plt.show()
         
         mask_kokoaika=(self.episodestats.popempstate!=1) # kokoaika
         arr=ma.ravel(ma.array(self.episodestats.infostats_pop_pt_act,mask=mask_kokoaika)).compressed()
@@ -2206,15 +2218,15 @@ class PlotStats():
         else:
             self.plot_tyolldistribs_both(unemp_distrib,tyoll_distrib,max=max,figname=figname)
 
-    def plot_irr(self,figname=''):
+    def plot_irr(self,figname='',grayscale=False):
         self.plot_aggirr()
         self.plot_aggirr(gender=1)
         self.plot_aggirr(gender=2)
         self.episodestats.comp_irr()
-        self.plot_irrdistrib(self.episodestats.infostats_irr_tyel_reduced,figname=figname+'_reduced',reduced=True)
-        self.plot_irrdistrib(self.episodestats.infostats_irr_tyel_full,figname=figname+'_full')
-        self.plot_irrdistrib(self.episodestats.infostats_irr_tyel_full,figname=figname+'_full_naiset',gender=1)
-        self.plot_irrdistrib(self.episodestats.infostats_irr_tyel_full,figname=figname+'_full_miehet',gender=2)
+        self.plot_irrdistrib(self.episodestats.infostats_irr_tyel_reduced,figname=figname+'_reduced',reduced=True,grayscale=grayscale)
+        self.plot_irrdistrib(self.episodestats.infostats_irr_tyel_full,figname=figname+'_full',grayscale=grayscale)
+        self.plot_irrdistrib(self.episodestats.infostats_irr_tyel_full,figname=figname+'_full_naiset',gender=1,grayscale=grayscale)
+        self.plot_irrdistrib(self.episodestats.infostats_irr_tyel_full,figname=figname+'_full_miehet',gender=2,grayscale=grayscale)
 
     def plot_aggirr(self,gender=None):
         '''
@@ -2364,11 +2376,7 @@ class PlotStats():
             plt.savefig(figname+'irrdistrib.'+self.figformat, bbox_inches='tight', format=self.figformat)
         plt.show()
 
-        fig,ax=plt.subplots()
-        ax.hist(irr_distrib,bins=40,density=True)
-        plt.show()
-        
-        self.plot_one_irrdistrib(irr_distrib)
+        self.plot_one_irrdistrib(irr_distrib,label1='Sisäinen tuotto [%]')
 
         irr_distrib_wout_nans=irr_distrib.copy()
         irr_distrib_wout_nans[np.isnan(irr_distrib_wout_nans)]=0 # mostly not defined of type 0/0, hence use 0
