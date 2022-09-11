@@ -318,6 +318,8 @@ class runner_stablebaselines2():
                 else:
                     model = DQN(MlpPolicy, env, verbose=verbose,gamma=self.gamma,batch_size=batch,
                                 learning_rate=learning_rate,policy_kwargs=policy_kwargs) 
+
+        #print('obs.shape',model.ob_space.shape)
                             
         return model
         

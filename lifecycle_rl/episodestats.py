@@ -1467,7 +1467,7 @@ class EpisodeStats():
 
         q['tyottomyyspvraha']=q['ansiopvraha']+q['peruspvraha']
         q['ta_maksut']=q['tyoelakemaksu']-q['ptel']+(0.2057-0.1695)*q['tyotulosumma'] # karkea
-        q['verotettava etuusmeno']=q['kokoelakemeno']+q['tyottomyyspvraha']+q['aitiyspaivaraha']+q['isyyspaivaraha']
+        q['verotettava etuusmeno']=q['kokoelakemeno']+q['tyottomyyspvraha']+q['aitiyspaivaraha']+q['isyyspaivaraha']+q['perustulo']+q['sairauspaivaraha']+q['kotihoidontuki']+q['opintotuki']
         q['alv']=np.sum(self.infostats_alv*scalex)
         q['verot+maksut+alv']=q['verot+maksut']+q['alv']
         q['muut tulot']=q['etuusmeno']-q['verot+maksut+alv']
@@ -1977,6 +1977,8 @@ class EpisodeStats():
             q['vanhempainvapaalla']=np.sum(emp[:,5]*scalex_lkm)
             q['opiskelijoita']=np.sum((emp[:,12])*scalex_lkm)
             q['ovella']=np.sum(np.sum(self.infostats_ove,axis=1)*scalex)
+            q['pareja']=np.sum(np.sum(self.infostats_puoliso,axis=1)*scalex)/2
+            q['lapsia']=np.sum(np.sum(self.infostats_children_under18,axis=1)*scalex)
 #             else:
 #                 q['yhteensä']=np.sum(np.sum(self.empstate[:,:],axis=1)*scalex)
 #                 if include_retwork:
@@ -2787,7 +2789,32 @@ class EpisodeStats():
                 ka_tyottomyysaste=100*np.sum(unemployed)/np.sum(alive[:,0])
 
         return tyollisyysaste,osatyoaste,tyottomyysaste,ka_tyottomyysaste
+        
+    def comp_ptproportions(self):
+        mask_osaaika=(self.popempstate!=10) # osa-aika
+        mask_ft=(self.popempstate!=1) # osa-aika
+        mask_veft=(self.popempstate!=9) # osa-aika
+        mask_vept=(self.popempstate!=8) # osa-aika
+        ptsuhde=np.zeros((self.n_time,3))
+        ftsuhde=np.zeros((self.n_time,3))
+        veptsuhde=np.zeros((self.n_time,3))
+        veftsuhde=np.zeros((self.n_time,3))
+        for t in range(self.n_time):
+            arr=ma.ravel(ma.array(self.infostats_pop_pt_act[t,:],mask=mask_osaaika[t,:])).compressed()
+            s,_=np.histogram(arr,bins=3,density=False)
+            ptsuhde[t,:]=s/np.sum(s)
+            arr=ma.ravel(ma.array(self.infostats_pop_pt_act[t,:],mask=mask_ft[t,:])).compressed()
+            s,_=np.histogram(arr,bins=3,density=True)
+            ftsuhde[t,:]=s/np.sum(s)
+            arr=ma.ravel(ma.array(self.infostats_pop_pt_act[t,:],mask=mask_vept[t,:])).compressed()
+            s,_=np.histogram(arr,bins=3,density=True)
+            veptsuhde[t,:]=s/np.sum(s)
+            arr=ma.ravel(ma.array(self.infostats_pop_pt_act[t,:],mask=mask_veft[t,:])).compressed()
+            s,_=np.histogram(arr,bins=3,density=True)
+            veftsuhde[t,:]=s/np.sum(s)
 
+        return ptsuhde,ftsuhde,veptsuhde,veftsuhde
+        
     def comp_taxratios(self,grouped=False):
         valtionvero_osuus=100*np.sum(self.infostats_valtionvero_distrib,0)/np.sum(self.infostats_valtionvero_distrib)
         kunnallisvero_osuus=100*np.sum(self.infostats_kunnallisvero_distrib,0)/np.sum(self.infostats_kunnallisvero_distrib)

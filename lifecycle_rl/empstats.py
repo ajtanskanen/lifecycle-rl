@@ -735,9 +735,12 @@ class Empstats():
             q['palkansaajia']= 3_508_270_000 * h_to_v # yritykset, statfin
             q['ansiosidonnaisella']=(31_269_904+7_553_200)/htv_tt  # Kelan tilasto 31.12.2018
             q['tmtuella']=49_880_321/htv_tt   # Kelan tilasto 31.12.2018
+            q['työkyvyttömyyseläke']=198_762
             q['isyysvapaalla']=(1_268_710+155_307)/htv # Kelan tilasto 2018
             q['kotihoidontuella']=42_042  # saajia Kelan tilasto 2018
             q['vanhempainvapaalla']=(4_964_669+7_590_429)/htv  # Kelan tilasto 2022, äideille
+            q['pareja']=0
+            q['lapsia']=0
         elif self.year==2019:
             q['yhteensä']=np.sum(np.sum(demog2))*self.timestep
             q['työllisiä']= 4_141_593_000 * h_to_v # yritykset, statfin
@@ -746,9 +749,12 @@ class Empstats():
             q['palkansaajia']= 3_512_025_000 * h_to_v  # Kelan tilasto 31.12.2018
             q['ansiosidonnaisella']=(27_858_120+6_972_312)/htv_tt  # Kelan tilasto 31.12.2018
             q['tmtuella']=48_454_665/htv_tt   # Kelan tilasto 31.12.2019
+            q['työkyvyttömyyseläke']=195_316
             q['isyysvapaalla']=(1_271_141+156_927)/htv # Kelan tilasto 2022
             q['kotihoidontuella']=42_042  # saajia Kelan tilasto 2018
             q['vanhempainvapaalla']=(4_727_809+7_070_436)/htv  # Kelan tilasto 2022, äideille
+            q['pareja']=0
+            q['lapsia']=0
         elif self.year==2020:
             q['yhteensä']=np.sum(np.sum(demog2))*self.timestep
             q['työllisiä']= 4_062_562_000 * h_to_v # yritykset, statfin
@@ -757,9 +763,12 @@ class Empstats():
             q['palkansaajia']= 3_459_030_000 * h_to_v #
             q['ansiosidonnaisella']=(40_448_224+12_425_099)/htv_tt  # Kelan tilasto 31.12.2018
             q['tmtuella']=52_449_825/htv_tt   # Kelan tilasto 31.12.2020
+            q['työkyvyttömyyseläke']=191_597
             q['isyysvapaalla']=(1_287_660+170_034)/htv # Kelan tilasto 2022
             q['kotihoidontuella']=42_042  # saajia Kelan tilasto 2018
             q['vanhempainvapaalla']=(4_819_360+7_162_896)/htv  # Kelan tilasto 2022, äideille
+            q['pareja']=0
+            q['lapsia']=0
         elif self.year==2021:
             q['yhteensä']=np.sum(np.sum(demog2))*self.timestep
             q['työllisiä']= 4_062_562_000 * h_to_v # yritykset, statfin
@@ -768,9 +777,12 @@ class Empstats():
             q['palkansaajia']= 3_459_030_000 * h_to_v #
             q['ansiosidonnaisella']=(37_549_237+7_553_200)/htv_tt  # Kelan tilasto 31.12.2018
             q['tmtuella']=49_613_125/htv_tt   # Kelan tilasto 31.12.2021
+            q['työkyvyttömyyseläke']=185_991  
             q['isyysvapaalla']=(1_356_711+196_429)/htv # Kelan tilasto 2022, isyysvapaa+vanhempainvapaa
             q['kotihoidontuella']=42_042  # saajia Kelan tilasto 2018
             q['vanhempainvapaalla']=(5_084_479+7_311_157)/htv  # Kelan tilasto 2022, äideille
+            q['pareja']=0
+            q['lapsia']=0
         elif self.year==2022:
             q['yhteensä']=np.sum(np.sum(demog2))*self.timestep
             q['työllisiä']= 4_062_562_000 * h_to_v # yritykset, statfin
@@ -779,9 +791,12 @@ class Empstats():
             q['palkansaajia']= 3_459_030_000 * h_to_v #
             q['ansiosidonnaisella']=(30_676_200+11_611_154)/htv_tt  # Kelan tilasto 31.12.2018
             q['tmtuella']=49_880_300/htv_tt   # Kelan tilasto 31.12.2018
+            q['työkyvyttömyyseläke']=185_991  
             q['isyysvapaalla']=1_424_000/htv # Kelan tilasto 2018
             q['kotihoidontuella']=42_042  # saajia Kelan tilasto 2018
             q['vanhempainvapaalla']=12_571_400/htv  # Kelan tilasto 2018, äideille
+            q['pareja']=0
+            q['lapsia']=0
         elif self.year==2023:
             q['yhteensä']=np.sum(np.sum(demog2))*self.timestep
             q['työllisiä']= 4_062_562_000 * h_to_v # yritykset, statfin
@@ -790,9 +805,12 @@ class Empstats():
             q['palkansaajia']= 3_459_030_000 * h_to_v #
             q['ansiosidonnaisella']=(30_676_200+7_553_200)/htv_tt  # Kelan tilasto 31.12.2018
             q['tmtuella']=49_880_300/htv_tt   # Kelan tilasto 31.12.2018
+            q['työkyvyttömyyseläke']=185_991  
             q['isyysvapaalla']=1_424_000/htv # Kelan tilasto 2018
             q['kotihoidontuella']=42_042  # saajia Kelan tilasto 2018
             q['vanhempainvapaalla']=12_571_400/htv  # Kelan tilasto 2018, äideille
+            q['pareja']=0
+            q['lapsia']=0
 
         return q    
 

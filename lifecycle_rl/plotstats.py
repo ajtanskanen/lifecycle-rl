@@ -109,7 +109,7 @@ class PlotStats():
                 q_stat=self.empstats.stat_budget()
             else:
                 q_stat=cc.episodestats.comp_budget(scale=True)
-                
+
             df1 = pd.DataFrame.from_dict(q,orient='index',columns=['e/v'])
             df2 = pd.DataFrame.from_dict(q_stat,orient='index',columns=[cctext])
             df=df1.copy()
@@ -240,6 +240,8 @@ class PlotStats():
         if self.version in set([0,1,2,3,4,5,104]):
             print_html('<h2>Eläkkeet</h2>')
             self.plot_all_pensions()
+            print_html('<h2>Työkyvyttömyyseläke</h2>')
+            self.plot_disab()
 
         if self.version in set([4,5,104]):
             print_html('<h2>Lapset ja puolisot</h2>')
@@ -326,6 +328,25 @@ class PlotStats():
         plt.title('Osa-aika, pt-tila')
         plt.show()
 
+        x=np.linspace(self.min_age,self.max_age,self.n_time)
+        pt,ft,vept,veft=self.episodestats.comp_ptproportions()
+        plt.stackplot(x,pt.T)
+        plt.legend(labels=['25%','50%','75%'])
+        plt.title('Osa-aika, pt-tila')
+        plt.show()
+        plt.stackplot(x,ft.T)
+        plt.legend(labels=['100%','125%','150%'])
+        plt.title('Kokoaika, pt-tila')
+        plt.show()
+        plt.stackplot(x,vept.T)
+        plt.legend(labels=['25%','50%','75%'])
+        plt.title('Ve+Osa-aika, pt-tila')
+        plt.show()
+        plt.stackplot(x,veft.T)
+        plt.legend(labels=['100%','125%','150%'])
+        plt.title('Ve+Kokoaika, pt-tila')
+        plt.show()
+
         men_mask=(self.episodestats.infostats_group<4).T
         women_mask=~men_mask
 
@@ -390,11 +411,13 @@ class PlotStats():
     def plot_unemp_after_ra(self):
         self.plot_states(self.episodestats.stat_unemp_after_ra,ylabel='Unemp after ret.age',stack=False,start_from=60,end_at=70)
 
-    def plot_all_pensions(self):
+    def plot_disab(self):
         w1,w2,n_tk=self.episodestats.comp_tkstats()
         print(f'Työkyvyttömyyseläkkeisiin menetetty palkkasumma {w1:,.2f} ja työpanoksen arvo {w2:,.2f}')
         self.plot_group_disab()
         self.plot_group_disab(xstart=60,xend=67)
+
+    def plot_all_pensions(self):
         alivemask=(self.episodestats.popempstate==self.env.get_mortstate()) # pois kuolleet
         kemask=(self.episodestats.infostats_pop_kansanelake<0.1)
         kemask=ma.mask_or(kemask,alivemask)

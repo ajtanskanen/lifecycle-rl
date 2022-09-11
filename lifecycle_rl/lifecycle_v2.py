@@ -32,6 +32,10 @@ from . episodestats import EpisodeStats
 from . plotstats import PlotStats
 from . simstats import SimStats
 
+import profile
+import re
+
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 os.environ['OMP_NUM_THREADS'] = '4'  # or any {'0', '1', '2'}
 OMP_NUM_THREADS=4
@@ -215,6 +219,8 @@ class Lifecycle():
         self.timestep=0.25
         self.year=2018
         
+        self.profile=False
+        
         self.lang='Finnish'
         
         if self.minimal:
@@ -284,6 +290,9 @@ class Lifecycle():
             kwarg=kwargs
 
         for key, value in kwarg.items():
+            if key=='profile':
+                if value is not None:
+                    self.profile=value
             if key=='callback_minsteps':
                 if value is not None:
                     self.callback_minsteps=value
@@ -739,9 +748,16 @@ class Lifecycle():
         simulate the three models obtained from run_protocol
         '''
  
+        def run_sim():
+            self.runner.simulate(pop=pop,rlmodel=rlmodel,debug=debug,arch=arch,
+                        load=load,save=results,deterministic=deterministic,startage=startage)
+ 
         # simulate the saved best
-        self.runner.simulate(pop=pop,rlmodel=rlmodel,debug=debug,arch=arch,
-                      load=load,save=results,deterministic=deterministic,startage=startage)
+        #if self.profile:
+        #    profile.run('run_sim()')
+        #else:
+        run_sim()
+        
 
     def run_distrib(self,n=5,steps1=100,steps2=100,pop=1_000,rlmodel='acktr',
                save='saved/distrib_base_',debug=False,simut='simut',results='results/distrib_',
