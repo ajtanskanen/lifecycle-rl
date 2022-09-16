@@ -2328,21 +2328,26 @@ class EpisodeStats():
         '''
         Laskee työkyvyttömyyseläkkeisiin menetetty työpanos
         '''
+        return self.comp_potempstats(3)
+
+    def comp_potempstats(self,e):
+        '''
+        Laskee tilassa e menetetyn työpanoksen
+        '''
         menetetty_palkka_reduced=np.zeros((self.n_time,1))
         tk=np.zeros((self.n_time,1))
         
         retage=self.map_age(self.min_retirementage)
         
         for k in range(self.n_pop):
-            g=self.infostats_group[k,0]
             for t in range(retage):
-                if self.popempstate[t,k] in set([3]):
+                if self.popempstate[t,k] in set([e]):
                     menetetty_palkka_reduced[t]+=self.infostats_pop_potential_wage[t,k]*(1-self.infostats_pop_wage_reduction[t,k])*self.timestep
-                    #print(self.infostats_pop_potential_wage[t,k]*self.timestep,(1-self.stat_wage_reduction_g[t,1,g]))
+                    #print(self.infostats_pop_potential_wage[t,k],self.timestep,(1-self.infostats_pop_wage_reduction[t,k]))
                     tk[t]+=1
 
         demog2=self.empstats.get_demog()
-        scalex=demog2/self.n_pop*self.timestep
+        scalex=demog2/self.n_pop*self.timestep # pitääkö tässä olla self.timestep??
 
         sum1=np.sum(menetetty_palkka_reduced*scalex)
         sum2=sum1*2.13 # työpanos
@@ -2363,6 +2368,17 @@ class EpisodeStats():
             self.infostats_irr_tyel_full[k]=self.reaalinen_palkkojenkasvu*100+self.comp_annual_irr(self.infostats_npv0[k,0],self.infostats_tyelpremium[:,k],self.infostats_pop_tyoelake[:,k])
             # tyel-eläke ml. muiden eläkkeiden vähenteisyys
             self.infostats_irr_tyel_reduced[k]=self.reaalinen_palkkojenkasvu*100+self.comp_annual_irr(self.infostats_npv0[k,0],self.infostats_tyelpremium[:,k],self.infostats_paid_tyel_pension[:,k])
+
+    def get_gendermask(self,gender):
+        if gender is None:
+            gendermask=np.zeros_like(self.infostats_group) # mask no-one
+        else:
+            if gender==1: # naiset
+                gendermask = self.infostats_group<3 # maskaa miehet
+            else: # miehet
+                gendermask = self.infostats_group>2 # maskaa naiset
+
+        return gendermask
 
     def comp_aggirr(self,gender=None,full=False):
         '''
