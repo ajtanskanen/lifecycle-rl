@@ -269,10 +269,10 @@ class EpisodeStats():
             self.infostats_kansanelake[t]+=q[person+'kansanelake']*scale
             self.infostats_pop_tyoelake[t,n]=q[person+'tyoelake']*scale
             self.infostats_pop_kansanelake[t,n]=q[person+'kansanelake']*scale
-            self.infostats_pop_wage[t,n]=q[person+'palkkatulot']*12 # at annual level
+            self.infostats_pop_wage[t,n]=q[person+'palkkatulot']*scale # at annual level
             self.infostats_pop_emtr[t,n]=q[person+'emtr']
             self.infostats_pop_tva[t,n]=q[person+'tva']
-            self.infostats_pop_potential_wage[t,n]=q[person+'potential_wage']
+            self.infostats_pop_potential_wage[t,n]=q[person+'potential_wage']*self.timestep # ei skaalausta kuukausilla, koska on jo vuositasossa *scale
             #self.infostats_takuuelake[t]+=q[person+'takuuelake']*scale
         else:
             self.infostats_tulot_netto[t]+=q['kateen']*scale # legacy for v1-3
@@ -1500,7 +1500,6 @@ class EpisodeStats():
 
         return G
 
-
     def comp_gini(self):
         '''
         Laske Gini-kerroin populaatiolle
@@ -1540,7 +1539,6 @@ class EpisodeStats():
         
         return ratio_med50,ratio_med60,pt_levl
                     
-
     def comp_employed_ratio_by_age(self,emp=None,grouped=False,g=0):
         if emp is None:
             if grouped:
@@ -1593,7 +1591,7 @@ class EpisodeStats():
 
     def comp_palkkasumma(self,start=18,end=68,grouped=False,scale_time=True):
         '''
-        Computes the sum of wages either by groups or as an aggregate
+        Computes the sum of actually paid wages either by groups or as an aggregate
         '''
         demog2=self.empstats.get_demog()
 
@@ -1606,7 +1604,7 @@ class EpisodeStats():
         max_cage=self.map_age(end)+1
 
         if grouped:
-            scalex=demog2/self.n_pop*self.timestep
+            scalex=demog2/self.n_pop
             ps=np.zeros((self.n_time,6))
             ps_norw=np.zeros((self.n_time,6))
             a_ps=np.zeros(6)
@@ -1616,15 +1614,15 @@ class EpisodeStats():
                 for t in range(min_cage,max_cage):
                     e=int(self.popempstate[t,k])
                     if e in set([1,10]):
-                        ps[t,g]+=self.infostats_pop_wage[t,k]*self.timestep
-                        ps_norw[t,g]+=self.infostats_pop_wage[t,k]*self.timestep
+                        ps[t,g]+=self.infostats_pop_wage[t,k]
+                        ps_norw[t,g]+=self.infostats_pop_wage[t,k]
                     elif e in set([8,9]):
-                        ps[t,g]+=self.infostats_pop_wage[t,k]*self.timestep
+                        ps[t,g]+=self.infostats_pop_wage[t,k]
             for g in range(6):
-                a_ps[g]=np.sum(scalex[min_cage:max_cage]*ps[min_cage:max_cage,g])
-                a_ps_norw[g]=np.sum(scalex[min_cage:max_cage]*ps_norw[min_cage:max_cage,g])
+                a_ps[g]=np.sum(scalex[min_cage:max_cage,0]*ps[min_cage:max_cage,g])
+                a_ps_norw[g]=np.sum(scalex[min_cage:max_cage,0]*ps_norw[min_cage:max_cage,g])
         else:
-            scalex=demog2/self.n_pop*self.timestep
+            scalex=demog2/self.n_pop
             ps=np.zeros((self.n_time,1))
             ps_norw=np.zeros((self.n_time,1))
 
@@ -1632,17 +1630,17 @@ class EpisodeStats():
                 for t in range(min_cage,max_cage):
                     e=int(self.popempstate[t,k])
                     if e in set([1,10]):
-                        ps[t,0]+=self.infostats_pop_wage[t,k]*self.timestep
-                        ps_norw[t,0]+=self.infostats_pop_wage[t,k]*self.timestep
+                        ps[t,0]+=self.infostats_pop_wage[t,k]
+                        ps_norw[t,0]+=self.infostats_pop_wage[t,k]
                     elif e in set([8,9]):
-                        ps[t,0]+=self.infostats_pop_wage[t,k]*self.timestep
+                        ps[t,0]+=self.infostats_pop_wage[t,k]
 
-            a_ps=np.sum(scalex[min_cage:max_cage]*ps[min_cage:max_cage])
-            a_ps_norw=np.sum(scalex[min_cage:max_cage]*ps_norw[min_cage:max_cage])
+            a_ps=np.sum(scalex[min_cage:max_cage,0]*ps[min_cage:max_cage,0])
+            a_ps_norw=np.sum(scalex[min_cage:max_cage,0]*ps_norw[min_cage:max_cage,0])
 
         return a_ps,a_ps_norw
         
-    def comp_potential_palkkasumma(self,start=18,end=68,grouped=False,scale_time=True):
+    def comp_potential_palkkasumma(self,start=18,end=68,grouped=False,scale_time=True,full=False):
         '''
         Laskee menetetyn palkkasumman joko tiloittain tai aggregaattina
         '''
@@ -1657,22 +1655,24 @@ class EpisodeStats():
         max_cage=self.map_age(end)+1
 
         if grouped:
-            scalex=demog2/self.n_pop*self.timestep
+            scalex=demog2/self.n_pop
             ps=np.zeros((self.n_time,15))
             a_ps=np.zeros(15)
             for k in range(self.n_pop):
                 for t in range(min_cage,max_cage):
                     e=int(self.popempstate[t,k])
                     if e in set([1,10]):
-                        ps[t,e]+=self.infostats_pop_wage[t,k]*self.timestep
+                        ps[t,e]+=self.infostats_pop_wage[t,k]
                     elif e in set([8,9]):
-                        ps[t,e]+=self.infostats_pop_wage[t,k]*self.timestep
-                    elif e in set([0,3,10,12,4,13,14]):
-                        ps[t,e]+=self.infostats_pop_potential_wage[t,k]*(1-self.infostats_pop_wage_reduction[t,k])*self.timestep
+                        ps[t,e]+=self.infostats_pop_wage[t,k]
+                    elif e in set([0,3,4,10,12,4,13,14]):
+                        ps[t,e]+=self.infostats_pop_potential_wage[t,k]*(1-self.infostats_pop_wage_reduction[t,k])
+                    elif e in set([2,5,6,7,11]):
+                        ps[t,e]+=self.infostats_pop_potential_wage[t,k]*(1-self.infostats_pop_wage_reduction[t,k])
             for g in range(15):
-                a_ps[g]=np.sum(scalex[min_cage:max_cage]*ps[min_cage:max_cage,g])
+                a_ps[g]=np.sum(scalex[min_cage:max_cage,0]*ps[min_cage:max_cage,g])
         else:
-            scalex=demog2/self.n_pop*self.timestep
+            scalex=demog2/self.n_pop
             ps=np.zeros((self.n_time,1))
             ps_norw=np.zeros((self.n_time,1))
 
@@ -1680,11 +1680,46 @@ class EpisodeStats():
                 for t in range(min_cage,max_cage):
                     e=int(self.popempstate[t,k])
                     if e in set([3,14]):
-                        ps[t,0]+=self.infostats_pop_potential_wage[t,k]*(1-self.infostats_pop_wage_reduction[t,k])*self.timestep
+                        ps[t,0]+=self.infostats_pop_potential_wage[t,k]*(1-self.infostats_pop_wage_reduction[t,k])
 
-            a_ps=np.sum(scalex[min_cage:max_cage]*ps[min_cage:max_cage])
+            a_ps=np.sum(scalex[min_cage:max_cage,0]*ps[min_cage:max_cage,0])
 
-        return a_ps
+        if full:
+            return a_ps,ps
+        else:
+            return a_ps
+
+    def comp_tkstats(self):
+        '''
+        Laskee työkyvyttömyyseläkkeisiin menetetty työpanos
+        '''
+        return self.comp_potempstats(3)
+
+    def comp_potempstats(self,e):
+        '''
+        Laskee tilassa e menetetyn työpanoksen
+        '''
+        menetetty_palkka_reduced=np.zeros((self.n_time,1))
+        tk=np.zeros((self.n_time,1))
+        
+        retage=self.map_age(self.min_retirementage)
+        
+        pot=self.comp_potential_palkkasumma()
+        
+        for k in range(self.n_pop):
+            for t in range(retage):
+                if self.popempstate[t,k] in set([e]):
+                    menetetty_palkka_reduced[t]+=self.infostats_pop_potential_wage[t,k]*(1-self.infostats_pop_wage_reduction[t,k])
+                    tk[t]+=1
+
+        demog2=self.empstats.get_demog()
+        scalex=demog2/self.n_pop
+
+        sum1=np.sum(menetetty_palkka_reduced*scalex)
+        sum2=sum1*2.13 # työpanos
+        n_tk=np.sum(tk*scalex)
+
+        return sum1,sum2,n_tk
         
     def comp_stats_agegroup(self,border=[19,35,50]):
         n_groups=len(border)
@@ -2323,37 +2358,6 @@ class EpisodeStats():
                 print('---------\nirri {}\nnpv {}\nx {}\ny {}\nprem {}\npens {}\nemps {}\n---------\n'.format(irri,npv,x,y,premium,pension,empstate))
 
         return irri
-
-    def comp_tkstats(self):
-        '''
-        Laskee työkyvyttömyyseläkkeisiin menetetty työpanos
-        '''
-        return self.comp_potempstats(3)
-
-    def comp_potempstats(self,e):
-        '''
-        Laskee tilassa e menetetyn työpanoksen
-        '''
-        menetetty_palkka_reduced=np.zeros((self.n_time,1))
-        tk=np.zeros((self.n_time,1))
-        
-        retage=self.map_age(self.min_retirementage)
-        
-        for k in range(self.n_pop):
-            for t in range(retage):
-                if self.popempstate[t,k] in set([e]):
-                    menetetty_palkka_reduced[t]+=self.infostats_pop_potential_wage[t,k]*(1-self.infostats_pop_wage_reduction[t,k])*self.timestep
-                    #print(self.infostats_pop_potential_wage[t,k],self.timestep,(1-self.infostats_pop_wage_reduction[t,k]))
-                    tk[t]+=1
-
-        demog2=self.empstats.get_demog()
-        scalex=demog2/self.n_pop*self.timestep # pitääkö tässä olla self.timestep??
-
-        sum1=np.sum(menetetty_palkka_reduced*scalex)
-        sum2=sum1*2.13 # työpanos
-        n_tk=np.sum(tk*scalex)
-
-        return sum1,sum2,n_tk
 
     def comp_irr(self):
         '''

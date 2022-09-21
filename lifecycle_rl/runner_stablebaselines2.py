@@ -501,3 +501,51 @@ class runner_stablebaselines2():
 
         if False:
             return self.emp        
+            
+    def simulate_swap(self,debug=False,rlmodel='acktr',load=None,pop=None,startage=None,
+                 deterministic=False,save='results/testsimulate',arch=None):
+
+        model,env,n_cpu=self.setup_model(debug=debug,rlmodel=rlmodel,load=load,pop=pop,
+                 deterministic=deterministic,arch=arch,predict=True)
+
+        states = env.reset()
+        if self.version in set([4,5,104]):  # increase by 2
+            n_add=2
+            pop_num=np.array([k for k in range(0,n_add*n_cpu,n_add)])
+            n=n_add*(n_cpu-1)
+        else:  # increase by 1
+            pop_num=np.array([k for k in range(0,n_cpu,1)])
+            n_add=1
+            n=n_cpu-1
+        
+        tqdm_e = tqdm(range(int(self.n_pop/n_add)), desc='Population', leave=True, unit=" p")
+        self.episodestats.init_variables()
+        
+        if startage is not None:
+            self.env.set_startage(startage)
+
+        while np.any(pop_num<self.n_pop):
+            act, predstate = model.predict(states,deterministic=deterministic)
+            newstate, rewards, dones, infos = env.step(act)
+            for k in range(n_cpu):
+                if pop_num[k]<self.n_pop: # do not save extras
+                    if dones[k]:
+                        self.episodestats.add(pop_num[k],act[k],rewards[k],states[k],infos[k]['terminal_observation'],infos[k],debug=debug)
+                        tqdm_e.update(1)
+                        n+=n_add
+                        tqdm_e.set_description("Pop " + str(n))
+                        pop_num[k]=n
+                    else:
+                        self.episodestats.add(pop_num[k],act[k],rewards[k],states[k],newstate[k],infos[k],debug=debug)
+    
+            states = newstate
+
+        print('saving results...')
+
+        self.episodestats.scale_sim()
+        self.episodestats.save_sim(save)
+
+        print('done')
+
+        if False:
+            return self.emp                    

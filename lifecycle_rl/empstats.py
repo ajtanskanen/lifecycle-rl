@@ -1072,7 +1072,7 @@ class Empstats():
             q['isyyspaivaraha']=104_212_164
             q['aitiyspaivaraha']=341_304_991+462_228_789
             q['kotihoidontuki']=245_768_701
-            q['sairauspaivaraha']=786_659_783
+            q['sairauspaivaraha']=1_039_110_731
             q['toimeentulotuki']=715_950_847
             #q['perustulo']=0
             q['pvhoitomaksu']=271_000_000
@@ -1105,7 +1105,7 @@ class Empstats():
             q['isyyspaivaraha']=104_212_164
             q['aitiyspaivaraha']=341_304_991+462_228_789
             q['kotihoidontuki']=245_768_701
-            q['sairauspaivaraha']=786_659_783
+            q['sairauspaivaraha']=1_039_110_731
             q['toimeentulotuki']=715_950_847
             #q['perustulo']=0
             q['pvhoitomaksu']=271_000_000

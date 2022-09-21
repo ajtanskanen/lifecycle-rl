@@ -223,7 +223,8 @@ class PlotStats():
             self.plot_gender_emp(figname=figname)
             self.plot_group_emp()
             self.plot_workforce()
-            
+            print_html('<h2>Tekemätön työ</h2>')
+            self.plot_tekematon_tyo()
 
         print_html('<h2>Osa-aika</h2>')
         if self.version in set([5]):
@@ -415,6 +416,30 @@ class PlotStats():
         print(f'Työkyvyttömyyseläkkeisiin menetetty palkkasumma {w1:,.2f} ja työpanoksen arvo {w2:,.2f}')
         self.plot_group_disab()
         self.plot_group_disab(xstart=60,xend=67)
+
+    def plot_tekematon_tyo(self):
+        w1,wplt=self.episodestats.comp_potential_palkkasumma(grouped=True,full=True)
+        for k in range(15):
+            w2=2.1*w1[k]
+            if k in [0,2,3,4,5,6,7,11,12,13,14]:
+                print(f'Tilaan {k} menetetty palkkasumma {w1[k]:,.2f} ja työpanoksen arvo {w2:,.2f}')
+            else:
+                print(f'Tilan {k} palkkasumma {w1[k]:,.2f} ja työpanoksen arvo {w2:,.2f}')
+                
+        ps=np.sum(w1[[1,8,9,10]])
+        tpa=2.1*ps
+        nops=np.sum(w1[[0,2,3,4,5,6,7,11,12,13,14]])
+        notpa=2.1*nops
+        print(f'Palkkasumma {ps:,.2f} ja työpanoksen arvo {tpa:,.2f}')
+        print(f'Menetetty palkkasumma {nops:,.2f} ja työpanoksen arvo {notpa:,.2f}')
+        wplt[:,[1,8,9,10]]=0
+        self.plot_states(wplt,ylabel='Menetetty palkkasumma',stack=True,ymaxlim=np.max(np.sum(wplt,axis=1)))
+        wplt=wplt/np.sum(wplt,axis=1,keepdims=True)*100
+        self.plot_states(wplt,ylabel='Menetetty palkkasumma [%]',stack=True)
+        wplt[:,[0,2,4,5,6,7,11,12,13]]=0
+        self.plot_states(wplt,ylabel='Menetetty palkkasumma',stack=True,ymaxlim=np.max(np.nansum(wplt,axis=1)))
+        wplt=wplt/np.sum(wplt,axis=1,keepdims=True)*100
+        self.plot_states(wplt,ylabel='Menetetty palkkasumma [%]',stack=True)
 
     def plot_all_pensions(self):
         alivemask=(self.episodestats.popempstate==self.env.get_mortstate()) # pois kuolleet
@@ -1991,7 +2016,7 @@ class PlotStats():
             if grayscale:
                 pal=sns.light_palette("black", 8, reverse=True)
             else:
-                pal=sns.color_palette("hls", self.n_employment)  # hls, husl, cubehelix
+                pal=sns.color_palette("colorblind", self.n_employment)  # hls, husl, cubehelix
             reverse=True
 
             if parent:

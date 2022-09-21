@@ -9,7 +9,7 @@ Initial implementation. Works but needs improvement, e.g., no lr_schedule or lea
 
 import gym, numpy as np
 from stable_baselines3.common.vec_env import SubprocVecEnv,DummyVecEnv
-from stable_baselines3 import A2C, DQN, PPO
+from stable_baselines3 import A2C, DQN, PPO, ACKTR
 from stable_baselines3.common.env_checker  import check_env as env_checker_check_env
 #from stable_baselines3.bench import Monitor
 #from stable_baselines3.results_plotter import load_results, ts2xy
@@ -63,9 +63,15 @@ class runner_stablebaselines3():
             print('arch',arch)
 
         # multiprocess environment
-        if rlmodel=='a2c':
+        if rlmodel in set(['A2C','a2c']):
             policy_kwargs = dict(activation_fn=th.nn.ReLU, net_arch=[64, 64, 16],lr_schedule=learning_schedule,learning_rate=learning_rate)
             n_cpu = 4
+        elif rlmodel in set(['acktr','ACKTR','leaky_acktr']):
+            policy_kwargs = dict(activation_fn=th.nn.LeakyReLU, net_arch=[256, 256, 16],lr_schedule=learning_schedule,learning_rate=learning_rate)
+            if predict:
+                n_cpu = 10
+            else:
+                n_cpu = 10 # 12 # 20
         elif rlmodel=='ppo': # th.nn.leakyrelu
             if arch is not None:
                 policy_kwargs = dict(activation_fn=th.nn.LeakyReLU, net_arch=arch,lr_schedule=learning_schedule,learning_rate=learning_rate) 
@@ -74,7 +80,7 @@ class runner_stablebaselines3():
             if predict:
                 n_cpu = 20
             else:
-                n_cpu = 8 # 12 # 20
+                n_cpu = 10
         else:
             error('Unknown rlmodel')
 
@@ -84,7 +90,7 @@ class runner_stablebaselines3():
         return policy_kwargs,n_cpu
 
     def setup_rlmodel(self,rlmodel,loadname,env,batch,policy_kwargs,learning_rate,
-                      cont,max_grad_norm=None,tensorboard=False,verbose=1,n_cpu=1,
+                      cont,max_grad_norm=None,tensorboard=False,verbose=2,n_cpu=1,
                       learning_schedule='linear',vf=None,gae_lambda=0.9):
         '''
         Alustaa RL-mallin ajoa varten
@@ -120,11 +126,17 @@ class runner_stablebaselines3():
             if rlmodel in set(['ppo','PPO']):
                 model = PPO.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time,kfac_clip=kfac_clip,
                                    vf_coef=vf_coef,gae_lambda=gae_lambda,policy_kwargs=policy_kwargs,max_grad_norm=max_grad_norm)
+            elif rlmodel in set(['acktr','ACKTR']):
+                model = ACKTR.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time,kfac_clip=kfac_clip,
+                                   vf_coef=vf_coef,gae_lambda=gae_lambda,policy_kwargs=policy_kwargs,max_grad_norm=max_grad_norm)
             else:
                 model = A2C.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time,policy_kwargs=policy_kwargs)
         else:
             if rlmodel in set(['ppo','PPO']):
                 model = PPO('MlpPolicy', env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time,kfac_clip=kfac_clip,
+                            max_grad_norm=max_grad_norm,gae_lambda=gae_lambda,vf_coef=vf_coef,policy_kwargs=policy_kwargs)
+            elif rlmodel in set(['acktr','ACKTR']):
+                model = ACKTR('MlpPolicy', env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time,kfac_clip=kfac_clip,
                             max_grad_norm=max_grad_norm,gae_lambda=gae_lambda,vf_coef=vf_coef,policy_kwargs=policy_kwargs)
             else:
                 model = A2C('MlpPolicy', env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time)#,policy_kwargs=policy_kwargs)
@@ -135,7 +147,7 @@ class runner_stablebaselines3():
     def train(self,train=False,debug=False,steps=20_000,cont=False,rlmodel='dqn',
                 save='saved/malli',pop=None,batch=1,max_grad_norm=None,learning_rate=0.25,
                 start_from=None,max_n_cpu=1000,use_vecmonitor=False,
-                bestname='tmp/best2',use_callback=False,log_interval=100,verbose=1,plotdebug=False,
+                bestname='tmp/best2',use_callback=False,log_interval=100,verbose=2,plotdebug=False,
                 learning_schedule='linear',vf=None,arch=None,gae_lambda=None):
         '''
         Opetusrutiini
@@ -246,6 +258,8 @@ class runner_stablebaselines3():
 
         if self.rlmodel=='a2c':
             model = A2C.load(load, env=env, verbose=1,gamma=self.gamma, policy_kwargs=policy_kwargs)
+        if self.rlmodel=='acktr':
+            model = ACKTR.load(load, env=env, verbose=1,gamma=self.gamma, policy_kwargs=policy_kwargs)
         elif self.rlmodel=='trpo':
             model = TRPO.load(load, env=env, verbose=1,gamma=self.gamma, policy_kwargs=policy_kwargs)
         elif self.rlmodel=='ppo':
