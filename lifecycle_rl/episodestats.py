@@ -660,7 +660,7 @@ class EpisodeStats():
             _,_,_,_,_,_,_,_,_,_,\
             _,_,_,_,_,_,_,_,_,_,\
             _,_,_,_,_,_,_\
-            =self.env.state_decode(state) # current employment state
+            =self.env.states.state_decode(state) # current employment state
             
         newemp,g,newpen,newsal,a2,tis,paidpens,pink,toe,toek,\
             ura,bu,wr,upr,uw,uwr,pr,c3,c7,c18,\
@@ -668,7 +668,7 @@ class EpisodeStats():
             p_wr,p_paidpens,p_nw,p_bu,p_unemp_benefit_left,p_unemp_after_ra,p_uw,p_uwr,p_aa,p_toe58,\
             p_toe,p_toekesto,p_ura,p_tis,p_pink,p_ove,kansanelake,p_kansanelake,te_maksussa,p_te_maksussa,\
             nw,old_pw,s_old_pw,pt_act,s_pt_act,wbasis,s_wbasis\
-            =self.env.state_decode(newstate)
+            =self.env.states.state_decode(newstate)
 
         t=int(np.round((a2-self.min_age)*self.inv_timestep))#-1
         if a2>a and newemp>=0: # new state is not reset (age2>age) # FIXME: tässä newemp>0
@@ -1640,7 +1640,7 @@ class EpisodeStats():
 
         return a_ps,a_ps_norw
         
-    def comp_potential_palkkasumma(self,start=18,end=68,grouped=False,scale_time=True,full=False):
+    def comp_potential_palkkasumma(self,start=18,end=70,grouped=False,scale_time=True,full=False):
         '''
         Laskee menetetyn palkkasumman joko tiloittain tai aggregaattina
         '''
@@ -1661,13 +1661,9 @@ class EpisodeStats():
             for k in range(self.n_pop):
                 for t in range(min_cage,max_cage):
                     e=int(self.popempstate[t,k])
-                    if e in set([1,10]):
+                    if e in set([1,8,9,10]):
                         ps[t,e]+=self.infostats_pop_wage[t,k]
-                    elif e in set([8,9]):
-                        ps[t,e]+=self.infostats_pop_wage[t,k]
-                    elif e in set([0,3,4,10,12,4,13,14]):
-                        ps[t,e]+=self.infostats_pop_potential_wage[t,k]*(1-self.infostats_pop_wage_reduction[t,k])
-                    elif e in set([2,5,6,7,11]):
+                    elif e in set([0,2,3,4,5,6,7,10,11,12,13,14]):
                         ps[t,e]+=self.infostats_pop_potential_wage[t,k]*(1-self.infostats_pop_wage_reduction[t,k])
             for g in range(15):
                 a_ps[g]=np.sum(scalex[min_cage:max_cage,0]*ps[min_cage:max_cage,g])
