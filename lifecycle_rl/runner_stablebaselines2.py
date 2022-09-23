@@ -3,7 +3,7 @@ Runner for making fitting with Stable Baselines 2.0
 '''
 
 import gym, numpy as np
-from stable_baselines.common.vec_env import SubprocVecEnv,DummyVecEnv
+from stable_baselines.common.vec_env import SubprocVecEnv,DummyVecEnv, VecNormalize
 from stable_baselines.common.env_checker  import check_env as env_checker_check_env
 from stable_baselines import A2C, ACER, DQN, ACKTR, PPO2 #, TRPO
 from stable_baselines.bench import Monitor
@@ -93,7 +93,7 @@ class runner_stablebaselines2():
             if arch is not None:
                 policy_kwargs = dict(act_fun=tf.nn.leaky_relu, net_arch=arch) 
             else:
-                policy_kwargs = dict(act_fun=tf.nn.leaky_relu, net_arch=[256, 256, 16]) 
+                policy_kwargs = dict(act_fun=tf.nn.leaky_relu, net_arch=[256, 256, 128]) 
             if predict:
                 n_cpu = 10
             else:
@@ -174,6 +174,10 @@ class runner_stablebaselines2():
         scaled_learning_rate=learning_rate
         print('batch {} learning rate {} scaled {} n_cpu {}'.format(batch,learning_rate,
             scaled_learning_rate,n_cpu))
+
+        #normalize=True
+        #if normalize:
+        #    env = VecNormalize(env, norm_obs=True, norm_reward=True, gamma=self.gamma)
 
         if cont:
             if rlmodel=='a2c':
@@ -370,10 +374,10 @@ class runner_stablebaselines2():
             #if False:
                 #env = DummyVecEnv([lambda: gym.make(self.environment,kwargs=gkwargs) for i in range(n_cpu)])
 
-        normalize=False
-        if normalize:
-            normalize_kwargs={}
-            env = VecNormalize(env, **normalize_kwargs)
+        #normalize=False
+        #if normalize:
+        #    normalize_kwargs={}
+        #    env = VecNormalize(env, **normalize_kwargs)
 
         model=self.setup_rlmodel(self.rlmodel,start_from,env,batch,policy_kwargs,learning_rate,
                                 cont,max_grad_norm=max_grad_norm,verbose=verbose,n_cpu=n_cpu,
@@ -430,7 +434,7 @@ class runner_stablebaselines2():
         else:
             env = SubprocVecEnv([lambda: make_env(self.environment, i, self.gym_kwargs) for i in range(n_cpu)])
 
-        normalize=False
+        normalize=True
         if normalize:
             normalize_kwargs={}
             env = VecNormalize(env, **normalize_kwargs)
@@ -459,6 +463,7 @@ class runner_stablebaselines2():
 
         model,env,n_cpu=self.setup_model(debug=debug,rlmodel=rlmodel,load=load,pop=pop,
                  deterministic=deterministic,arch=arch,predict=True)
+        env.norm_reward = False
 
         states = env.reset()
         if self.version in set([4,5,104]):  # increase by 2
@@ -507,6 +512,7 @@ class runner_stablebaselines2():
 
         model,env,n_cpu=self.setup_model(debug=debug,rlmodel=rlmodel,load=load,pop=pop,
                  deterministic=deterministic,arch=arch,predict=True)
+        env.norm_reward = False
 
         states = env.reset()
         if self.version in set([4,5,104]):  # increase by 2
