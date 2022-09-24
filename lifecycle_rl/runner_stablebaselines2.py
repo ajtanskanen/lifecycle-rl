@@ -175,10 +175,6 @@ class runner_stablebaselines2():
         print('batch {} learning rate {} scaled {} n_cpu {}'.format(batch,learning_rate,
             scaled_learning_rate,n_cpu))
 
-        #normalize=True
-        #if normalize:
-        #    env = VecNormalize(env, norm_obs=True, norm_reward=True, gamma=self.gamma)
-
         if cont:
             if rlmodel=='a2c':
                 from stable_baselines.common.policies import MlpPolicy 
@@ -374,10 +370,6 @@ class runner_stablebaselines2():
             #if False:
                 #env = DummyVecEnv([lambda: gym.make(self.environment,kwargs=gkwargs) for i in range(n_cpu)])
 
-        #normalize=False
-        #if normalize:
-        #    normalize_kwargs={}
-        #    env = VecNormalize(env, **normalize_kwargs)
 
         model=self.setup_rlmodel(self.rlmodel,start_from,env,batch,policy_kwargs,learning_rate,
                                 cont,max_grad_norm=max_grad_norm,verbose=verbose,n_cpu=n_cpu,
@@ -434,11 +426,6 @@ class runner_stablebaselines2():
         else:
             env = SubprocVecEnv([lambda: make_env(self.environment, i, self.gym_kwargs) for i in range(n_cpu)])
 
-        normalize=True
-        if normalize:
-            normalize_kwargs={}
-            env = VecNormalize(env, **normalize_kwargs)
-            
         print('predicting...')
 
         if self.rlmodel=='a2c':
@@ -463,7 +450,6 @@ class runner_stablebaselines2():
 
         model,env,n_cpu=self.setup_model(debug=debug,rlmodel=rlmodel,load=load,pop=pop,
                  deterministic=deterministic,arch=arch,predict=True)
-        env.norm_reward = False
 
         states = env.reset()
         if self.version in set([4,5,104]):  # increase by 2
@@ -512,7 +498,6 @@ class runner_stablebaselines2():
 
         model,env,n_cpu=self.setup_model(debug=debug,rlmodel=rlmodel,load=load,pop=pop,
                  deterministic=deterministic,arch=arch,predict=True)
-        env.norm_reward = False
 
         states = env.reset()
         if self.version in set([4,5,104]):  # increase by 2
