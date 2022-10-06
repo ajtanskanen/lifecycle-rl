@@ -126,7 +126,7 @@ class runner_stablebaselines3():
             if rlmodel in set(['ppo','PPO']):
                 model = PPO.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time,kfac_clip=kfac_clip,
                                    vf_coef=vf_coef,gae_lambda=gae_lambda,policy_kwargs=policy_kwargs,max_grad_norm=max_grad_norm)
-            elif rlmodel in set(['acktr','ACKTR']):
+            elif rlmodel in set(['acktr','ACKTR','leaky_acktr']):
                 model = ACKTR.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time,kfac_clip=kfac_clip,
                                    vf_coef=vf_coef,gae_lambda=gae_lambda,policy_kwargs=policy_kwargs,max_grad_norm=max_grad_norm)
             else:
@@ -135,7 +135,7 @@ class runner_stablebaselines3():
             if rlmodel in set(['ppo','PPO']):
                 model = PPO('MlpPolicy', env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time,kfac_clip=kfac_clip,
                             max_grad_norm=max_grad_norm,gae_lambda=gae_lambda,vf_coef=vf_coef,policy_kwargs=policy_kwargs)
-            elif rlmodel in set(['acktr','ACKTR']):
+            elif rlmodel in set(['acktr','ACKTR','leaky_acktr']):
                 model = ACKTR('MlpPolicy', env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time,kfac_clip=kfac_clip,
                             max_grad_norm=max_grad_norm,gae_lambda=gae_lambda,vf_coef=vf_coef,policy_kwargs=policy_kwargs)
             else:
@@ -258,7 +258,7 @@ class runner_stablebaselines3():
 
         if self.rlmodel=='a2c':
             model = A2C.load(load, env=env, verbose=1,gamma=self.gamma, policy_kwargs=policy_kwargs)
-        if self.rlmodel=='acktr':
+        if self.rlmodel in set(['acktr','ACKTR','leaky_acktr']):
             model = ACKTR.load(load, env=env, verbose=1,gamma=self.gamma, policy_kwargs=policy_kwargs)
         elif self.rlmodel=='trpo':
             model = TRPO.load(load, env=env, verbose=1,gamma=self.gamma, policy_kwargs=policy_kwargs)
