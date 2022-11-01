@@ -2639,24 +2639,31 @@ class PlotStats():
                 ylabel='sisäinen tuotto [%]',xlabel='maksutaso [% palkoista]',selite=True,
                 label='Pelkkä työeläke',label2='Palkkasumman kasvu',figname=figname)
         
-
-
-    def lineplot(self,x,y,y2=None,y3=None,label=None,label2=None,label3=None,xlabel='',ylabel='',selite=False,source=None,xlim=None,ylim=None,figname=None):
+        
+    def lineplot(x,y,y2=None,y3=None,y4=None,y5=None,y6=None,
+                 label=None,label2=None,label3=None,label4=None,label5=None,label6=None,
+                 xlabel='',ylabel='',selite=False,source=None,xlim=None,ylim=None,figname=None):
         csfont,pal=setup_EK_fonts()
-            
+
         linestyle={'linewidth': 3}
         legendstyle={'frameon': False}
-    
+
         fig, axs = plt.subplots()
         axs.plot(x,y,label=label,**linestyle)
         if y2 is not None:
             axs.plot(x,y2,label=label2,**linestyle)
         if y3 is not None:
             axs.plot(x,y3,label=label3,**linestyle)
-        
+        if y4 is not None:
+            axs.plot(x,y4,label=label4,**linestyle)
+        if y5 is not None:
+            axs.plot(x,y5,label=label5,**linestyle)
+        if y6 is not None:
+            axs.plot(x,y6,label=label6,**linestyle)
+
         if selite:
             axs.legend(loc='upper right',**legendstyle)
-            
+
         axs.set_xlabel(xlabel,**csfont)
         axs.set_ylabel(ylabel,**csfont)
         axs.grid(True,color='black',fillstyle='top',lw=0.5,axis='y',alpha=1.0)
@@ -2667,7 +2674,7 @@ class PlotStats():
         if source is not None:
             add_source(source,**csfont)
         if figname is not None:
-            plt.savefig(figname+'.'+self.figformat, format='png')
+            plt.savefig(figname+'.png', format='png')
     
                 
     def get_initial_reward(self,startage=None):

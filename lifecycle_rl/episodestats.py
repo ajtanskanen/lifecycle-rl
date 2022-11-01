@@ -1977,11 +1977,10 @@ class EpisodeStats():
         demog2=self.empstats.get_demog()
 
         scalex=np.squeeze(demog2/self.n_pop*self.timestep)
+        scalex_lkm=np.squeeze(demog2/self.n_pop*self.timestep)
         if lkm:
-            scalex_lkm=np.squeeze(demog2/self.n_pop*self.timestep)
             osa_aika_kerroin=1.0
         else:
-            scalex_lkm=np.squeeze(demog2/self.n_pop*self.timestep)
             osa_aika_kerroin=0.5
 
         q={}
@@ -2000,11 +1999,13 @@ class EpisodeStats():
 
             q['työssä ja eläkkeellä']=osa_aika_kerroin*np.sum(osa_aika_kerroin*emp[:,8]*scalex_lkm)+np.sum(emp[:,9]*scalex_lkm)
             q['työssä yli 63v']=np.sum(np.sum(emp[self.map_age(63):,[1,9]],axis=1)*scalex_lkm[self.map_age(63):])+osa_aika_kerroin*np.sum(np.sum(emp[self.map_age(63):,[8,10]],axis=1)*scalex_lkm[self.map_age(63):])
+            q['osaaikatyössä']=osa_aika_kerroin*np.sum((emp[:,8]+emp[:,10])*scalex_lkm)
             q['ansiosidonnaisella']=np.sum((emp[:,0]+emp[:,4])*scalex_lkm)
             q['tmtuella']=np.sum(emp[:,13]*scalex_lkm)
             q['isyysvapaalla']=np.sum(emp[:,6]*scalex_lkm)
             q['kotihoidontuella']=np.sum(emp[:,7]*scalex_lkm)
             q['työkyvyttömyyseläke']=np.sum(emp[:retage,3]*scalex_lkm[:retage])
+            q['svpäiväraha']=osa_aika_kerroin*np.sum(emp[:,14]*scalex_lkm)
             q['vanhempainvapaalla']=np.sum(emp[:,5]*scalex_lkm)
             q['opiskelijoita']=np.sum((emp[:,12])*scalex_lkm)
             q['ovella']=np.sum(np.sum(self.infostats_ove,axis=1)*scalex)
