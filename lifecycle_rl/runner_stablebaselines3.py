@@ -9,7 +9,7 @@ Initial implementation. Works but needs improvement, e.g., no lr_schedule or lea
 
 import gym, numpy as np
 from stable_baselines3.common.vec_env import SubprocVecEnv,DummyVecEnv
-from stable_baselines3 import A2C, DQN, PPO, ACKTR
+from stable_baselines3 import A2C, DQN, PPO#, ACKTR
 from stable_baselines3.common.env_checker  import check_env as env_checker_check_env
 #from stable_baselines3.bench import Monitor
 #from stable_baselines3.results_plotter import load_results, ts2xy
@@ -73,6 +73,15 @@ class runner_stablebaselines3():
             else:
                 n_cpu = 10 # 12 # 20
         elif rlmodel=='ppo': # th.nn.leakyrelu
+            if arch is not None:
+                policy_kwargs = dict(activation_fn=th.nn.LeakyReLU, net_arch=arch,lr_schedule=learning_schedule,learning_rate=learning_rate) 
+            else:
+                policy_kwargs = dict(activation_fn=th.nn.LeakyReLU, net_arch=[256, 256, 16],lr_schedule=learning_schedule,learning_rate=learning_rate) 
+            if predict:
+                n_cpu = 20
+            else:
+                n_cpu = 10
+        elif rlmodel in set(['dqn','DQN']): # th.nn.leakyrelu
             if arch is not None:
                 policy_kwargs = dict(activation_fn=th.nn.LeakyReLU, net_arch=arch,lr_schedule=learning_schedule,learning_rate=learning_rate) 
             else:
@@ -164,7 +173,8 @@ class runner_stablebaselines3():
                                 self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year)
 
         # multiprocess environment
-        policy_kwargs,n_cpu=self.get_multiprocess_env(self.rlmodel,debug=debug,arch=arch,learning_schedule=learning_schedule,learning_rate=learning_rate)  
+        policy_kwargs,n_cpu=self.get_multiprocess_env(self.rlmodel,debug=debug,arch=arch,
+            learning_schedule=learning_schedule,learning_rate=learning_rate)  
 
         self.savename=save
         n_cpu=min(max_n_cpu,n_cpu)
@@ -222,7 +232,7 @@ class runner_stablebaselines3():
 #         return val
         
     def setup_model(self,debug=False,rlmodel='acktr',plot=True,load=None,pop=None,
-                    deterministic=False,arch=None,predict=False):
+                    deterministic=False,arch=None,predict=False,learning_schedule=None,learning_rate=None):
 
         if pop is not None:
             self.n_pop=pop
@@ -241,7 +251,8 @@ class runner_stablebaselines3():
         print('simulating ',self.loadname)
 
         # multiprocess environment
-        policy_kwargs,n_cpu=self.get_multiprocess_env(rlmodel,debug=debug,arch=arch,predict=predict,learning_schedule=learning_schedule,learning_rate=learning_rate)
+        policy_kwargs,n_cpu=self.get_multiprocess_env(rlmodel,debug=debug,arch=arch,predict=predict,
+            learning_schedule=learning_schedule,learning_rate=learning_rate)
 
         nonvec=False
         if nonvec:
@@ -264,6 +275,8 @@ class runner_stablebaselines3():
             model = TRPO.load(load, env=env, verbose=1,gamma=self.gamma, policy_kwargs=policy_kwargs)
         elif self.rlmodel=='ppo':
             model = PPO.load(load, env=env, verbose=1,gamma=self.gamma, policy_kwargs=policy_kwargs)
+        elif self.rlmodel in set(['dqn','DQN']):
+            model = DQN.load(load, env=env, verbose=1,gamma=self.gamma)#, policy_kwargs=policy_kwargs)
         else:
             error('unknown model')
 

@@ -469,6 +469,7 @@ class runner_stablebaselines2():
 
         while np.any(pop_num<self.n_pop):
             act, predstate = model.predict(states,deterministic=deterministic)
+            #print(model.value(states))
             newstate, rewards, dones, infos = env.step(act)
             for k in range(n_cpu):
                 if pop_num[k]<self.n_pop: # do not save extras

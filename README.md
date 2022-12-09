@@ -1,8 +1,10 @@
-# Life cycle model
+# Life cycle model with reinforced learning & Python
 
-The life cycle model describes agents making optimal decisions in the framework of 
+A life cycle model describes agents making optimal decisions in the framework of 
 Finnish social security. The main interest in this setting is how changes in the social security
 impacts employment and public finances.
+
+## Basis
 
 The library depends on separate <a href='https://github.com/ajtanskanen/econogym'>econogym</a> and 
 <a href='https://github.com/ajtanskanen/benefits'>benefits</a> modules. Econogym
@@ -10,12 +12,30 @@ implements how agents behave in the presence of detailed description of social s
 The optimal  behavior of the agents is solved using Reinforcement Learning library stable baselines 2, however,
 other choices are also present.
 
+## Results
+
 The library reproduces the observed employment rates in Finland quite well, at all ages
-from 18-70 separately for women and men. 
+from 18-70 separately for both women and men. 
 
 <img src='https://github.com/ajtanskanen/lifecycle_rl/images/kuva1a.png'>
 
-The model is written in Python 3.
+<img src='https://github.com/ajtanskanen/lifecycle_rl/images/kuva1a.png'>
+
+<img src='https://github.com/ajtanskanen/lifecycle_rl/images/kuva1a.png'>
+
+<img src='https://github.com/ajtanskanen/lifecycle_rl/images/kuva1a.png'>
+
+<img src='https://github.com/ajtanskanen/lifecycle_rl/images/kuva1a.png'>
+
+# How to run
+
+Jupyter notebook or command line.
+
+Clone library and install it by running command 
+
+    pip install -e .
+
+on the directory.
 
 ## References
 
