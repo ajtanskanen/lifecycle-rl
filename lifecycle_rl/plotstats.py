@@ -190,6 +190,9 @@ class PlotStats():
             print('Henkilöitä tiloissa skaalattuna väestötasolle')
             print(tabulate(df, headers='keys', tablefmt='psql', floatfmt=",.0f"))
 
+        print_html('<h2>Simulation stats</h2>')
+        print('Simulated individuals',self.episodestats.n_pop)
+
         print_html('<h2>Tilastot</h2>')
 
         tyoll_osuus1,htv_osuus1,tyot_osuus1,kokotyo_osuus1,osatyo_osuus1=self.episodestats.comp_employed_ratio(self.episodestats.empstate)
@@ -213,9 +216,12 @@ class PlotStats():
 
         print_html('<h2>Sovite</h2>')
 
-        print('Real discounted reward {}'.format(self.episodestats.comp_realoptimrew()))
-        real=self.episodestats.comp_presentvalue()
-        print('Initial discounted reward {}'.format(np.mean(real[1,:])))
+        #print('Real discounted reward {}'.format(self.episodestats.comp_realoptimrew()))
+        #real=self.episodestats.comp_presentvalue()
+        #print('Initial discounted reward {}'.format(np.mean(real[1,:])))
+
+        print('Real discounted reward {}'.format(self.episodestats.get_average_discounted_reward()))
+        print('Initial discounted reward {}'.format(self.episodestats.get_initial_reward()))
 
         print_html('<h2>Työssä</h2>')
         self.plot_emp(figname=figname)
@@ -237,12 +243,6 @@ class PlotStats():
             self.plot_outsider()        
             self.plot_various_groups(figname=figname)
             self.plot_group_student()
-
-        if self.version in set([0,1,2,3,4,5,104]):
-            print_html('<h2>Eläkkeet</h2>')
-            self.plot_all_pensions()
-            print_html('<h2>Työkyvyttömyyseläke</h2>')
-            self.plot_disab()
 
         if self.version in set([4,5,104]):
             print_html('<h2>Lapset ja puolisot</h2>')
@@ -298,6 +298,12 @@ class PlotStats():
             #self.plot_distrib(label='Jakauma työvoiman ulkopuoliset',ansiosid=False,tmtuki=False,putki=False,outsider=True)
             #self.plot_distrib(label='Jakauma laaja (ansiosidonnainen+tmtuki+putki+ulkopuoliset)',laaja=True)
             
+        if self.version in set([0,1,2,3,4,5,104]):
+            print_html('<h2>Eläkkeet</h2>')
+            self.plot_all_pensions()
+            print_html('<h2>Työkyvyttömyyseläke</h2>')
+            self.plot_disab()
+
         if self.version in set([1,2,3,4,5,104]):
             print_html('<h2>Verot</h2>')
             self.plot_taxes()
@@ -419,8 +425,9 @@ class PlotStats():
 
     def plot_tekematon_tyo(self):
         w1,wplt=self.episodestats.comp_potential_palkkasumma(grouped=True,full=True)
+        wplt2=wplt.copy()
         for k in range(15):
-            w2=2.1*w1[k]
+            w2=2.1*w1[k] # kerroin 2,1 muuttaa palkan työpanoksen arvoksi
             if k in [0,2,3,4,5,6,7,11,12,13,14]:
                 print(f'Tilaan {k} menetetty palkkasumma {w1[k]:,.2f} ja työpanoksen arvo {w2:,.2f}')
             else:
@@ -440,6 +447,11 @@ class PlotStats():
         self.plot_states(wplt,ylabel='Menetetty palkkasumma',stack=True,ymaxlim=np.max(np.nansum(wplt,axis=1)))
         wplt=wplt/np.sum(wplt,axis=1,keepdims=True)*100
         self.plot_states(wplt,ylabel='Menetetty palkkasumma [%]',stack=True)
+
+        wplt2[:,[1,2,3,5,6,7,8,9,10,11,12,14]]=0
+        self.plot_states(wplt2,ylabel='Menetetty palkkasumma',stack=True,ymaxlim=np.max(np.nansum(wplt2,axis=1)))
+        wplt2=wplt2/np.sum(wplt2,axis=1,keepdims=True)*100
+        self.plot_states(wplt2,ylabel='Menetetty palkkasumma [%]',stack=True)
 
     def plot_all_pensions(self):
         alivemask=(self.episodestats.popempstate==self.env.get_mortstate()) # pois kuolleet
@@ -739,7 +751,7 @@ class PlotStats():
 
         plt.show()
 
-    def plot_unempdistribs(self,unemp_distrib,max=4,figname=None,miny=None,maxy=None):
+    def plot_unempdistribs(self,unemp_distrib,max=2.5,figname=None,miny=None,maxy=None):
         #fig,ax=plt.subplots()
         max_time=50
         nn_time = int(np.round((max_time)*self.inv_timestep))+1
@@ -2675,17 +2687,6 @@ class PlotStats():
             add_source(source,**csfont)
         if figname is not None:
             plt.savefig(figname+'.png', format='png')
-    
-                
-    def get_initial_reward(self,startage=None):
-        real=self.episodestats.comp_presentvalue()
-        if startage is None:
-            startage=self.min_age
-        age=max(1,startage-self.min_age)
-        realage=max(self.min_age+1,startage)
-        print('Initial discounted reward at age {}: {}'.format(realage,np.mean(real[age,:])))
-        return np.mean(real[age,:])
-
 
     def plot_img(self,img,xlabel="eläke",ylabel="Palkka",title="Employed"):
         fig, ax = plt.subplots()

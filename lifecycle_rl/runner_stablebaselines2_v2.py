@@ -1,15 +1,17 @@
 '''
 Runner for making fitting with Stable Baselines 2.0
+- revised model
 '''
 
 import gym, numpy as np
+from stable_baselines.common import make_vec_env
 from stable_baselines.common.vec_env import SubprocVecEnv,DummyVecEnv, VecNormalize
 from stable_baselines.common.env_checker  import check_env as env_checker_check_env
 from stable_baselines import A2C, ACER, DQN, ACKTR, PPO2 #, TRPO
 from stable_baselines.bench import Monitor
 from stable_baselines.results_plotter import load_results, ts2xy
 from stable_baselines import results_plotter
-from .vec_monitor import VecMonitor
+#from .vec_monitor import VecMonitor
 from stable_baselines.common.policies import FeedForwardPolicy, register_policy
 from .utils import make_env
 import tensorflow as tf
@@ -19,6 +21,9 @@ from tqdm import tqdm
 
 from . episodestats import EpisodeStats
 from . simstats import SimStats
+
+#from multiprocessing import shared_memory
+from multiprocessing import Process,Manager
 
 
 #Custom MLP policy of three layers of size 128 each
@@ -33,7 +38,7 @@ class CustomPolicy(FeedForwardPolicy):
 class runner_stablebaselines2():
     def __init__(self,environment,gamma,timestep,n_time,n_pop,
                  minimal,min_age,max_age,min_retirementage,year,episodestats,
-                 gym_kwargs,version,processes=1):
+                 gym_kwargs,version,processes=10):
         self.gamma=gamma
         self.timestep=timestep
         self.environment=environment
@@ -53,6 +58,35 @@ class runner_stablebaselines2():
         self.action_shape = self.env.action_space.shape or self.env.action_space.n
 
         self.version = self.env.get_lc_version()
+
+        self.args={'gamma': gamma, 
+              'version': version,
+              'tau': 1.0,
+              'environment': environment,
+              'test': False,
+              'hidden': 256,
+              'n_time': n_time, 
+              'timestep': timestep, 
+              'n_pop': n_pop, 
+              'min_age': min_age, 
+              'max_age': max_age, 
+              'processes': processes,
+              'seed': 1,
+              'debug': False,
+              'lr': 0.01,
+              'n_employment': self.n_employment,
+              'n_acts': self.n_acts,
+              'gym_kwargs': gym_kwargs,
+              'startage': None,
+              'rnn_steps': 20,
+              'horizon': 0.99,
+              'min_retirementage': min_retirementage, 
+              'save_dir': 'results/',
+              'simfile': 'results_'+str(year),
+              'minimal': minimal,
+              'render': False,
+              'state_shape': (self.env.observation_space.shape or self.env.observation_space.n)[0],
+              'year': year}
 
         self.episodestats=episodestats
         #SimStats(self.timestep,self.n_time,self.n_employment,self.n_pop,
@@ -97,7 +131,7 @@ class runner_stablebaselines2():
             if predict:
                 n_cpu = 10
             else:
-                n_cpu = 10 # 12 # 20
+                n_cpu = 10 # 12 
         elif rlmodel=='ppo': # tf.nn.leakyrelu
             if arch is not None:
                 policy_kwargs = dict(act_fun=tf.nn.leaky_relu, net_arch=arch) 
@@ -148,15 +182,14 @@ class runner_stablebaselines2():
         
         gae_lambda=0.9
         '''
-        n_cpu_tf_sess=16 #n_cpu #4 vai n_cpu??
+        #n_cpu_tf_sess=16 #n_cpu #4 vai n_cpu??
+        n_cpu_tf_sess=8 #n_cpu #4 vai n_cpu??
         batch=max(1,int(np.ceil(batch/n_cpu)))
         
-        full_tensorboard_log=True
+        full_tensorboard_log=False
+        vf=0.10
         if vf is not None:
             vf_coef=vf
-        else:
-            vf_coef=0.10 # baseline 0.25, best 0.10
-
         ent_coef=0.005 #1 # 0.01 # default 0.01
 
         if max_grad_norm is None:
@@ -167,7 +200,11 @@ class runner_stablebaselines2():
         
         if cont:
             learning_rate=0.25*learning_rate
+            #learning_rate=0.5*learning_rate
             
+        #scaled_learning_rate=learning_rate*np.sqrt(batch)
+        #scaled_learning_rate=learning_rate*batch
+        #scaled_learning_rate=learning_rate*8
         scaled_learning_rate=learning_rate
         print('batch {} learning rate {} scaled {} n_cpu {}'.format(batch,learning_rate,
             scaled_learning_rate,n_cpu))
@@ -206,8 +243,8 @@ class runner_stablebaselines2():
                 else:
                     model = ACKTR.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time,kfac_clip=kfac_clip,
                                        learning_rate=np.sqrt(batch)*learning_rate,vf_coef=vf_coef,gae_lambda=gae_lambda,
-                                       ent_coef=ent_coef,
-                                       policy_kwargs=policy_kwargs,max_grad_norm=max_grad_norm,lr_schedule=learning_schedule,n_cpu_tf_sess=n_cpu_tf_sess)
+                                       ent_coef=ent_coef,policy_kwargs=policy_kwargs,max_grad_norm=max_grad_norm,
+                                       lr_schedule=learning_schedule,n_cpu_tf_sess=n_cpu_tf_sess)
             elif rlmodel in set(['ppo','PPO']):
                 from stable_baselines.common.policies import MlpPolicy 
                 if tensorboard:
@@ -319,17 +356,15 @@ class runner_stablebaselines2():
                 else:
                     model = DQN(MlpPolicy, env, verbose=verbose,gamma=self.gamma,batch_size=batch,
                                 learning_rate=learning_rate,policy_kwargs=policy_kwargs) 
-
-        #print('obs.shape',model.ob_space.shape)
                             
         return model
         
 
     def train(self,train=False,debug=False,steps=20_000,cont=False,rlmodel='dqn',
                 save='saved/malli',pop=None,batch=1,max_grad_norm=None,learning_rate=0.25,
-                start_from=None,processes=None,use_vecmonitor=False,
+                start_from=None,max_n_cpu=1000,use_vecmonitor=False,
                 bestname='tmp/best2',use_callback=False,log_interval=100,verbose=1,plotdebug=False,
-                learning_schedule='linear',vf=None,arch=None,gae_lambda=None):
+                learning_schedule='linear',vf=None,arch=None,gae_lambda=None,processes=None):
         '''
         Opetusrutiini
         '''
@@ -341,18 +376,23 @@ class runner_stablebaselines2():
         self.rlmodel=rlmodel
         self.bestname=bestname
 
-        self.episodestats.reset(self.timestep,self.n_time,self.n_employment,1, #self.n_pop,
+        if processes is not None:
+            self.args['processes']=processes
+
+        pop=1 # self.n_pop
+        self.episodestats.reset(self.timestep,self.n_time,self.n_employment,pop,
                                 self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year)
 
         # multiprocess environment
         policy_kwargs,n_cpu=self.get_multiprocess_env(self.rlmodel,debug=debug,arch=arch)  
 
         self.savename=save
-        if processes is not None:
-            self.args['processes']=processes
+        n_cpu=min(max_n_cpu,n_cpu)
 
         if self.args['processes'] is not None:
             n_cpu = min(self.args['processes'],n_cpu)
+
+        print('n_cpu',n_cpu)
 
         if debug:
             print('use_vecmonitor',use_vecmonitor)
@@ -365,15 +405,13 @@ class runner_stablebaselines2():
         if nonvec:
             env=self.env
         else:
-            if use_vecmonitor:
-                env = SubprocVecEnv([lambda: make_env(self.environment, i, gkwargs, use_monitor=False) for i in range(n_cpu)], start_method='spawn')
-                env = VecMonitor(env,filename=self.log_dir+'monitor.csv')
-            else:
-                env = SubprocVecEnv([lambda: make_env(self.environment, i, gkwargs, use_monitor=use_callback) for i in range(n_cpu)], start_method='spawn')
+            #env = make_vec_env(self.environment, n_envs=n_cpu, seed=1, vec_env_cls=SubprocVecEnv)
+            env = SubprocVecEnv([lambda: make_env(self.environment, i, gkwargs) for i in range(n_cpu)], start_method='spawn')
+            #env = DummyVecEnv([lambda: make_env(self.environment, i, gkwargs) for i in range(n_cpu)])
+            #env = ShmemVecEnv([lambda: self.make_env(self.environment, i, gkwargs, use_monitor=use_callback) for i in range(n_cpu)], start_method='fork')
 
             #if False:
                 #env = DummyVecEnv([lambda: gym.make(self.environment,kwargs=gkwargs) for i in range(n_cpu)])
-
 
         model=self.setup_rlmodel(self.rlmodel,start_from,env,batch,policy_kwargs,learning_rate,
                                 cont,max_grad_norm=max_grad_norm,verbose=verbose,n_cpu=n_cpu,
@@ -390,112 +428,208 @@ class runner_stablebaselines2():
 
         del model,env
 
-#     def save_to_hdf(self,filename,nimi,arr,dtype):
-#         f = h5py.File(filename, 'w')
-#         dset = f.create_dataset(nimi, data=arr, dtype=dtype)
-#         f.close()
-# 
-#     def load_hdf(self,filename,nimi):
-#         f = h5py.File(filename, 'r')
-#         val=f.get(nimi).value
-#         f.close()
-#         return val
-        
-    def setup_model(self,debug=False,rlmodel='acktr',plot=True,load=None,pop=None,
-                    deterministic=False,arch=None,predict=False):
+    def setup_model_v2(self,env,rank=1,debug=False,rlmodel='acktr',plot=True,load=None,
+                    deterministic=False,arch=None,predict=False,n_cpu_tf_sess=1):
 
-        if pop is not None:
-            self.n_pop=pop
-
-        if load is not None:
-            self.loadname=load
-
-        if rlmodel is not None:
-            self.rlmodel=rlmodel
-            
-        print('simulate')
-        
-        self.episodestats.reset(self.timestep,self.n_time,self.n_employment,self.n_pop,
-                                self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year)
-
-        print('simulating ',self.loadname)
+        if rank==0:    
+            print('simulating ',load)
 
         # multiprocess environment
-        policy_kwargs,n_cpu=self.get_multiprocess_env(rlmodel,debug=debug,arch=arch,predict=predict)
-        n_cpu_tf_sess=4
+        policy_kwargs,_=self.get_multiprocess_env(rlmodel,debug=debug,arch=arch,predict=predict)
 
-        nonvec=False
-        if nonvec:
-            env=self.env
-        else:
-            env = SubprocVecEnv([lambda: make_env(self.environment, i, self.gym_kwargs) for i in range(n_cpu)])
-
-        print('predicting...')
-
-        if self.rlmodel=='a2c':
+        if rlmodel=='a2c':
             model = A2C.load(load, env=env, verbose=1,gamma=self.gamma, policy_kwargs=policy_kwargs,n_cpu_tf_sess=n_cpu_tf_sess)
-        elif self.rlmodel in set(['acktr','small_acktr','lnacktr','small_lnacktr','deep_acktr','leaky_acktr','small_leaky_acktr']):
+        elif rlmodel in set(['acktr','small_acktr','lnacktr','small_lnacktr','deep_acktr','leaky_acktr','small_leaky_acktr']):
             model = ACKTR.load(load, env=env, verbose=1,gamma=self.gamma, policy_kwargs=policy_kwargs,n_cpu_tf_sess=n_cpu_tf_sess)
-        elif self.rlmodel=='trpo':
+        elif rlmodel=='trpo':
             model = TRPO.load(load, env=env, verbose=1,gamma=self.gamma, policy_kwargs=policy_kwargs,n_cpu_tf_sess=n_cpu_tf_sess)
-        elif self.rlmodel=='custom_acktr':
+        elif rlmodel=='custom_acktr':
             model = ACKTR.load(load, env=env, verbose=1,gamma=self.gamma, policy_kwargs=policy_kwargs, n_cpu_tf_sess=n_cpu_tf_sess)
-        elif self.rlmodel=='ppo':
+        elif rlmodel=='ppo':
             model = PPO2.load(load, env=env, verbose=1,gamma=self.gamma, policy_kwargs=policy_kwargs,n_cpu_tf_sess=n_cpu_tf_sess)
-        elif self.rlmodel=='dqn':
+        elif rlmodel=='dqn':
             model = DQN.load(load, env=env, verbose=1,gamma=self.gamma,prioritized_replay=True,policy_kwargs=policy_kwargs,n_cpu_tf_sess=n_cpu_tf_sess)
         else:
             error('unknown model')
 
-        return model,env,n_cpu
+        return model
 
     def simulate(self,debug=False,rlmodel='acktr',load=None,pop=None,startage=None,
-                 deterministic=False,save='results/testsimulate',arch=None,set_seed=True):
+                 deterministic=False,save='results/testsimulate',arch=None,set_seed=True,render=False,processes=None):
 
-        model,env,n_cpu=self.setup_model(debug=debug,rlmodel=rlmodel,load=load,pop=pop,
-                 deterministic=deterministic,arch=arch,predict=True)
+        args=self.args.copy()
+        args['debug']=debug
+        args['rlmodel']=rlmodel
+        args['load']=load
+        args['pop']=pop
+        args['startage']=startage
+        args['deterministic']=deterministic
+        args['save']=save
+        args['arch']=arch
+        args['set_seed']=set_seed
+        args['render']=render
+
+        if processes is not None:
+            self.args['processes']=processes
+
+        if render:  
+            self.args['processes'] = 1 
+
+        gkwargs=self.args['gym_kwargs'].copy()
+        gkwargs.update({'train':False})
+        
+        pop=1 # self.n_pop
+        self.episodestats.reset(self.timestep,self.n_time,self.n_employment,pop,
+                                self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year)
+
+        manager = Manager()
+        info = manager.dict({'pop': 0})
+        processes = []
+
+        print('simulating with',self.args['processes'],'processes')
+        for rank in range(self.args['processes']):
+            p = Process(target=self.simulate_single, args=(rank, args, gkwargs, info))
+            print('started.',rank)
+            p.start()
+            processes.append(p)
+
+        print('switching to join')
+        print(processes)
+            
+        for p in processes: 
+            print('exitcode',p.exitcode)
+            p.join()         
+
+        print('joined.')
+
+        self.combine_episodestats(self.args)
+        
+        print('done')
+            
+    def simulate_single(self, rank, args, kwargs, info):
+        '''
+        An own process for each simulation unit
+        '''
+
+        print('sim_single',rank)
+
+        if args['version'] in set([4,5,104]):  # increase by 2
+            n_add=2
+        else:  # increase by 1
+            n_add=1
+
+        render = args['render']
+        n_pop_single = int(args['pop']/args['processes'])
+        deterministic = args['deterministic']
+        debug = args['debug']
+        savefile=args['save_dir']+args['simfile']+'_rank_'+str(rank)
+        #kwargs['silent']=True
+
+        if rank==0:
+            print(savefile)
+
+        #env = SubprocVecEnv([make_env(args['environment'], 0, kwargs=kwargs)], start_method='spawn')
+        #env = gym.make(args['environment'],kwargs=kwargs) # make a local (unshared) environment
+        #env = SubprocVecEnv(env)
+        print('Child',rank,'check point 3')
+        seed = 20_000 + rank*100 # must not be identical to train seed
+        #env = SubprocVecEnv([lambda: make_env(args['environment'],seed+i,kwargs=kwargs) for i in range(1)], start_method='spawn')
+        envlist=[lambda: make_env(args['environment'],seed+i,kwargs=kwargs) for i in range(1)]
+        print('Child',rank,'check point 3b')
+        env = DummyVecEnv(envlist)
+        #env = SubprocVecEnv(envlist, start_method='spawn')
+        print('spawning',args['environment'])
+        #env = SubprocVecEnv([lambda: make_env(args['environment'],seed,kwargs=kwargs) for i in range(1)], start_method='spawn')
+        print('Child',rank,'check point 4')
+
+        env.seed(args['seed'] + rank)
+
+        model=self.setup_model_v2(env,rank=rank,debug=args['debug'],rlmodel=args['rlmodel'],load=args['load'],
+                 deterministic=args['deterministic'],arch=args['arch'],predict=True,n_cpu_tf_sess=1)
+
+        if args['startage'] is not None:
+            env.set_startage(args['startage'])
 
         states = env.reset()
-        if set_seed:
-            env.seed(42)
 
-        if self.version in set([4,5,104]):  # increase by 2
-            n_add=2
-            pop_num=np.array([k for k in range(0,n_add*n_cpu,n_add)])
-            n=n_add*(n_cpu-1)
-        else:  # increase by 1
-            pop_num=np.array([k for k in range(0,n_cpu,1)])
-            n_add=1
-            n=n_cpu-1
-        
-        tqdm_e = tqdm(range(int(self.n_pop)), desc='Population', leave=True, unit=" p")
-        self.episodestats.init_variables()
-        
-        if startage is not None:
-            self.env.set_startage(startage)
+        if rank == 0:
+            print('predict',rank)
+            if render:
+                env.render()
 
-        while np.any(pop_num<self.n_pop):
+        epienv = gym.make(args['environment'],kwargs=kwargs) # make a local (unshared) environment
+        episodestats = SimStats(args['timestep'],args['n_time'],args['n_employment'],n_pop_single,
+                            epienv,args['minimal'],args['min_age'],args['max_age'],args['min_retirementage'],
+                            version=args['version'],params=args['gym_kwargs'],year=args['year'],gamma=args['gamma'],
+                            silent=True)
+        episodestats.init_variables()
+
+        n=0
+        pred=0
+        
+        if rank==0:
+            tqdm_e = tqdm(range(args['pop']), desc='Population', leave=True, unit=" p")
+
+        # while n<n_pop_single:
+        #     act, predstate = model.predict(states,deterministic=deterministic)
+        #     newstate, rewards, dones, infos = env.step(act)
+        #     if n<n_pop_single: # do not save extras
+        #         if dones:
+        #             #print(infos)
+        #             episodestats.add(n,act[0],rewards[0],states[0],infos['terminal_observation'][0],infos[0],debug=debug)
+        #             #episodestats.add(n,act,rewards,states,newstate,infos,debug=debug)
+        #             n += n_add
+        #             #newstates = env.reset()
+
+        #             if rank==0:
+        #                 tqdm_e.update(n_add)
+        #                 tqdm_e.set_description("Pop " + str(n))
+
+        #         else:
+        #             episodestats.add(n,act[0],rewards[0],states[0],newstate[0],infos[0],debug=debug)
+        #             states = newstate
+
+        k=0
+        while n<n_pop_single:
             act, predstate = model.predict(states,deterministic=deterministic)
             newstate, rewards, dones, infos = env.step(act)
-            for k in range(n_cpu):
-                if pop_num[k]<self.n_pop: # do not save extras
-                    if dones[k]:
-                        self.episodestats.add(pop_num[k],act[k],rewards[k],states[k],infos[k]['terminal_observation'],infos[k],debug=debug)
-                        tqdm_e.update(n_add)
-                        n += n_add
-                        tqdm_e.set_description("Pop " + str(n))
-                        pop_num[k] = n
-                    else:
-                        self.episodestats.add(pop_num[k],act[k],rewards[k],states[k],newstate[k],infos[k],debug=debug)
+            if n<n_pop_single: # do not save extras
+                if dones[k]:
+                    episodestats.add(n,act[k],rewards[k],states[k],infos[k]['terminal_observation'],infos[k])
+                    n += n_add
+                    info['pop'] += n_add
+                    if rank==0:
+                        tqdm_e.update(info['pop']-pred)
+                        tqdm_e.set_description("Pop " + str(info['pop']))
+                        pred=info['pop']
+                else:
+                    episodestats.add(n,act[k],rewards[k],states[k],newstate[k],infos[k])
     
             states = newstate
 
-        print('saving results...')
+        if rank==0:
+            print('saving results...')
 
-        self.episodestats.scale_sim()
-        self.episodestats.save_sim(save)
+        episodestats.scale_sim()
+        episodestats.save_sim(savefile)
 
-        print('done')
+    def combine_results(self,results):
+        self.combine_episodestats(self.args)
 
-        if False:
-            return self.emp        
+    def combine_episodestats(self,args):
+        save=args['save_dir']+args['simfile']+'_rank_'
+        
+        base=SimStats(args['timestep'],args['n_time'],args['n_employment'],args['n_pop'],
+                            self.env,args['minimal'],args['min_age'],args['max_age'],args['min_retirementage'],
+                            version=args['version'],params=args['gym_kwargs'],year=args['year'],gamma=args['gamma'],
+                            silent=True)
+        base.load_sim(save+'0')
+        eps=SimStats(args['timestep'],args['n_time'],args['n_employment'],args['n_pop'],
+                            self.env,args['minimal'],args['min_age'],args['max_age'],args['min_retirementage'],
+                            version=args['version'],params=args['gym_kwargs'],year=args['year'],gamma=args['gamma'],
+                            silent=True)
+        for k in range(1,self.args['processes']):
+            eps.load_sim(save+str(k))
+            base.append_episodestat(eps)
+
+        base.save_sim(args['save_dir']+args['simfile']+'_combined')

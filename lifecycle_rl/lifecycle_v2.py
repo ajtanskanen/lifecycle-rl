@@ -160,10 +160,10 @@ class Lifecycle():
         if self.version in set([4,5,104]):
             self.min_retirementage=self.env.get_retirementage()
 
-        self.episodestats=SimStats(self.timestep,self.n_time,self.n_employment,self.n_pop,
+        self.episodestats=SimStats(self.timestep,self.n_time,self.n_employment,1, #self.n_pop,
                                    self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,
                                    version=self.version,params=self.gym_kwargs,year=self.year,gamma=self.gamma,
-                                   lang=self.lang,silent=self.silent)
+                                   silent=self.silent)
         
         self.plotstats=PlotStats(self.episodestats,self.timestep,self.n_time,self.n_employment,self.n_pop,
                                    self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,
@@ -178,31 +178,33 @@ class Lifecycle():
         self.use_standalone=False
         self.use_sb3=False
         self.use_sb2=False
-        if use_solver==2:
+        if use_solver==2: # not working
             from .runner_tianshou import runner_tianshou
             self.use_tianshou=True
-        elif use_solver==3:
+        elif use_solver==3: # does not implement ACKTR
             from .runner_stablebaselines3 import runner_stablebaselines3
             self.use_sb3=True
-        elif use_solver==1:
-            from .runner_standalone import runner_standalone
+        elif use_solver==1: # A2C with GRU, fast
+            from .runner_standalone_a3c import runner_standalone
             self.use_standalone=True
         else:
-            from .runner_stablebaselines2 import runner_stablebaselines2
+            from .runner_stablebaselines2_v2 import runner_stablebaselines2 # newer, roughly 13 p/s, allows larger simulations
+            #from .runner_stablebaselines2 import runner_stablebaselines2 # older, roughly 11 p/s
             self.use_sb2=True
 
         if self.use_tianshou:
             self.runner=runner_tianshou(self.environment,self.gamma,self.timestep,self.n_time,self.n_pop,
-                 self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year,self.episodestats,self.gym_kwargs)
+                 self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year,self.episodestats,self.gym_kwargs,self.version)
         elif self.use_standalone:
+            print('pop',self.n_pop)
             self.runner=runner_standalone(self.environment,self.gamma,self.timestep,self.n_time,self.n_pop,
-                 self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year,self.episodestats,self.gym_kwargs)
+                 self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year,self.episodestats,self.gym_kwargs,self.version,self.processes)
         elif self.use_sb3:
             self.runner=runner_stablebaselines3(self.environment,self.gamma,self.timestep,self.n_time,self.n_pop,
-                 self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year,self.episodestats,self.gym_kwargs)
+                 self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year,self.episodestats,self.gym_kwargs,self.version)
         else:
             self.runner=runner_stablebaselines2(self.environment,self.gamma,self.timestep,self.n_time,self.n_pop,
-                 self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year,self.episodestats,self.gym_kwargs)
+                 self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year,self.episodestats,self.gym_kwargs,self.version,self.processes)
         
 
     def initial_parameters(self):
@@ -272,6 +274,7 @@ class Lifecycle():
         self.randomness=True
         self.include_emtr=False
         self.library=0
+        self.processes=10
         
         self.random_returns=False
         self.r_mean=0.0
@@ -289,6 +292,10 @@ class Lifecycle():
             if key=='profile':
                 if value is not None:
                     self.profile=value
+            if key=='processes':
+                if value is not None:
+                    self.processes=value
+                    print('processes',self.processes)
             if key=='callback_minsteps':
                 if value is not None:
                     self.callback_minsteps=value
@@ -504,8 +511,15 @@ class Lifecycle():
         if load is not None:
             self.episodestats.load_sim(load)
             
-        return self.episodestats.comp_total_reward(),self.episodestats.comp_initial_npv()
-   
+        return self.episodestats.get_average_discounted_reward(),self.episodestats.get_initial_reward()
+        #return self.episodestats.comp_total_reward(),self.episodestats.comp_initial_npv()
+
+    def render_reward_trajectory(self,load=None,figname=None):
+        if load is not None:
+            self.episodestats.load_sim(load)
+            
+        return self.episodestats.get_reward_trajectory()
+
     def render_laffer(self,load=None,figname=None,include_retwork=True,grouped=False,g=0):
         if load is not None:
             self.episodestats.load_sim(load)
@@ -662,7 +676,7 @@ class Lifecycle():
                batch1=1,batch2=100,cont=False,start_from=None,callback_minsteps=None,
                verbose=1,max_grad_norm=None,learning_rate=0.25,log_interval=10,
                learning_schedule='linear',vf=None,arch=None,gae_lambda=None,
-               startage=None):
+               startage=None,processes=None):
    
         '''
         run_results
@@ -682,26 +696,26 @@ class Lifecycle():
         if train: 
             print('train...')
             if cont:
-                self.run_protocol(rlmodel=rlmodel,steps1=steps1,steps2=steps2,verbose=verbose,
+                self.train_protocol(rlmodel=rlmodel,steps1=steps1,steps2=steps2,verbose=verbose,
                                   debug=debug,save=save,batch1=batch1,batch2=batch2,
                                   cont=cont,start_from=start_from,twostage=twostage,
                                   max_grad_norm=max_grad_norm,learning_rate=learning_rate,log_interval=log_interval,
-                                  learning_schedule=learning_schedule,vf=vf,arch=arch,gae_lambda=gae_lambda)
+                                  learning_schedule=learning_schedule,vf=vf,arch=arch,gae_lambda=gae_lambda,processes=processes)
             else:
-                self.run_protocol(rlmodel=rlmodel,steps1=steps1,steps2=steps2,verbose=verbose,
+                self.train_protocol(rlmodel=rlmodel,steps1=steps1,steps2=steps2,verbose=verbose,
                                  debug=debug,batch1=batch1,batch2=batch2,cont=cont,
                                  save=save,twostage=twostage,
                                  max_grad_norm=max_grad_norm,learning_rate=learning_rate,log_interval=log_interval,
-                                 learning_schedule=learning_schedule,vf=vf,arch=arch,gae_lambda=gae_lambda)
+                                 learning_schedule=learning_schedule,vf=vf,arch=arch,gae_lambda=gae_lambda,processes=processes)
         if predict:
             #print('predict...')
             self.predict_protocol(pop=pop,rlmodel=rlmodel,load=save,startage=startage,
-                          debug=debug,deterministic=deterministic,results=results,arch=arch)
+                          debug=debug,deterministic=deterministic,results=results,arch=arch,processes=processes)
           
-    def run_protocol(self,steps1=2_000_000,steps2=1_000_000,rlmodel='acktr',
+    def train_protocol(self,steps1=2_000_000,steps2=1_000_000,rlmodel='acktr',
                debug=False,batch1=1,batch2=1000,cont=False,twostage=False,log_interval=10,
                start_from=None,save='best3',verbose=1,max_grad_norm=None,
-               learning_rate=0.25,learning_schedule='linear',vf=None,arch=None,gae_lambda=None):
+               learning_rate=0.25,learning_schedule='linear',vf=None,arch=None,gae_lambda=None,processes=None):
         '''
         run_protocol
 
@@ -721,35 +735,38 @@ class Lifecycle():
                 self.runner.train(steps=steps1,cont=cont,rlmodel=rlmodel,save=tmpname,batch=batch1,debug=debug,
                            start_from=start_from,use_callback=False,use_vecmonitor=False,
                            log_interval=log_interval,verbose=1,vf=vf,arch=arch,gae_lambda=gae_lambda,
-                           max_grad_norm=max_grad_norm,learning_rate=learning_rate,learning_schedule=learning_schedule)
+                           max_grad_norm=max_grad_norm,learning_rate=learning_rate,learning_schedule=learning_schedule,processes=processes)
             else:
                 self.runner.train(steps=steps1,cont=False,rlmodel=rlmodel,save=tmpname,batch=batch1,debug=debug,vf=vf,arch=arch,
                            use_callback=False,use_vecmonitor=False,log_interval=log_interval,verbose=1,gae_lambda=gae_lambda,
-                           max_grad_norm=max_grad_norm,learning_rate=learning_rate,learning_schedule=learning_schedule)
+                           max_grad_norm=max_grad_norm,learning_rate=learning_rate,learning_schedule=learning_schedule,processes=processes)
 
         if twostage and steps2>0:
             print('phase 2')
             self.runner.train(steps=steps2,cont=True,rlmodel=rlmodel,save=tmpname,
                        debug=debug,start_from=tmpname,batch=batch2,verbose=verbose,
                        use_callback=False,use_vecmonitor=False,log_interval=log_interval,bestname=save,plotdebug=plotdebug,
-                       max_grad_norm=max_grad_norm,learning_rate=learning_rate,learning_schedule=learning_schedule)
+                       max_grad_norm=max_grad_norm,learning_rate=learning_rate,learning_schedule=learning_schedule,processes=processes)
 
     def predict_protocol(self,pop=1_00,rlmodel='acktr',results='results/simut_res',arch=None,
-                         load='saved/malli',debug=False,deterministic=False,startage=None):
+                         load='saved/malli',debug=False,deterministic=False,startage=None,processes=None):
         '''
         predict_protocol
 
         simulate the three models obtained from run_protocol
         '''
+
+        print('pop_protocol',pop)
  
         def run_sim():
             self.runner.simulate(pop=pop,rlmodel=rlmodel,debug=debug,arch=arch,
-                        load=load,save=results,deterministic=deterministic,startage=startage)
+                        load=load,save=results,deterministic=deterministic,startage=startage,processes=processes)
  
         # simulate the saved best
         #if self.profile:
         #    profile.run('run_sim()')
         #else:
+        print('run_sim')
         run_sim()
         
 
@@ -1039,4 +1056,10 @@ class Lifecycle():
         
     def comp_verokiila(self,grouped=True):
         return self.episodestats.comp_verokiila(grouped=grouped)
-    
+
+    def combine_results(self,results='results/simut_res'):
+        '''
+        combine_results
+        '''
+ 
+        self.runner.combine_results(results=results)    

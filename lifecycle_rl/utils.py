@@ -79,7 +79,7 @@ def get_style_EK():
      
     return axes
 
-def make_env(env_id, rank, kwargs, seed=None, use_monitor=True):
+def make_env(env_id, rank, kwargs, seed=None):
     """
     Utility function for multiprocessed env.#
 

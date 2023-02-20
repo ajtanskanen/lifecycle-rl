@@ -33,7 +33,8 @@ import datetime
 #locale.setlocale(locale.LC_ALL, 'fi_FI')
 
 class EpisodeStats():
-    def __init__(self,timestep,n_time,n_emps,n_pop,env,minimal,min_age,max_age,min_retirementage,year=2018,version=3,params=None,gamma=0.92,lang='English',silent=False):
+    def __init__(self,timestep,n_time,n_emps,n_pop,env,minimal,min_age,max_age,min_retirementage,
+                year=2018,version=3,params=None,gamma=0.92,silent=False,rapid=False): # lang='English',
         self.version=version
         self.gamma=gamma
         self.params=params
@@ -41,7 +42,8 @@ class EpisodeStats():
         self.params['n_emps']=n_emps
         self.lab=Labels()
         self.silent=silent
-        self.reset(timestep,n_time,n_emps,n_pop,env,minimal,min_age,max_age,min_retirementage,year,params=params,lang=lang)
+        self.rapid=rapid
+        self.reset(timestep,n_time,n_emps,n_pop,env,minimal,min_age,max_age,min_retirementage,year,params=params) #,lang=lang)
         
         if self.version==0:
             self.add=self.add_v0
@@ -54,7 +56,10 @@ class EpisodeStats():
         elif self.version==4:
             self.add=self.add_v4
         elif self.version==5:
-            self.add=self.add_v5
+            if self.rapid:
+                self.add=self.add_v5_noindivid
+            else:
+                self.add=self.add_v5
         elif self.version==101:
             self.add=self.add_v101
         elif self.version==104:
@@ -62,7 +67,7 @@ class EpisodeStats():
         else:
             print('Unknown version ',self.version)
 
-    def reset(self,timestep,n_time,n_emps,n_pop,env,minimal,min_age,max_age,min_retirementage,year,version=None,params=None,lang=None,dynprog=False):
+    def reset(self,timestep,n_time,n_emps,n_pop,env,minimal,min_age,max_age,min_retirementage,year,version=None,params=None,dynprog=False): # lang=None,
         self.min_age=min_age
         self.max_age=max_age
         self.min_retirementage=min_retirementage
@@ -71,15 +76,15 @@ class EpisodeStats():
         if params is not None:
             self.params=params
 
-        if lang is None:
-            self.language='English'
-        else:
-            self.language=lang
+        #if lang is None:
+        #    self.language='English'
+        #else:
+        #    self.language=lang
 
         if version is not None:
             self.version=version
 
-        self.setup_labels()
+        #self.setup_labels()
 
         self.figformat='pdf'
 
@@ -188,13 +193,14 @@ class EpisodeStats():
         self.infostats_pop_tyoelake=np.zeros((self.n_time,self.n_pop),dtype=float)
         self.infostats_pop_kansanelake=np.zeros((self.n_time,self.n_pop),dtype=float)
         self.infostats_sairausvakuutus=np.zeros((self.n_time,1))
-        self.infostats_pvhoitomaksu=np.zeros((self.n_time,self.n_pop),dtype=float)
+        self.infostats_pvhoitomaksu=np.zeros((self.n_time,1),dtype=float)
         self.infostats_ylevero=np.zeros((self.n_time,1))
         self.infostats_ylevero_distrib=np.zeros((self.n_time,n_emps))
         self.infostats_irr_tyel_reduced=np.zeros((self.n_pop,1),dtype=float)
         self.infostats_irr_tyel_full=np.zeros((self.n_pop,1),dtype=float)
         self.infostats_npv0=np.zeros((self.n_pop,1),dtype=float)
         self.infostats_mother_in_workforce=np.zeros((self.n_time,1))
+        self.infostats_sv_in_workforce=np.zeros((self.n_time,self.n_groups))
         #self.infostats_father_in_workforce=np.zeros((self.n_time,1))
         self.infostats_children_under3=np.zeros((self.n_time,self.n_pop),dtype=np.int8)
         self.infostats_children_under7=np.zeros((self.n_time,self.n_pop),dtype=np.int8)
@@ -210,6 +216,9 @@ class EpisodeStats():
         self.infostats_equivalent_income=np.zeros((self.n_time,1))
         self.infostats_alv=np.zeros((self.n_time,1))
         self.pop_predrew=np.zeros((self.n_time,self.n_pop))
+        self.initial_reward=0
+        self.average_discounted_reward=0
+        self.rewards_computed=False
         if self.version in set([101,102,104]):
             self.infostats_savings=np.zeros((self.n_time,self.n_pop),dtype=float)
             self.sav_actions=np.zeros((self.n_time,self.n_pop),dtype=float)
@@ -225,6 +234,73 @@ class EpisodeStats():
             self.actions=np.zeros((self.n_time,self.n_pop),dtype=np.int8)
 
     def add_taxes(self,t,q,newemp,n,g,person=''):
+        scale=self.timestep*12
+        self.infostats_taxes[t]+=q[person+'verot']*scale
+        self.infostats_wagetaxes[t]+=q[person+'verot_ilman_etuuksia']*scale
+        self.infostats_taxes_distrib[t,newemp]+=q[person+'verot']*scale
+        self.infostats_etuustulo[t]+=q[person+'etuustulo_brutto']*scale
+        self.infostats_etuustulo_group[t,g]+=q[person+'etuustulo_brutto']*scale
+        self.infostats_perustulo[t]+=q[person+'perustulo']*scale
+        self.infostats_palkkatulo[t]+=q[person+'palkkatulot']*scale
+        self.infostats_palkkatulo_eielakkeella[t]+=q[person+'palkkatulot_eielakkeella']*scale
+        self.infostats_ansiopvraha[t]+=q[person+'ansiopvraha']*scale
+        self.infostats_peruspvraha[t]+=q[person+'peruspvraha']*scale 
+        self.infostats_asumistuki[t]+=q[person+'asumistuki']*scale
+        self.infostats_valtionvero[t]+=q[person+'valtionvero']*scale
+        self.infostats_valtionvero_distrib[t,newemp]+=q[person+'valtionvero']*scale
+        self.infostats_kunnallisvero[t]+=q[person+'kunnallisvero']*scale
+        self.infostats_kunnallisvero_distrib[t,newemp]+=q[person+'kunnallisvero']*scale
+        self.infostats_ptel[t]+=q[person+'ptel']*scale
+        self.infostats_tyotvakmaksu[t]+=q[person+'tyotvakmaksu']*scale
+        self.infostats_kokoelake[t]+=q[person+'kokoelake']*scale
+        self.stat_pop_paidpension[t,n]=q[person+'kokoelake']*scale
+        self.infostats_lapsilisa[t]+=q[person+'lapsilisa']*scale
+        self.infostats_elatustuki[t]+=q[person+'elatustuki']*scale
+        self.infostats_opintotuki[t]+=q[person+'opintotuki']*scale
+        self.infostats_isyyspaivaraha[t]+=q[person+'isyyspaivaraha']*scale
+        self.infostats_aitiyspaivaraha[t]+=q[person+'aitiyspaivaraha']*scale
+        self.infostats_kotihoidontuki[t]+=q[person+'kotihoidontuki']*scale
+        self.infostats_sairauspaivaraha[t]+=q[person+'sairauspaivaraha']*scale
+        self.infostats_toimeentulotuki[t]+=q[person+'toimeentulotuki']*scale
+        self.infostats_pvhoitomaksu[t]=q[person+'pvhoito']*scale
+        
+#         d1=q[person+'verot']
+#         d2=q[person+'valtionvero']+q[person+'kunnallisvero']+q[person+'ptel']+q[person+'tyotvakmaksu']+\
+#             q[person+'ylevero']+q[person+'sairausvakuutusmaksu']
+#             
+#         if np.abs(d2-d1)>1e-6:
+#             print('add_taxes',person,d2-d1)
+        
+        if self.version in set([4,5,104]):
+            self.infostats_tulot_netto[t]+=q[person+'netto']*scale # vuositasolla, huomioi alv:n
+            self.infostats_tulot_netto_emp[t,newemp]+=q[person+'netto']*scale # vuositasolla, huomioi alv:n
+            self.infostats_poptulot_netto[t,n]=q[person+'netto']*scale
+            self.infostats_tyoelake[t]+=q[person+'tyoelake']*scale
+            self.infostats_kansanelake[t]+=q[person+'kansanelake']*scale
+            self.infostats_pop_tyoelake[t,n]=q[person+'tyoelake']*scale
+            self.infostats_pop_kansanelake[t,n]=q[person+'kansanelake']*scale
+            self.infostats_pop_wage[t,n]=q[person+'palkkatulot']*scale # at annual level
+            self.infostats_pop_emtr[t,n]=q[person+'emtr']
+            self.infostats_pop_tva[t,n]=q[person+'tva']
+            self.infostats_pop_potential_wage[t,n]=q[person+'potential_wage']*self.timestep # ei skaalausta kuukausilla, koska on jo vuositasossa *scale
+            #self.infostats_takuuelake[t]+=q[person+'takuuelake']*scale
+        else:
+            self.infostats_tulot_netto[t]+=q['kateen']*scale # legacy for v1-3
+            self.infostats_tulot_netto_emp[t,newemp]+=q[person+'netto']*scale # vuositasolla, huomioi alv:n
+            self.infostats_poptulot_netto[t,n]=q['kateen']*scale
+            self.infostats_tyoelake[t]+=q[person+'elake_maksussa']*scale
+            
+        self.infostats_tyelpremium[t,n]=q[person+'tyel_kokomaksu']*scale
+        self.infostats_paid_tyel_pension[t,n]=q[person+'puhdas_tyoelake']*scale
+        self.infostats_sairausvakuutus[t]+=q[person+'sairausvakuutusmaksu']*scale
+        self.infostats_ylevero[t]+=q[person+'ylevero']*scale
+        self.infostats_ylevero_distrib[t,newemp]=q[person+'ylevero']*scale
+        self.infostats_npv0[n]=q[person+'multiplier']
+        self.infostats_equivalent_income[t]+=q[person+'eq']*self.timestep # already at annual level
+        if 'alv' in q:
+            self.infostats_alv[t]+=q[person+'alv']*scale
+
+    def add_taxes_nopop(self,t,q,newemp,n,g,person=''):
         scale=self.timestep*12
         self.infostats_taxes[t]+=q[person+'verot']*scale
         self.infostats_wagetaxes[t]+=q[person+'verot_ilman_etuuksia']*scale
@@ -264,33 +340,153 @@ class EpisodeStats():
         if self.version in set([4,5,104]):
             self.infostats_tulot_netto[t]+=q[person+'netto']*scale # vuositasolla, huomioi alv:n
             self.infostats_tulot_netto_emp[t,newemp]+=q[person+'netto']*scale # vuositasolla, huomioi alv:n
-            self.infostats_poptulot_netto[t,n]=q[person+'netto']*scale
+            #self.infostats_poptulot_netto[t,n]=q[person+'netto']*scale
             self.infostats_tyoelake[t]+=q[person+'tyoelake']*scale
             self.infostats_kansanelake[t]+=q[person+'kansanelake']*scale
-            self.infostats_pop_tyoelake[t,n]=q[person+'tyoelake']*scale
-            self.infostats_pop_kansanelake[t,n]=q[person+'kansanelake']*scale
-            self.infostats_pop_wage[t,n]=q[person+'palkkatulot']*scale # at annual level
-            self.infostats_pop_emtr[t,n]=q[person+'emtr']
-            self.infostats_pop_tva[t,n]=q[person+'tva']
-            self.infostats_pop_potential_wage[t,n]=q[person+'potential_wage']*self.timestep # ei skaalausta kuukausilla, koska on jo vuositasossa *scale
+            #self.infostats_pop_tyoelake[t,n]=q[person+'tyoelake']*scale
+            #self.infostats_pop_kansanelake[t,n]=q[person+'kansanelake']*scale
+            #self.infostats_pop_wage[t,n]=q[person+'palkkatulot']*scale # at annual level
+            #self.infostats_pop_emtr[t,n]=q[person+'emtr']
+            #self.infostats_pop_tva[t,n]=q[person+'tva']
+            #self.infostats_pop_potential_wage[t,n]=q[person+'potential_wage']*self.timestep # ei skaalausta kuukausilla, koska on jo vuositasossa *scale
             #self.infostats_takuuelake[t]+=q[person+'takuuelake']*scale
         else:
             self.infostats_tulot_netto[t]+=q['kateen']*scale # legacy for v1-3
             self.infostats_tulot_netto_emp[t,newemp]+=q[person+'netto']*scale # vuositasolla, huomioi alv:n
-            self.infostats_poptulot_netto[t,n]=q['kateen']*scale
+            #self.infostats_poptulot_netto[t,n]=q['kateen']*scale
             self.infostats_tyoelake[t]+=q[person+'elake_maksussa']*scale
             
-        self.infostats_tyelpremium[t,n]=q[person+'tyel_kokomaksu']*scale
-        self.infostats_paid_tyel_pension[t,n]=q[person+'puhdas_tyoelake']*scale
+        #self.infostats_tyelpremium[t,n]=q[person+'tyel_kokomaksu']*scale
+        #self.infostats_paid_tyel_pension[t,n]=q[person+'puhdas_tyoelake']*scale
         self.infostats_sairausvakuutus[t]+=q[person+'sairausvakuutusmaksu']*scale
-        self.infostats_pvhoitomaksu[t,n]=q[person+'pvhoito']*scale
+        #self.infostats_pvhoitomaksu[t]+=q[person+'pvhoito']*scale
         self.infostats_ylevero[t]+=q[person+'ylevero']*scale
         self.infostats_ylevero_distrib[t,newemp]=q[person+'ylevero']*scale
-        self.infostats_npv0[n]=q[person+'multiplier']
+        #self.infostats_npv0[n]=q[person+'multiplier']
         self.infostats_equivalent_income[t]+=q[person+'eq']*self.timestep # already at annual level
         if 'alv' in q:
-            self.infostats_alv[t]+=q[person+'alv']*scale
+            self.infostats_alv[t]+=q[person+'alv']*scale            
             
+    def append_episodestat(self,cc):
+        n_emps1=self.n_employment
+        n_emps2=cc.n_employment
+        
+        self.empstate = self.empstate+cc.empstate
+        self.gempstate = self.gempstate+cc.gempstate
+        self.deceiced = self.deceiced+cc.deceiced
+        self.alive = self.alive+cc.alive
+        self.galive = self.galive+cc.galive
+        self.rewstate = self.rewstate+cc.rewstate
+        self.poprewstate = np.append(self.poprewstate,cc.poprewstate,axis=1)
+        self.salaries_emp = self.salaries_emp+cc.salaries_emp
+        self.popempstate = np.append(self.popempstate,cc.popempstate,axis=1)
+        self.popunemprightleft = np.append(self.popunemprightleft[:,:self.n_pop],cc.popunemprightleft[:,:cc.n_pop],axis=1)
+        self.popunemprightused = np.append(self.popunemprightused[:,:self.n_pop],cc.popunemprightused[:,:cc.n_pop],axis=1)
+        self.tyoll_distrib_bu = np.append(self.tyoll_distrib_bu[:,:self.n_pop],cc.tyoll_distrib_bu[:,:cc.n_pop],axis=1)
+        self.unemp_distrib_bu = np.append(self.unemp_distrib_bu[:,:self.n_pop],cc.unemp_distrib_bu[:,:cc.n_pop],axis=1)
+        self.siirtyneet = self.siirtyneet+cc.siirtyneet
+        self.siirtyneet_det = self.siirtyneet_det+cc.siirtyneet_det
+        self.pysyneet = self.pysyneet+cc.pysyneet
+        self.siirtyneet_det = self.siirtyneet_det+cc.siirtyneet_det
+        if self.minimal:
+            self.aveV=np.append(self.aveV[:,:self.n_pop],cc.aveV[:,:cc.n_pop],axis=1)
+        self.time_in_state = self.time_in_state+cc.time_in_state
+        self.stat_tyoura = self.stat_tyoura+cc.stat_tyoura
+        self.stat_toe = self.stat_toe+cc.stat_toe
+        self.out_of_work = self.out_of_work+cc.out_of_work
+        self.stat_unemp_len = np.append(self.stat_unemp_len[:,:self.n_pop],cc.stat_unemp_len[:,:cc.n_pop],axis=1)
+        self.stat_wage_reduction = self.stat_wage_reduction+cc.stat_wage_reduction
+        self.stat_wage_reduction_g = self.stat_wage_reduction_g+cc.stat_wage_reduction_g
+        self.infostats_taxes = self.infostats_taxes+cc.infostats_taxes
+        self.infostats_wagetaxes = self.infostats_wagetaxes+cc.infostats_wagetaxes
+        self.infostats_taxes_distrib = self.infostats_taxes_distrib+cc.infostats_taxes_distrib
+        self.infostats_etuustulo = self.infostats_etuustulo+cc.infostats_etuustulo
+        self.infostats_etuustulo_group = self.infostats_etuustulo_group+cc.infostats_etuustulo_group
+        self.infostats_perustulo = self.infostats_perustulo+cc.infostats_perustulo
+        self.infostats_palkkatulo = self.infostats_palkkatulo+cc.infostats_palkkatulo
+        self.infostats_palkkatulo_eielakkeella = self.infostats_palkkatulo_eielakkeella+cc.infostats_palkkatulo_eielakkeella
+        self.infostats_palkkatulo_group = self.infostats_palkkatulo_group+cc.infostats_palkkatulo_group
+        self.infostats_palkkatulo_eielakkeella_group = self.infostats_palkkatulo_eielakkeella_group+cc.infostats_palkkatulo_eielakkeella_group
+        self.infostats_ansiopvraha = self.infostats_ansiopvraha+cc.infostats_ansiopvraha
+        self.infostats_peruspvraha = self.infostats_peruspvraha+cc.infostats_peruspvraha
+        self.infostats_ansiopvraha_group = self.infostats_ansiopvraha_group+cc.infostats_ansiopvraha_group
+        self.infostats_asumistuki = self.infostats_asumistuki+cc.infostats_asumistuki
+        self.infostats_asumistuki_group = self.infostats_asumistuki_group+cc.infostats_asumistuki_group
+        self.infostats_ansiopvraha_group = self.infostats_ansiopvraha_group+cc.infostats_ansiopvraha_group
+        self.infostats_valtionvero = self.infostats_valtionvero+cc.infostats_valtionvero
+        self.infostats_valtionvero_group = self.infostats_valtionvero_group+cc.infostats_valtionvero_group
+        self.infostats_kunnallisvero = self.infostats_kunnallisvero+cc.infostats_kunnallisvero
+        self.infostats_kunnallisvero_group = self.infostats_kunnallisvero_group+cc.infostats_kunnallisvero_group
+        self.infostats_valtionvero_distrib = self.infostats_valtionvero_distrib+cc.infostats_valtionvero_distrib
+        self.infostats_kunnallisvero_distrib = self.infostats_kunnallisvero_distrib+cc.infostats_kunnallisvero_distrib
+        self.infostats_valtionvero_distrib = self.infostats_valtionvero_distrib+cc.infostats_valtionvero_distrib
+        self.infostats_ptel = self.infostats_ptel+cc.infostats_ptel
+        self.infostats_tyotvakmaksu = self.infostats_tyotvakmaksu+cc.infostats_tyotvakmaksu
+        self.infostats_tyoelake = self.infostats_tyoelake+cc.infostats_tyoelake
+        self.infostats_kansanelake = self.infostats_kansanelake+cc.infostats_kansanelake
+        self.infostats_kokoelake = self.infostats_kokoelake+cc.infostats_kokoelake
+        self.infostats_lapsilisa = self.infostats_lapsilisa+cc.infostats_lapsilisa
+        self.infostats_elatustuki = self.infostats_elatustuki+cc.infostats_elatustuki
+        self.infostats_opintotuki = self.infostats_opintotuki+cc.infostats_opintotuki
+        self.infostats_isyyspaivaraha = self.infostats_isyyspaivaraha+cc.infostats_isyyspaivaraha
+        self.infostats_aitiyspaivaraha = self.infostats_aitiyspaivaraha+cc.infostats_aitiyspaivaraha
+        self.infostats_kotihoidontuki = self.infostats_kotihoidontuki+cc.infostats_kotihoidontuki
+        self.infostats_sairauspaivaraha = self.infostats_sairauspaivaraha+cc.infostats_sairauspaivaraha
+        self.infostats_toimeentulotuki = self.infostats_toimeentulotuki+cc.infostats_toimeentulotuki
+        self.infostats_tulot_netto = self.infostats_tulot_netto+cc.infostats_tulot_netto
+        self.infostats_tulot_netto_emp = self.infostats_tulot_netto_emp+cc.infostats_tulot_netto_emp
+        self.infostats_pinkslip = self.infostats_pinkslip+cc.infostats_pinkslip
+        self.infostats_group = np.append(self.infostats_group[:,:self.n_pop],cc.infostats_group,axis=0)
+        self.infostats_pop_pinkslip = np.append(self.infostats_pop_pinkslip[:,:self.n_pop],cc.infostats_pop_pinkslip[:,:cc.n_pop],axis=1)
+        self.infostats_pop_wage_reduction = np.append(self.infostats_pop_wage_reduction[:,:self.n_pop],cc.infostats_pop_wage_reduction[:,:cc.n_pop],axis=1)
+        self.infostats_tyelpremium = np.append(self.infostats_tyelpremium[:,:self.n_pop],cc.infostats_tyelpremium[:,:cc.n_pop],axis=1)
+        self.stat_paidpension = self.stat_paidpension+cc.stat_paidpension
+        self.stat_pop_paidpension = np.append(self.stat_pop_paidpension[:,:self.n_pop],cc.stat_pop_paidpension[:,:cc.n_pop],axis=1)
+        self.stat_pension = self.stat_pension+cc.stat_pension
+        self.stat_unemp_after_ra = self.stat_unemp_after_ra+cc.stat_unemp_after_ra
+        self.infostats_pop_pension = np.append(self.infostats_pop_pension[:,:self.n_pop],cc.infostats_pop_pension[:,:cc.n_pop],axis=1)
+        self.infostats_paid_tyel_pension = np.append(self.infostats_paid_tyel_pension[:,:self.n_pop],cc.infostats_paid_tyel_pension[:,:cc.n_pop],axis=1)
+        self.infostats_pop_tyoelake = np.append(self.infostats_pop_tyoelake[:,:self.n_pop],cc.infostats_pop_tyoelake[:,:cc.n_pop],axis=1)
+        self.infostats_pop_kansanelake = np.append(self.infostats_pop_kansanelake[:,:self.n_pop],cc.infostats_pop_kansanelake[:,:cc.n_pop],axis=1)
+        self.infostats_sairausvakuutus = self.infostats_sairausvakuutus+cc.infostats_sairausvakuutus
+        self.infostats_pvhoitomaksu = self.infostats_pvhoitomaksu+cc.infostats_pvhoitomaksu
+        self.infostats_ylevero = self.infostats_ylevero+cc.infostats_ylevero
+        self.infostats_ylevero_distrib = self.infostats_ylevero_distrib+cc.infostats_ylevero_distrib
+        self.infostats_irr_tyel_reduced = np.append(self.infostats_irr_tyel_reduced[:,:self.n_pop],cc.infostats_irr_tyel_reduced[:,:cc.n_pop],axis=0)
+        self.infostats_irr_tyel_full = np.append(self.infostats_irr_tyel_full[:,:self.n_pop],cc.infostats_irr_tyel_full[:,:cc.n_pop],axis=0)
+        self.infostats_npv0 = np.append(self.infostats_npv0[:,:self.n_pop],cc.infostats_npv0[:,:cc.n_pop],axis=0)
+        self.infostats_mother_in_workforce = self.infostats_mother_in_workforce+cc.infostats_mother_in_workforce
+        self.infostats_sv_in_workforce = self.infostats_sv_in_workforce+cc.infostats_sv_in_workforce
+        self.infostats_children_under3 = np.append(self.infostats_children_under3[:,:self.n_pop],cc.infostats_children_under3[:,:cc.n_pop],axis=1)
+        self.infostats_children_under7 = np.append(self.infostats_children_under7[:,:self.n_pop],cc.infostats_children_under7[:,:cc.n_pop],axis=1)
+        self.infostats_children_under18 = np.append(self.infostats_children_under18[:,:self.n_pop],cc.infostats_children_under18[:,:cc.n_pop],axis=1)
+        self.infostats_unempwagebasis = np.append(self.infostats_unempwagebasis[:,:self.n_pop],cc.infostats_unempwagebasis[:,:cc.n_pop],axis=1)
+        self.infostats_unempwagebasis_acc = np.append(self.infostats_unempwagebasis_acc[:,:self.n_pop],cc.infostats_unempwagebasis_acc[:,:cc.n_pop],axis=1)
+        self.infostats_toe = np.append(self.infostats_toe[:,:self.n_pop],cc.infostats_toe[:,:cc.n_pop],axis=1)
+        self.infostats_ove = self.infostats_ove+cc.infostats_ove
+        self.infostats_ove_g = self.infostats_ove_g+cc.infostats_ove_g
+        self.infostats_kassanjasen = self.infostats_kassanjasen+cc.infostats_kassanjasen
+        self.infostats_poptulot_netto = np.append(self.infostats_poptulot_netto[:,:self.n_pop],cc.infostats_poptulot_netto[:,:cc.n_pop],axis=1)
+        self.infostats_pop_wage = np.append(self.infostats_pop_wage[:,:self.n_pop],cc.infostats_pop_wage[:,:cc.n_pop],axis=1)
+        self.infostats_equivalent_income = self.infostats_equivalent_income+cc.infostats_equivalent_income
+        self.infostats_alv = self.infostats_alv+cc.infostats_alv
+        self.pop_predrew = np.append(self.pop_predrew[:,:self.n_pop],cc.pop_predrew[:,:cc.n_pop],axis=1)
+        if self.version in set([101,102,104]):
+            self.infostats_savings = np.append(self.infostats_savings[:,:self.n_pop],cc.infostats_savings[:,:cc.n_pop],axis=1)
+            self.sav_actions = np.append(self.sav_actions[:,:self.n_pop],cc.sav_actions[:,:cc.n_pop],axis=1)
+
+        if self.version in set([4,5,104]):
+            self.actions = np.append(self.actions,cc.actions[:,:cc.n_pop],axis=1)
+            self.infostats_puoliso = np.append(self.infostats_puoliso[:,:self.n_pop],cc.infostats_puoliso[:,:cc.n_pop],axis=1)
+            self.infostats_pop_emtr = np.append(self.infostats_pop_emtr[:,:self.n_pop],cc.infostats_pop_emtr[:,:cc.n_pop],axis=1)
+            self.infostats_pop_tva = np.append(self.infostats_pop_tva[:,:self.n_pop],cc.infostats_pop_tva[:,:cc.n_pop],axis=1)
+            self.infostats_pop_pt_act = np.append(self.infostats_pop_pt_act[:,:self.n_pop],cc.infostats_pop_pt_act[:,:cc.n_pop],axis=1)
+            self.infostats_pop_potential_wage = np.append(self.infostats_pop_potential_wage[:,:self.n_pop],cc.infostats_pop_potential_wage[:,:cc.n_pop],axis=1)
+        else:
+            self.actions = np.append(self.actions[:,:self.n_pop],cc.actions[:,:cc.n_pop],axis=1)
+
+        self.n_pop += cc.n_pop
+
     def add_v0(self,n,act,r,state,newstate,q=None,debug=False,plot=False,aveV=None,pred_r=None):
 
         emp,_,_,a,_,_=self.env.state_decode(state) # current employment state
@@ -354,10 +550,10 @@ class EpisodeStats():
                 #self.salaries[t,n]=newsal
                 self.salaries_emp[t,newemp]+=newsal
                 self.time_in_state[t,newemp]+=tis
-                if tis<=0.25 and newemp==5:
+                if tis<=0.26 and newemp==5:
                     self.infostats_mother_in_workforce[t]+=1
-                #if tis<=0.25 and newemp==6:
-                #    self.infostats_father_in_workforce[t]+=1
+                if tis<=0.26 and newemp==14:
+                    self.infostats_sv_in_workforce[t,g]+=1
                 self.infostats_pinkslip[t,newemp]+=pink
                 self.infostats_pop_pinkslip[t,n]=pink
                 self.gempstate[t,newemp,g]+=1
@@ -418,10 +614,10 @@ class EpisodeStats():
             self.popempstate[t,n]=newemp
             self.salaries_emp[t,newemp]+=newsal
             self.time_in_state[t,newemp]+=tis
-            if tis<=0.25 and newemp==5:
+            if tis<=0.26 and newemp==5:
                 self.infostats_mother_in_workforce[t]+=1
-            #if tis<=0.25 and newemp==6:
-            #    self.infostats_father_in_workforce[t]+=1
+            if tis<=0.26 and newemp==14:
+                self.infostats_sv_in_workforce[t,g]+=1
             self.infostats_pinkslip[t,newemp]+=pink
             self.infostats_pop_pinkslip[t,n]=pink
             self.gempstate[t,newemp,g]+=1
@@ -483,10 +679,10 @@ class EpisodeStats():
             #self.salaries[t,n]=newsal
             self.salaries_emp[t,newemp]+=newsal
             self.time_in_state[t,newemp]+=tis
-            if tis<=0.25 and newemp==5:
+            if tis<=0.26 and newemp==5:
                 self.infostats_mother_in_workforce[t]+=1
-            #if tis<=0.25 and newemp==6:
-            #    self.infostats_father_in_workforce[t]+=1
+            if tis<=0.26 and newemp==14:
+                self.infostats_sv_in_workforce[t,g]+=1
             self.infostats_pinkslip[t,newemp]+=pink
             self.infostats_pop_pinkslip[t,n]=pink
             self.gempstate[t,newemp,g]+=1
@@ -571,8 +767,10 @@ class EpisodeStats():
                 self.popunemprightused[t,n]=bu
                 self.infostats_ove[t,newemp]+=ove
                 self.infostats_ove_g[t,newemp,g]+=ove
-                if tis<=0.25 and newemp==5:
+                if tis<=0.26 and newemp==5:
                     self.infostats_mother_in_workforce[t]+=1
+                if tis<=0.26 and newemp==14:
+                    self.infostats_sv_in_workforce[t,g]+=1
                 if q is not None:
                     self.add_taxes(t,q,newemp,n,g,person='omat_')
                 
@@ -600,8 +798,10 @@ class EpisodeStats():
                 self.popunemprightused[t,n+1]=p_bu
                 self.infostats_ove[t,p_tila]+=p_ove
                 self.infostats_ove_g[t,p_tila,p_g]+=p_ove
-                if p_tis<=0.25 and p_tila==5:
+                if p_tis<=0.26 and p_tila==5:
                     self.infostats_mother_in_workforce[t]+=1
+                if p_tis<=0.26 and p_tila==14:
+                    self.infostats_sv_in_workforce[t,p_g]+=1
                 if q is not None:
                     self.add_taxes(t,q,p_tila,n+1,p_g,person='puoliso_')
                 
@@ -618,10 +818,6 @@ class EpisodeStats():
             self.popempstate[t,n+1]=p_tila
             self.time_in_state[t,newemp]+=tis
             self.time_in_state[t,p_tila]+=p_tis
-            #if tis<=0.25 and newemp==6:
-            #    self.infostats_father_in_workforce[t]+=1
-            #if p_tis<=0.25 and newemp==6:
-            #    self.infostats_mother_in_workforce[t]+=1
             self.gempstate[t,newemp,g]+=1
             self.gempstate[t,p_tila,p_g]+=1
             self.stat_tyoura[t,newemp]+=ura
@@ -706,8 +902,10 @@ class EpisodeStats():
                 self.popunemprightused[t,n]=bu
                 self.infostats_ove[t,newemp]+=ove
                 self.infostats_ove_g[t,newemp,g]+=ove
-                if tis<=0.25 and newemp==5:
+                if tis<=0.26 and newemp==5:
                     self.infostats_mother_in_workforce[t]+=1
+                if tis<=0.26 and newemp==14:
+                    self.infostats_sv_in_workforce[t,g]+=1
                 if q is not None:
                     self.add_taxes(t,q,newemp,n,g,person='omat_')
                 
@@ -737,8 +935,10 @@ class EpisodeStats():
                 self.popunemprightused[t,n+1]=p_bu
                 self.infostats_ove[t,p_tila]+=p_ove
                 self.infostats_ove_g[t,p_tila,p_g]+=p_ove
-                if p_tis<=0.25 and p_tila==5:
+                if p_tis<=0.26 and p_tila==5:
                     self.infostats_mother_in_workforce[t]+=1
+                if p_tis<=0.26 and p_tila==14:
+                    self.infostats_sv_in_workforce[t,p_g]+=1
                 if q is not None:
                     self.add_taxes(t,q,p_tila,n+1,p_g,person='puoliso_')
                 
@@ -755,10 +955,6 @@ class EpisodeStats():
             self.popempstate[t,n+1]=p_tila
             self.time_in_state[t,newemp]+=tis
             self.time_in_state[t,p_tila]+=p_tis
-            #if tis<=0.25 and newemp==6:
-            #    self.infostats_father_in_workforce[t]+=1
-            #if p_tis<=0.25 and newemp==6:
-            #    self.infostats_mother_in_workforce[t]+=1
             self.gempstate[t,newemp,g]+=1
             self.gempstate[t,p_tila,p_g]+=1
             self.stat_tyoura[t,newemp]+=ura
@@ -789,6 +985,143 @@ class EpisodeStats():
         elif newemp<0:
             self.deceiced[t]+=1                                    
             
+    def add_v5_noindivid(self,n,act,r,state,newstate,q=None,debug=False,plot=False,aveV=None,pred_r=None):
+
+        emp,_,_,_,a,_,_,_,_,_,\
+            _,_,_,_,_,_,_,_,_,_,\
+            _,_,_,_,_,_,p_tila_vanha,_,_,_,\
+            _,_,_,_,_,_,_,_,_,_,\
+            _,_,_,_,_,_,_,_,_,_,\
+            _,_,_,_,_,_,_\
+            =self.env.states.state_decode(state) # current employment state
+            
+        newemp,g,newpen,newsal,a2,tis,paidpens,pink,toe,toek,\
+            ura,bu,wr,upr,uw,uwr,pr,c3,c7,c18,\
+            unemp_left,aa,toe58,ove,jasen,puoliso,p_tila,p_g,p_w,p_newpen,\
+            p_wr,p_paidpens,p_nw,p_bu,p_unemp_benefit_left,p_unemp_after_ra,p_uw,p_uwr,p_aa,p_toe58,\
+            p_toe,p_toekesto,p_ura,p_tis,p_pink,p_ove,kansanelake,p_kansanelake,te_maksussa,p_te_maksussa,\
+            nw,old_pw,s_old_pw,pt_act,s_pt_act,wbasis,s_wbasis\
+            =self.env.states.state_decode(newstate)
+
+        t=int(np.round((a2-self.min_age)*self.inv_timestep))#-1
+        if a2>a and newemp>=0: # new state is not reset (age2>age) # FIXME: tässä newemp>0
+            if a2>self.min_retirementage:
+                if newemp==3:
+                    newemp=2
+                if p_tila==3:
+                    p_tila=2
+                    
+            self.empstate[t,newemp]+=1
+            self.empstate[t,p_tila]+=1
+            if newemp<15:
+                self.alive[t]+=1
+                self.galive[t,g]+=1
+                #self.pop_alive[t,n]=1
+                self.infostats_kassanjasen[t]+=jasen
+                #self.actions[t,n]=act[0]
+                self.salaries_emp[t,newemp]+=newsal
+                self.infostats_pinkslip[t,newemp]+=pink
+                #self.infostats_pop_pinkslip[t,n]=pink
+                self.stat_toe[t,newemp]+=toe
+                #self.infostats_toe[t,n]=toe
+                #self.infostats_pop_pension[t,n]=newpen
+                self.stat_pension[t,newemp]+=newpen
+                self.stat_paidpension[t,newemp]+=paidpens
+                self.stat_unemp_after_ra[t,newemp]+=upr
+                #self.stat_unemp_len[t,n]=tis
+                self.stat_wage_reduction[t,newemp]+=wr
+                self.stat_wage_reduction_g[t,newemp,g]+=wr
+                #self.infostats_pop_wage_reduction[t,n]=wr
+                #self.infostats_unempwagebasis[t,n]=uw
+                #self.infostats_unempwagebasis_acc[t,n]=uwr
+                #self.infostats_pop_pt_act[t,n]=pt_act
+                #self.popunemprightleft[t,n]=-self.env.unempright_left(newemp,tis,bu,a2,ura)
+                #self.popunemprightused[t,n]=bu
+                self.infostats_ove[t,newemp]+=ove
+                self.infostats_ove_g[t,newemp,g]+=ove
+                if tis<=0.26 and newemp==5:
+                    self.infostats_mother_in_workforce[t]+=1
+                if tis<=0.26 and newemp==14:
+                    self.infostats_sv_in_workforce[t,g]+=1
+                if q is not None:
+                    self.add_taxes_nopop(t,q,newemp,n,g,person='omat_')
+                
+            if p_tila<15:
+                self.alive[t]+=1
+                self.galive[t,p_g]+=1
+                #self.pop_alive[t,n+1]=1
+                self.infostats_kassanjasen[t]+=jasen
+                #self.actions[t,n+1]=act[1]
+                self.salaries_emp[t,p_tila]+=p_w
+                self.infostats_pinkslip[t,p_tila]+=p_pink
+                #self.infostats_pop_pinkslip[t,n+1]=p_pink
+                self.stat_toe[t,p_tila]+=p_toe
+                #self.infostats_toe[t,n+1]=p_toe
+                #self.infostats_pop_pension[t,n+1]=p_newpen
+                self.stat_pension[t,p_tila]+=p_newpen
+                self.stat_paidpension[t,p_tila]+=p_paidpens
+                self.stat_unemp_after_ra[t,p_tila] += p_unemp_after_ra
+                #self.stat_unemp_len[t,n+1]=p_tis
+                self.stat_wage_reduction[t,p_tila] += p_wr
+                self.stat_wage_reduction_g[t,p_tila,p_g] += p_wr
+                #self.infostats_pop_wage_reduction[t,n+1]=wr
+                #self.infostats_unempwagebasis[t,n+1]=p_uw
+                #self.infostats_unempwagebasis_acc[t,n+1]=p_uwr
+                #self.infostats_pop_pt_act[t,n+1]=s_pt_act
+                #self.popunemprightleft[t,n+1]=-self.env.unempright_left(p_tila,p_tis,p_bu,a2,p_ura)
+                #self.popunemprightused[t,n+1]=p_bu
+                self.infostats_ove[t,p_tila]+=p_ove
+                self.infostats_ove_g[t,p_tila,p_g]+=p_ove
+                if p_tis<=0.26 and p_tila==5:
+                    self.infostats_mother_in_workforce[t] += 1
+                if p_tis<=0.26 and p_tila==14:
+                    self.infostats_sv_in_workforce[t,p_g] += 1
+                if q is not None:
+                    self.add_taxes_nopop(t,q,p_tila,n+1,p_g,person='puoliso_')
+                
+            self.rewstate[t,newemp]+=r
+            self.rewstate[t,p_tila]+=r
+            
+            self.poprewstate[t,n]=r
+            self.poprewstate[t,n+1]=r
+            
+            # spouse is a first-class citizen
+            #self.infostats_puoliso[t,n]=puoliso
+            #self.infostats_puoliso[t,n+1]=puoliso
+            #self.popempstate[t,n]=newemp
+            #self.popempstate[t,n+1]=p_tila
+            self.time_in_state[t,newemp]+=tis
+            self.time_in_state[t,p_tila]+=p_tis
+            self.gempstate[t,newemp,g]+=1
+            self.gempstate[t,p_tila,p_g]+=1
+            self.stat_tyoura[t,newemp]+=ura
+            self.stat_tyoura[t,p_tila]+=p_ura
+            #self.infostats_group[n,0]=int(g)
+            #self.infostats_group[n+1,0]=int(p_g)
+            #self.infostats_pop_wage[t,n]=newsal
+            #self.infostats_pop_wage[t,n+1]=p_w
+            #self.infostats_children_under3[t,[n,n+1]]=c3
+            #self.infostats_children_under7[t,[n,n+1]]=c7
+            #self.infostats_children_under18[t,[n,n+1]]=c18
+
+            #if aveV is not None:
+            #    self.aveV[t,n]=aveV
+
+            if not emp==newemp:
+                self.siirtyneet[t,emp]+=1
+                self.siirtyneet_det[t,emp,newemp]+=1
+            else:
+                self.pysyneet[t,emp]+=1
+                
+            if not p_tila_vanha==p_tila:
+                self.siirtyneet[t,p_tila_vanha]+=1
+                self.siirtyneet_det[t,p_tila_vanha,p_tila]+=1
+            else:
+                self.pysyneet[t,p_tila_vanha]+=1
+                
+        elif newemp<0:
+            self.deceiced[t]+=1                                    
+                        
             
     def add_v101(self,n,act,r,state,newstate,q=None,debug=False,plot=False,aveV=None,pred_r=None):
 
@@ -931,14 +1264,14 @@ class EpisodeStats():
             self.popempstate[t,n+1]=p_tila
             self.time_in_state[t,newemp]+=tis
             self.time_in_state[t,p_tila]+=p_tis
-            if tis<=0.25 and newemp==5:
+            if tis<=0.26 and newemp==5:
                 self.infostats_mother_in_workforce[t]+=1
-            if p_tis<=0.25 and p_tila==5:
+            if p_tis<=0.26 and p_tila==5:
                 self.infostats_mother_in_workforce[t]+=1
-            #if tis<=0.25 and newemp==6:
-            #    self.infostats_father_in_workforce[t]+=1
-            #if p_tis<=0.25 and newemp==6:
-            #    self.infostats_mother_in_workforce[t]+=1
+            if tis<=0.26 and newemp==14:
+                self.infostats_sv_in_workforce[t,g]+=1
+            if p_tis<=0.26 and p_tila==14:
+                self.infostats_sv_in_workforce[t,p_g]+=1
             self.gempstate[t,newemp,g]+=1
             self.gempstate[t,p_tila,p_g]+=1
             self.stat_tyoura[t,newemp]+=ura
@@ -999,7 +1332,47 @@ class EpisodeStats():
         
         self.stat_wage_reduction_g=self.stat_wage_reduction_g/np.maximum(1,self.gempstate)
         self.infostats_ove_g=self.infostats_ove_g/np.maximum(1,self.gempstate)
-      
+
+        self.update_reward_stats()
+
+    def update_reward_stats(self):
+        r=self.comp_presentvalue()
+        self.initial_reward=np.mean(r[0,:])
+        self.average_discounted_reward=self.comp_realoptimrew()
+        self.rewards_computed=True
+
+    def get_initial_reward_old(self,startage=None):
+        real=self.comp_presentvalue()
+        if startage is None:
+            startage=self.min_age
+        age=max(1,startage-self.min_age)
+        realage=max(self.min_age+1,startage)
+        print('Initial discounted reward at age {}: {}'.format(realage,np.mean(real[age,:])))
+        return np.mean(real[age,:])
+        
+    def get_reward(self,discounted=False):
+        return self.get_average_discounted_reward()
+        #return self.comp_total_reward(output=False,discounted=discounted) #np.sum(self.rewstate)/self.n_pop
+
+    def get_initial_reward(self,recomp=False):
+        if recomp or not self.rewards_computed:
+            self.update_reward_stats()
+
+        return self.initial_reward
+
+    def get_average_discounted_reward(self,recomp=False):
+        if recomp or not self.rewards_computed:
+            self.update_reward_stats()
+
+        return self.average_discounted_reward
+
+    def get_reward_trajectory(self):
+        '''
+        Palauta keskimääräinen rewardin kehitys ajan mukana
+        '''
+        r=self.comp_presentvalue()
+        return np.mean(r,axis=1)
+
     def save_sim(self,filename):
         '''
         Save simulation results
@@ -1088,6 +1461,7 @@ class EpisodeStats():
         _ = f.create_dataset('infostats_ylevero', data=self.infostats_ylevero, dtype=ftype)
         _ = f.create_dataset('infostats_ylevero_distrib', data=self.infostats_ylevero_distrib, dtype=ftype,compression="gzip", compression_opts=9)
         _ = f.create_dataset('infostats_mother_in_workforce', data=self.infostats_mother_in_workforce, dtype=ftype)
+        _ = f.create_dataset('infostats_sv_in_workforce', data=self.infostats_sv_in_workforce, dtype=ftype)
         #_ = f.create_dataset('infostats_father_in_workforce', data=self.infostats_father_in_workforce, dtype=ftype)
         _ = f.create_dataset('infostats_children_under3', data=self.infostats_children_under3, dtype=np.int8,compression="gzip", compression_opts=9)
         _ = f.create_dataset('infostats_children_under7', data=self.infostats_children_under7, dtype=np.int8,compression="gzip", compression_opts=9)
@@ -1119,6 +1493,10 @@ class EpisodeStats():
         if self.version in set([5]):
             _ = f.create_dataset('infostats_pop_pt_act', data=self.infostats_pop_pt_act,  dtype=ftype,compression="gzip", compression_opts=9)
 
+        _ = f.create_dataset('initial_reward', data=self.initial_reward,  dtype=ftype)
+        _ = f.create_dataset('average_discounted_reward', data=self.average_discounted_reward,  dtype=ftype)
+        _ = f.create_dataset('rewards_computed', data=self.rewards_computed,  dtype=ftype)
+
         f.close()
 
     def save_to_hdf(self,filename,nimi,arr,dtype):
@@ -1148,6 +1526,10 @@ class EpisodeStats():
             
         if not silent and not self.silent:
             print(f'Loading results from {filename} version {version}')
+
+        if 'max_ge' in f.keys():
+            self.max_age=f['max_age'][()]
+            self.min_age=f['min_age'][()]
 
         self.empstate=f['empstate'][()]
         self.gempstate=f['gempstate'][()]
@@ -1266,8 +1648,8 @@ class EpisodeStats():
 
         if 'infostats_mother_in_workforce' in f.keys():
             self.infostats_mother_in_workforce=f['infostats_mother_in_workforce'][()]
-        #if 'infostats_father_in_workforce' in f.keys():
-        #    self.infostats_father_in_workforce=f['infostats_father_in_workforce'][()]
+        if 'infostats_sv_in_workforce' in f.keys():
+            self.infostats_sv_in_workforce=f['infostats_sv_in_workforce'][()]
 
         if 'stat_wage_reduction_g' in f.keys():
             self.stat_wage_reduction_g=f['stat_wage_reduction_g'][()]
@@ -1340,6 +1722,11 @@ class EpisodeStats():
         if 'infostats_pop_pt_act' in f.keys():
             self.infostats_pop_pt_act=f['infostats_pop_pt_act'][()]
 
+        if 'initial_reward' in f.keys():
+            self.initial_reward=f['initial_reward'][()]
+            self.average_discounted_reward=f['average_discounted_reward'][()]
+            self.rewards_computed=f['rewards_computed'][()]
+
         if n_pop is not None:
             self.n_pop=n_pop
 
@@ -1359,18 +1746,6 @@ class EpisodeStats():
         
     def scale_error(self,x,target=None,averaged=False):
         return (target-self.comp_scaled_consumption(x,averaged=averaged))
-
-    def get_initial_reward(self,startage=None):
-        real=self.comp_presentvalue()
-        if startage is None:
-            startage=self.min_age
-        age=max(1,startage-self.min_age)
-        realage=max(self.min_age+1,startage)
-        print('Initial discounted reward at age {}: {}'.format(realage,np.mean(real[age,:])))
-        return np.mean(real[age,:])
-        
-    def get_reward(self,discounted=False):
-        return self.comp_total_reward(output=False,discounted=discounted) #np.sum(self.rewstate)/self.n_pop
 
     def comp_total_reward(self,output=False,discounted=True,discountfactor=None):
         if not discounted:
@@ -2141,7 +2516,7 @@ class EpisodeStats():
         
         return ulkopuolella_m[::skip],ulkopuolella_n[::skip],tyovoimassa_m,tyovoimassa_n
 
-    def get_muut(self,skip=4,show=False,all=True,csv=None):
+    def get_muut(self,skip=4,show=False,csv=None):
         '''
         Laskee vanhempainvapaalla olevien määrän outsider-mallia (Excel) varten, ilman työvoimassa olevia vanhempainvapailla olevia
         '''
@@ -2179,18 +2554,16 @@ class EpisodeStats():
                 print('{},'.format(n[k,0]),end='')
             print(']')
 
-
         alive=np.zeros((self.galive.shape[0],1))
         alive[:,0]=np.sum(self.galive[:,0:3],1)
         ulkopuolella_m=np.sum(self.gempstate[:,7,0:3],axis=1)[:,None]/alive
         tyovoimassa_m=np.sum(self.gempstate[:,6,0:3],axis=1)[:,None]/alive
+        sv_tyovoimassa_m=np.sum(self.infostats_sv_in_workforce[:,0:3],axis=1)[:,None]/alive
 
         alive[:,0]=np.sum(self.galive[:,3:6],1)
-        nn=np.sum(self.gempstate[:,5,3:6]+self.gempstate[:,7,3:6],axis=1)[:,None]
-        if not all:
-            nn-=self.infostats_mother_in_workforce
-        ulkopuolella_n=nn/alive
+        ulkopuolella_n=(np.sum(self.gempstate[:,5,3:6]+self.gempstate[:,7,3:6],axis=1)[:,None] - self.infostats_mother_in_workforce)/alive
         tyovoimassa_n=self.infostats_mother_in_workforce/alive
+        sv_tyovoimassa_n=np.sum(self.infostats_sv_in_workforce[:,3:6],axis=1)[:,None]/alive
 
         if show:
             m,n=ulkopuolella_m[::skip],ulkopuolella_n[::skip]
@@ -2215,8 +2588,9 @@ class EpisodeStats():
         if csv is not None:
             n=muut_m[::skip].shape[0]
             x=np.linspace(self.min_age,self.min_age+n-1,n).reshape(-1,1)
-            df = pd.DataFrame(np.hstack([x,muut_m[::skip],muut_n[::skip],opisk_m[::skip],opisk_n[::skip],svpaivaraha_m[::skip],svpaivaraha_n[::skip],ulkopuolella_m[::skip],ulkopuolella_n[::skip],tyovoimassa_m[::skip],tyovoimassa_n[::skip]]), 
-                columns = ['ikä','muut_m','muut_n','opisk_m','opisk_n','svpaivaraha_m','svpaivaraha_n','ulkopuolella_m','ulkopuolella_n','tyovoimassa_m','tyovoimassa_n'])
+            df = pd.DataFrame(np.hstack([x,muut_m[::skip],muut_n[::skip],opisk_m[::skip],opisk_n[::skip],svpaivaraha_m[::skip],svpaivaraha_n[::skip],
+                ulkopuolella_m[::skip],ulkopuolella_n[::skip],tyovoimassa_m[::skip],tyovoimassa_n[::skip],sv_tyovoimassa_m[::skip],sv_tyovoimassa_n[::skip]]), 
+                columns = ['ikä','muut_m','muut_n','opisk_m','opisk_n','svpaivaraha_m','svpaivaraha_n','vv_ulkopuolella_m','vv_ulkopuolella_n','vv_tyovoimassa_m','vv_tyovoimassa_n','sv_tyovoimassa_m','sv_tyovoimassa_n'])
             df.to_csv(csv, sep=";", decimal=",",index=False)
         
         return muut_m[::skip],muut_n[::skip]
@@ -2291,8 +2665,8 @@ class EpisodeStats():
         print(f'min wage {min_wage} max wage {max_wage}')
         print(f'min pension {min_pension} max pension {max_pension}')
 
-    def setup_labels(self):
-        self.labels=self.lab.get_labels(self.language)
+    #def setup_labels(self):
+    #    self.labels=self.lab.get_labels(self.language)
 
     def map_age(self,age,start_zero=False):
         if start_zero:
@@ -2716,6 +3090,65 @@ class EpisodeStats():
                             prev_trans=t
 
         return unemp_distrib,emp_distrib,unemp_distrib_bu
+
+    def comp_empdistribs_v2(self,popempstate=None,popunemprightleft=None,putki=True,tmtuki=True,laaja=False,outsider=False,ansiosid=True,tyott=False,max_age=100,filter=400):
+        '''
+        Työttömien siirtyminen pois työttömyydestä ensimmäistä kertaa
+        jakauma
+        '''
+        unemp_distrib=[]
+        unemp_distrib_bu=[]
+        emp_distrib=[]
+        unempset=[]
+
+        if tmtuki:
+            unempset.append(13)
+        if outsider:
+            unempset.append(11)
+        if putki:
+            unempset.append(4)
+        if ansiosid:
+            unempset.append(0)
+        if tyott:
+            unempset=[0,4,13]
+
+        if laaja:
+            unempset=[0,4,11,13]
+
+        if popempstate is None or popunemprightleft is None:
+            popempstate=self.popempstate
+            popunemprightleft=self.popunemprightleft
+
+        empset=set([1,10])
+        unempset=set(unempset)
+
+        for k in range(self.n_pop):
+            prev_state=popempstate[0,k]
+            prev_trans=0
+            for t in range(1,self.n_time):
+                age=self.min_age+t*self.timestep
+                passed=False
+                if age<=max_age:
+                    if popunemprightleft[t,k]>=filter:
+                        passed=True
+                    
+                    if self.popempstate[t,k]!=prev_state:
+                        if prev_state in unempset and popempstate[t,k] not in unempset:
+                            if passed:
+                                unemp_distrib.append((t-prev_trans)*self.timestep)
+                                unemp_distrib_bu.append(popunemprightleft[t,k])
+                                passed=False
+                                prev_state=popempstate[t,k]
+                                prev_trans=t
+                        elif prev_state in empset and popempstate[t,k] not in unempset:
+                            emp_distrib.append((t-prev_trans)*self.timestep)
+                            prev_state=popempstate[t,k]
+                            prev_trans=t
+                        else: # some other state
+                            prev_state=popempstate[t,k]
+                            prev_trans=t
+
+        return unemp_distrib,emp_distrib,unemp_distrib_bu        
 
     def empdist_stat(self):
         ratio=np.array([1,0.287024901703801,0.115508955875928,0.0681083442551332,0.0339886413280909,0.0339886413280909,0.0114460463084316,0.0114460463084316,0.0114460463084316,0.00419397116644823,0.00419397116644823,0.00419397116644823,0.00419397116644823,0.00419397116644823,0.00419397116644823,0.00419397116644823,0.00419397116644823,0.00166011358671909,0.00166011358671909,0.00166011358671909,0.00166011358671909,0.00166011358671909,0.00166011358671909,0.00166011358671909,0.00166011358671909,0.00104849279161206,0.00104849279161206,0.00104849279161206,0.00104849279161206,0.00104849279161206,0.00104849279161206,0.00104849279161206,0.00104849279161206])

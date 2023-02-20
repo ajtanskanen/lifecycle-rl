@@ -1,5 +1,7 @@
 '''
 Runner for making fitting with stand-alone code without external libraries
+
+Employ a3C with MLP + GRU
 '''
 
 import gym, torch, numpy as np, torch.nn as nn

@@ -28,7 +28,7 @@ from . simstats import SimStats
 class runner_stablebaselines3():
     def __init__(self,environment,gamma,timestep,n_time,n_pop,
                  minimal,min_age,max_age,min_retirementage,year,episodestats,
-                 gym_kwargs):
+                 gym_kwargs,version):
         self.gamma=gamma
         self.timestep=timestep
         self.environment=environment
