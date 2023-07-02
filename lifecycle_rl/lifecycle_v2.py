@@ -70,6 +70,7 @@ class Lifecycle():
                 'reset_exploration_ratio': self.exploration_ratio,
                 'perustulomalli': perustulomalli,
                 'perustulo': perustulo,
+                'universalcredit': self.universalcredit, 
                 'osittainen_perustulo': self.osittainen_perustulo, 
                 'perustulo_korvaa_toimeentulotuen': self.perustulo_korvaa_toimeentulotuen,
                 'startage': self.startage,
@@ -97,6 +98,7 @@ class Lifecycle():
                 'ansiopvraha_toe': self.ansiopvraha_toe,
                 'include_pinkslip':self.include_pinkslip,
                 'perustulo': self.perustulo, 
+                'universalcredit': self.universalcredit, 
                 'karenssi_kesto': self.karenssi_kesto,
                 'mortality': self.mortality, 
                 'randomness': self.randomness,
@@ -237,6 +239,7 @@ class Lifecycle():
         self.plotdebug=False
         self.include_pinkslip=True
         self.mortality=False
+        self.universalcredit=False
         self.perustulo=False
         self.perustulo_korvaa_toimeentulotuen=False
         self.perustulomalli=None
@@ -296,6 +299,9 @@ class Lifecycle():
                 if value is not None:
                     self.processes=value
                     print('processes',self.processes)
+            if key=='universalcredit':
+                if value is not None:
+                    self.universalcredit=value
             if key=='callback_minsteps':
                 if value is not None:
                     self.callback_minsteps=value
@@ -748,8 +754,8 @@ class Lifecycle():
                        use_callback=False,use_vecmonitor=False,log_interval=log_interval,bestname=save,plotdebug=plotdebug,
                        max_grad_norm=max_grad_norm,learning_rate=learning_rate,learning_schedule=learning_schedule,processes=processes)
 
-    def predict_protocol(self,pop=1_00,rlmodel='acktr',results='results/simut_res',arch=None,
-                         load='saved/malli',debug=False,deterministic=False,startage=None,processes=None):
+    def predict_protocol(self,pop: float=1_00,rlmodel: str='acktr',results: str='results/simut_res',arch=None,
+                         load: str='saved/malli',debug: bool=False,deterministic: bool=False,startage: float=None,processes: int=None):
         '''
         predict_protocol
 

@@ -7,6 +7,7 @@ import numpy as np
 from gym import spaces, logger, utils, error
 from gym.utils import seeding
 from IPython.core.display import display,HTML
+import json
 #from stable_baselines.common import set_global_seeds
 
 
@@ -158,4 +159,12 @@ def print_q(a):
             print('{}:{:.2f} '.format(x,a[x]),end='')
             
     print('')
+        
+class NpEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        return super(NpEncoder, self).default(obj)
+
+
         

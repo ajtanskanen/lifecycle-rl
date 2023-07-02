@@ -4,6 +4,7 @@ Runner for making fitting with Stable Baselines 2.0
 '''
 
 import gym, numpy as np
+import os
 from stable_baselines.common import make_vec_env
 from stable_baselines.common.vec_env import SubprocVecEnv,DummyVecEnv, VecNormalize
 from stable_baselines.common.env_checker  import check_env as env_checker_check_env
@@ -197,6 +198,10 @@ class runner_stablebaselines2():
             
         max_grad_norm=0.05 # 0.01 # 0.001  was old
         kfac_clip=0.001
+
+        #if cont and not os.path.isfile(loadname):
+        #    cont=False
+        #    print(f'File {loadname} does not exist, switching to cont=False')
         
         if cont:
             learning_rate=0.25*learning_rate
@@ -478,7 +483,7 @@ class runner_stablebaselines2():
         gkwargs=self.args['gym_kwargs'].copy()
         gkwargs.update({'train':False})
         
-        pop=1 # self.n_pop
+        pop=2 # self.n_pop
         self.episodestats.reset(self.timestep,self.n_time,self.n_employment,pop,
                                 self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year)
 
@@ -487,8 +492,13 @@ class runner_stablebaselines2():
         processes = []
 
         print('simulating with',self.args['processes'],'processes')
+        pop_left = args['pop']
+        per_process = int(np.ceil(args['pop']/args['processes']/2))*2
         for rank in range(self.args['processes']):
-            p = Process(target=self.simulate_single, args=(rank, args, gkwargs, info))
+            sim_num = min(per_process,pop_left)
+            pop_left -= sim_num
+            print('********','rank',rank,'sim_num',sim_num,'pop_left',pop_left)
+            p = Process(target=self.simulate_single, args=(rank, args, gkwargs, sim_num, info))
             print('started.',rank)
             p.start()
             processes.append(p)
@@ -506,41 +516,42 @@ class runner_stablebaselines2():
         
         print('done')
             
-    def simulate_single(self, rank, args, kwargs, info):
+    def simulate_single(self, rank, args, kwargs, n_pop_single, info):
         '''
         An own process for each simulation unit
         '''
 
         print('sim_single',rank)
 
-        if args['version'] in set([4,5,104]):  # increase by 2
+        if args['version'] in set([4,5,6,7,104]):  # increase by 2
             n_add=2
         else:  # increase by 1
             n_add=1
 
         render = args['render']
-        n_pop_single = int(args['pop']/args['processes'])
+        print('pop',args['pop'],'procs',args['processes'])
         deterministic = args['deterministic']
         debug = args['debug']
         savefile=args['save_dir']+args['simfile']+'_rank_'+str(rank)
         #kwargs['silent']=True
+        #print(kwargs)
 
         if rank==0:
-            print(savefile)
+            print('savefile',savefile)
 
         #env = SubprocVecEnv([make_env(args['environment'], 0, kwargs=kwargs)], start_method='spawn')
         #env = gym.make(args['environment'],kwargs=kwargs) # make a local (unshared) environment
         #env = SubprocVecEnv(env)
-        print('Child',rank,'check point 3')
+        #print('Child',rank,'check point 3')
         seed = 20_000 + rank*100 # must not be identical to train seed
         #env = SubprocVecEnv([lambda: make_env(args['environment'],seed+i,kwargs=kwargs) for i in range(1)], start_method='spawn')
         envlist=[lambda: make_env(args['environment'],seed+i,kwargs=kwargs) for i in range(1)]
-        print('Child',rank,'check point 3b')
+        #print('Child',rank,'check point 3b')
         env = DummyVecEnv(envlist)
         #env = SubprocVecEnv(envlist, start_method='spawn')
-        print('spawning',args['environment'])
+        #print('spawning',args['environment'])
         #env = SubprocVecEnv([lambda: make_env(args['environment'],seed,kwargs=kwargs) for i in range(1)], start_method='spawn')
-        print('Child',rank,'check point 4')
+        #print('Child',rank,'check point 4')
 
         env.seed(args['seed'] + rank)
 
@@ -549,6 +560,8 @@ class runner_stablebaselines2():
 
         if args['startage'] is not None:
             env.set_startage(args['startage'])
+
+        #print('Child',rank,'check point 5')
 
         states = env.reset()
 
@@ -564,9 +577,8 @@ class runner_stablebaselines2():
                             silent=True)
         episodestats.init_variables()
 
-        n=0
-        pred=0
-        
+        #print('Child',rank,'check point 6')
+
         if rank==0:
             tqdm_e = tqdm(range(args['pop']), desc='Population', leave=True, unit=" p")
 
@@ -590,6 +602,8 @@ class runner_stablebaselines2():
         #             states = newstate
 
         k=0
+        n=0
+        pred=0
         while n<n_pop_single:
             act, predstate = model.predict(states,deterministic=deterministic)
             newstate, rewards, dones, infos = env.step(act)
