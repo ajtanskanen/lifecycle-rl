@@ -138,7 +138,8 @@ class Lifecycle():
                 'use_utility': self.use_utility,
                 'CRRA_eta': self.CRRA_eta,
                 'silent': self.silent,
-                'include_emtr': self.include_emtr
+                'include_emtr': self.include_emtr,
+                'ben': self.ben
                 }
                 
         # Create log dir & results dirs
@@ -159,7 +160,7 @@ class Lifecycle():
         self.n_age = self.max_age-self.min_age+1
         self.n_time = int(np.round((self.n_age-1)*self.inv_timestep))+1
 
-        if self.version in set([4,5,104]):
+        if self.version in set([4,5,6,7,104]):
             self.min_retirementage=self.env.get_retirementage()
 
         self.episodestats=SimStats(self.timestep,self.n_time,self.n_employment,1, #self.n_pop,
@@ -212,7 +213,7 @@ class Lifecycle():
     def initial_parameters(self):
     
         self.min_age = 18
-        self.max_age = 70
+        self.max_age = 75
         self.figformat='pdf'
         self.minimal=False
         self.timestep=0.25
@@ -284,6 +285,8 @@ class Lifecycle():
         self.r_std=0
         self.CRRA_eta=1.5
         self.use_utility=0 # log; 1 CRRA
+
+        self.ben=None
         
     def setup_parameters(self,**kwargs):
         if 'kwargs' in kwargs:
@@ -479,6 +482,9 @@ class Lifecycle():
             elif key=='use_tianshou':
                 if value is not None:
                     self.use_tianshou=value
+            elif key=='ben':
+                if value is not None:
+                    self.ben=value
             
     def explain(self):
         '''

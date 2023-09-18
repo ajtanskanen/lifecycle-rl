@@ -165,8 +165,8 @@ class runner_stablebaselines2():
         max_grad_norm=0.05 # 0.01 # 0.001  was old
         kfac_clip=0.001
         
-        if cont:
-            learning_rate=0.25*learning_rate
+        #if cont:
+        #    learning_rate=0.25*learning_rate
             
         scaled_learning_rate=learning_rate
         print('batch {} learning rate {} scaled {} n_cpu {}'.format(batch,learning_rate,

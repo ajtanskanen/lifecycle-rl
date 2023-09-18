@@ -32,11 +32,11 @@ class Empstats():
         '''
         if self.year==2018:
             if g==0: # kaikki
-                emp=np.array([0.299,0.455,0.464,0.548,0.569,0.602,0.649,0.682,0.709,0.732,0.743,0.755,0.761,0.772,0.779,0.784,0.791,0.798,0.806,0.811,0.812,0.824,0.824,0.833,0.835,0.837,0.836,0.832,0.832,0.829,0.825,0.821,0.819,0.816,0.811,0.806,0.799,0.791,0.776,0.766,0.753,0.730,0.686,0.630,0.568,0.382,0.218,0.143,0.108,0.088,0.012,0.003,0.002])
+                emp=np.array([0.299,0.455,0.464,0.548,0.569,0.602,0.649,0.682,0.709,0.732,0.743,0.755,0.761,0.772,0.779,0.784,0.791,0.798,0.806,0.811,0.812,0.824,0.824,0.833,0.835,0.837,0.836,0.832,0.832,0.829,0.825,0.821,0.819,0.816,0.811,0.806,0.799,0.791,0.776,0.766,0.753,0.730,0.686,0.630,0.568,0.382,0.218,0.143,0.108,0.088,0.012,0.003,0.002,0.002,0.001,0.001,0.000,0.000])
             elif g==1: # naiset
-                emp=np.array([0.34,0.531,0.556,0.569,0.587,0.623,0.669,0.688,0.705,0.726,0.729,0.737,0.744,0.751,0.756,0.766,0.772,0.780,0.792,0.797,0.801,0.817,0.821,0.832,0.836,0.839,0.840,0.839,0.837,0.840,0.836,0.835,0.831,0.831,0.828,0.825,0.819,0.815,0.802,0.794,0.782,0.761,0.715,0.665,0.596,0.401,0.222,0.137,0.100,0.082,0.012,0.004,0.003])
+                emp=np.array([0.344,0.531,0.556,0.569,0.587,0.623,0.669,0.688,0.705,0.726,0.729,0.737,0.744,0.751,0.756,0.766,0.772,0.780,0.792,0.797,0.801,0.817,0.821,0.832,0.836,0.839,0.840,0.839,0.837,0.840,0.836,0.835,0.831,0.831,0.828,0.825,0.819,0.815,0.802,0.794,0.782,0.761,0.715,0.665,0.596,0.401,0.222,0.137,0.100,0.082,0.012,0.004,0.003,0.002,0.001,0.001,0.001,0.000])
             else: # miehet
-                emp=np.array([0.257,0.384,0.377,0.527,0.553,0.582,0.629,0.676,0.713,0.737,0.755,0.772,0.777,0.792,0.801,0.802,0.808,0.815,0.818,0.823,0.823,0.830,0.828,0.835,0.834,0.835,0.833,0.825,0.826,0.817,0.815,0.807,0.807,0.801,0.793,0.786,0.780,0.768,0.750,0.738,0.724,0.698,0.655,0.594,0.539,0.362,0.214,0.149,0.116,0.095,0.012,0.002,0.002])
+                emp=np.array([0.257,0.384,0.377,0.527,0.553,0.582,0.629,0.676,0.713,0.737,0.755,0.772,0.777,0.792,0.801,0.802,0.808,0.815,0.818,0.823,0.823,0.830,0.828,0.835,0.834,0.835,0.833,0.825,0.826,0.817,0.815,0.807,0.807,0.801,0.793,0.786,0.780,0.768,0.750,0.738,0.724,0.698,0.655,0.594,0.539,0.362,0.214,0.149,0.116,0.095,0.012,0.002,0.002,0.001,0.001,0.001,0.000,0.000])
         elif self.year==2019:
             if g==0: # kaikki
                 emp=np.array([0.290,0.453,0.462,0.534,0.558,0.591,0.633,0.678,0.708,0.721,0.741,0.751,0.758,0.762,0.769,0.778,0.782,0.788,0.796,0.804,0.808,0.812,0.822,0.824,0.833,0.834,0.835,0.834,0.828,0.830,0.826,0.824,0.818,0.815,0.810,0.805,0.797,0.789,0.782,0.767,0.752,0.732,0.698,0.647,0.591,0.455,0.239,0.156,0.115,0.089,0.028,0.017,0.013])
@@ -422,11 +422,11 @@ class Empstats():
         '''
         if self.year==2018:
             if g==0: # kaikki
-                emp_ratio=np.array([ 0.011,0.014,0.016,0.016,0.018,0.019,0.019,0.021,0.020,0.019,0.020,0.021,0.022,0.022,0.024,0.024,0.025,0.025,0.026,0.026,0.029,0.029,0.030,0.031,0.034,0.037,0.039,0.042,0.045,0.047,0.052,0.056,0.060,0.065,0.070,0.076,0.088,0.098,0.110,0.128,0.159,0.196,0.277,0.533,0.741,0.849,0.888,0.908,0.983,0.992,0.993 ])
+                emp_ratio=np.array([ 0.011,0.014,0.016,0.016,0.018,0.019,0.019,0.021,0.020,0.019,0.020,0.021,0.022,0.022,0.024,0.024,0.025,0.025,0.026,0.026,0.029,0.029,0.030,0.031,0.034,0.037,0.039,0.042,0.045,0.047,0.052,0.056,0.060,0.065,0.070,0.076,0.088,0.098,0.110,0.128,0.159,0.196,0.277,0.533,0.741,0.849,0.888,0.908,0.983,0.992,0.993,0.993,0.993,0.993,0.994,0.994,0.996,1.000])
             elif g==1: # naiset
-                emp_ratio=np.array([ 0.010,0.013,0.014,0.016,0.016,0.017,0.018,0.018,0.018,0.018,0.017,0.020,0.020,0.020,0.022,0.021,0.023,0.022,0.023,0.024,0.025,0.026,0.027,0.029,0.031,0.034,0.036,0.038,0.041,0.044,0.047,0.052,0.055,0.058,0.062,0.066,0.077,0.085,0.097,0.111,0.142,0.177,0.258,0.518,0.735,0.855,0.896,0.916,0.983,0.991,0.992 ])
+                emp_ratio=np.array([ 0.010,0.013,0.014,0.016,0.016,0.017,0.018,0.018,0.018,0.018,0.017,0.020,0.020,0.020,0.022,0.021,0.023,0.022,0.023,0.024,0.025,0.026,0.027,0.029,0.031,0.034,0.036,0.038,0.041,0.044,0.047,0.052,0.055,0.058,0.062,0.066,0.077,0.085,0.097,0.111,0.142,0.177,0.258,0.518,0.735,0.855,0.896,0.916,0.983,0.991,0.992,0.993,0.993,0.993,0.994,0.994,0.996,1.000])
             else: # miehet
-                emp_ratio=np.array([ 0.012,0.016,0.018,0.017,0.019,0.020,0.021,0.023,0.022,0.021,0.022,0.021,0.024,0.024,0.026,0.026,0.026,0.028,0.028,0.027,0.032,0.032,0.033,0.033,0.036,0.041,0.042,0.045,0.049,0.051,0.056,0.060,0.065,0.072,0.078,0.086,0.099,0.112,0.123,0.144,0.178,0.216,0.297,0.549,0.748,0.843,0.880,0.901,0.982,0.993,0.993 ])
+                emp_ratio=np.array([ 0.009,0.010,0.013,0.017,0.018,0.018,0.020,0.020,0.021,0.023,0.023,0.021,0.023,0.021,0.024,0.024,0.026,0.026,0.026,0.028,0.028,0.028,0.032,0.032,0.033,0.033,0.036,0.041,0.042,0.046,0.049,0.051,0.056,0.061,0.065,0.072,0.079,0.088,0.100,0.113,0.128,0.147,0.184,0.220,0.303,0.554,0.749,0.844,0.879,0.900,0.983,0.993,0.993,0.993,0.994,0.994,0.996,1.000])
         elif self.year==2019: # 2019, päivitä
             if g==0: # kaikki
                 emp_ratio=np.array([ 0.011,0.014,0.016,0.016,0.018,0.019,0.019,0.021,0.020,0.019,0.020,0.021,0.022,0.022,0.024,0.024,0.025,0.025,0.026,0.026,0.029,0.029,0.030,0.031,0.034,0.037,0.039,0.042,0.045,0.047,0.052,0.056,0.060,0.065,0.070,0.076,0.088,0.098,0.110,0.128,0.159,0.196,0.277,0.533,0.741,0.849,0.888,0.908,0.983,0.992,0.993 ])
@@ -481,7 +481,7 @@ class Empstats():
         päivitä
         '''
         if self.year==2018:
-            if g==0: # miehet
+            if g==2: # miehet
                 emp_ratio=np.array([0.276,0.503,0.508,0.627,0.642,0.666,0.714,0.761,0.795,0.819,0.840,0.852,0.858,0.866,0.877,0.878,0.879,0.889,0.892,0.893,0.895,0.901,0.900,0.905,0.906,0.909,0.906,0.902,0.903,0.900,0.899,0.896,0.893,0.887,0.885,0.877,0.873,0.864,0.850,0.837,0.826,0.809,0.775,0.741,0.663,0.428,0.242,0.149,0.116,0.095,0.012,0.002,0.002])
             elif g==1: # naiset
                 emp_ratio=np.array([0.360,0.612,0.625,0.626,0.641,0.672,0.718,0.740,0.755,0.773,0.780,0.784,0.794,0.799,0.802,0.814,0.820,0.831,0.845,0.853,0.859,0.872,0.880,0.891,0.897,0.900,0.903,0.903,0.903,0.906,0.904,0.901,0.900,0.901,0.898,0.896,0.890,0.887,0.875,0.870,0.858,0.844,0.812,0.781,0.701,0.458,0.253,0.137,0.100,0.082,0.012,0.004,0.003])
@@ -786,7 +786,6 @@ class Empstats():
         '''
         demog2=self.get_demog()
 
-        #scalex=demog2/self.n_pop
         htv=6*52
         htv_tt=21.5*12
         h_to_v=1.0 / 1860.0
@@ -899,7 +898,6 @@ class Empstats():
         '''
         demog2=self.get_demog()
 
-        #scalex=demog2/self.n_pop
         h_to_v=1.0 / 1860.0
 
         q={}
@@ -912,7 +910,7 @@ class Empstats():
             q['ansiosidonnaisella']=116_972+27_157  # Kelan tilasto 31.12.2018 # vuoden aikana 339 680
             q['tmtuella']=189_780  # Kelan tilasto 31.12.2018 # vuoden aikana 268 254
             q['isyysvapaalla']=59_640 # Kelan tilasto 2018
-            q['kotihoidontuella']=42_042 # saajia Kelan tilasto 2018
+            q['kotihoidontuella']=95_759 # saajia Kelan tilasto 2018
             q['työkyvyttömyyseläke']=198_762
             q['vanhempainvapaalla']=84_387 # Kelan tilasto 2018
             q['opiskelijoita']=109076+111441
@@ -925,7 +923,7 @@ class Empstats():
             q['palkansaajia']=2_204_000 # TK
             q['ansiosidonnaisella']=116_972+27_157  # Kelan tilasto 31.12.2018
             q['isyysvapaalla']=59_640 # Kelan tilasto 2018
-            q['kotihoidontuella']=42_042 # saajia Kelan tilasto 2018
+            q['kotihoidontuella']=89_663 # saajia Kelan tilasto 2018
             q['työkyvyttömyyseläke']=195_316
             q['vanhempainvapaalla']=84_387 # Kelan tilasto 2018
             q['opiskelijoita']=114433+109652
@@ -939,7 +937,7 @@ class Empstats():
             q['ansiosidonnaisella']=116_972+27_157  # Kelan tilasto 31.12.2018
             q['tmtuella']=189_780  # Kelan tilasto 31.12.2018
             q['isyysvapaalla']=59_640 # Kelan tilasto 2018
-            q['kotihoidontuella']=42_042 # saajia Kelan tilasto 2018
+            q['kotihoidontuella']=86_614 # saajia Kelan tilasto 2018
             q['työkyvyttömyyseläke']=191_597
             q['vanhempainvapaalla']=84_387 # Kelan tilasto 2018
             q['opiskelijoita']=126153+118325
@@ -953,7 +951,7 @@ class Empstats():
             q['ansiosidonnaisella']=116_972+27_157  # Kelan tilasto 31.12.2018 # vuoden aikana 355 729
             q['tmtuella']=189_780  # Kelan tilasto 31.12.2018
             q['isyysvapaalla']=59_640 # Kelan tilasto 2018
-            q['kotihoidontuella']=42_042 # saajia Kelan tilasto 2018
+            q['kotihoidontuella']=82_386 # saajia Kelan tilasto 2018
             q['työkyvyttömyyseläke']=185_991  
             q['vanhempainvapaalla']=84_387 # Kelan tilasto 2018
             q['opiskelijoita']=126153+118325
@@ -967,7 +965,7 @@ class Empstats():
             q['ansiosidonnaisella']=116_972+27_157  # Kelan tilasto 31.12.2018
             q['tmtuella']=189_780  # Kelan tilasto 31.12.2018
             q['isyysvapaalla']=59_640 # Kelan tilasto 2018
-            q['kotihoidontuella']=42_042 # saajia Kelan tilasto 2018
+            q['kotihoidontuella']=79_880 # saajia Kelan tilasto 2018
             q['työkyvyttömyyseläke']=185_991  
             q['vanhempainvapaalla']=84_387 # Kelan tilasto 2018
             q['opiskelijoita']=126153+118325
@@ -981,7 +979,7 @@ class Empstats():
             q['ansiosidonnaisella']=116_972+27_157  # Kelan tilasto 31.12.2018
             q['tmtuella']=189_780  # Kelan tilasto 31.12.2018
             q['isyysvapaalla']=59_640 # Kelan tilasto 2018
-            q['kotihoidontuella']=42_042 # saajia Kelan tilasto 2018
+            q['kotihoidontuella']=79_880 # saajia Kelan tilasto 2018
             q['työkyvyttömyyseläke']=185_991  
             q['vanhempainvapaalla']=84_387 # Kelan tilasto 2018
             q['opiskelijoita']=126153+118325
@@ -995,7 +993,7 @@ class Empstats():
             q['ansiosidonnaisella']=116_972+27_157  # Kelan tilasto 31.12.2018
             q['tmtuella']=189_780  # Kelan tilasto 31.12.2018
             q['isyysvapaalla']=59_640 # Kelan tilasto 2018
-            q['kotihoidontuella']=42_042 # saajia Kelan tilasto 2018
+            q['kotihoidontuella']=79_880 # saajia Kelan tilasto 2018
             q['työkyvyttömyyseläke']=185_991  
             q['vanhempainvapaalla']=84_387 # Kelan tilasto 2018
             q['opiskelijoita']=126153+118325
@@ -1015,9 +1013,9 @@ class Empstats():
             q['valtionvero']=5_542_000_000
             q['kunnallisvero']=18_991_000_000 # 18_791_000_000 ?
             q['ptel']=5_560_000_000 # vai 6_804_000_000
-            q['elakemaksut']=22_085_700_000 # Lähde: ETK
+            q['tyoelakemaksu']=26_437_800_000 # Lähde: ETK
             q['tyottomyysvakuutusmaksu']=0.019*q['tyotulosumma']
-            q['tyoelakemaksu']=21_982_900_000
+            #q['tyoelakemaksu']=21_982_900_000
             q['sairausvakuutusmaksu']=1_335_000_000+407_000_000
             q['ylevero']=497_000_000
             q['ansiopvraha']=1_930_846_464 # Kelasto
@@ -1025,14 +1023,14 @@ class Empstats():
             q['asumistuki']=1_488_900_000 + 600_100_000 # yleinen plus eläkkeensaajan
             q['tyoelakemeno']=27_865_000_000
             q['kansanelakemeno']=2_099_444_514 # vain kansaneläkemeno (ml ve ja tk) ilman perhe-eläkkeitä
-            q['takuuelakemeno']=2_357_000_000-q['kansanelakemeno']
+            q['takuuelakemeno']=214_107_376
             q['kokoelakemeno']=q['tyoelakemeno']+2_357_000_000
             q['elatustuki']=206_977_000
             q['lapsilisa']=1_369_269_187
             q['opintotuki']=417_404_073+54_057
-            q['isyyspaivaraha']=104_212_164
-            q['aitiyspaivaraha']=341_304_991+462_228_789
-            q['kotihoidontuki']=245_768_701
+            q['isyyspaivaraha']=115_794_328
+            q['aitiyspaivaraha']=793_118_094
+            q['kotihoidontuki']=277_643_734
             q['sairauspaivaraha']=835_761_522
             q['toimeentulotuki']=715_950_847
             #q['perustulo']=0
@@ -1048,9 +1046,9 @@ class Empstats():
             q['valtionvero']=5_542_000_000
             q['kunnallisvero']=19_376_000_000
             q['ptel']=6_159_800_000 # vai 7_323_000_000
-            q['elakemaksut']=23_150_000_000 # Lähde: ETK
+            q['tyoelakemaksu']=27_598_800_000 #23_150_000_000 # Lähde: ETK
             q['tyottomyysvakuutusmaksu']=0.019*q['tyotulosumma']
-            q['tyoelakemaksu']=21_982_900_000
+            #q['tyoelakemaksu']=21_982_900_000
             q['sairausvakuutusmaksu']=1_335_000_000+407_000_000
             q['ylevero']=497_000_000
             q['ansiopvraha']=1_720_759_809 # Kelasto 
@@ -1058,14 +1056,13 @@ class Empstats():
             q['asumistuki']=1_490_952_605 + 616_199_681 # yleinen plus eläkkeensaajan
             q['tyoelakemeno']=27_865_000_000
             q['kansanelakemeno']=2_054_030_972
-            q['takuuelakemeno']=2_324_000_000-q['kansanelakemeno']
-            q['kokoelakemeno']=q['tyoelakemeno']+2_357_000_000
+            q['takuuelakemeno']=230_809_165
             q['elatustuki']=206_977_000
             q['lapsilisa']=1_358_971_519
             q['opintotuki']=417_404_073+54_057
-            q['isyyspaivaraha']=104_212_164
-            q['aitiyspaivaraha']=341_304_991+462_228_789
-            q['kotihoidontuki']=245_768_701
+            q['isyyspaivaraha']=118_477_043
+            q['aitiyspaivaraha']=767_134_967
+            q['kotihoidontuki']=253_877_650
             q['sairauspaivaraha']=875_502_895
             q['toimeentulotuki']=715_950_847
             #q['perustulo']=0
@@ -1081,9 +1078,9 @@ class Empstats():
             q['valtionvero']=5_542_000_000 # vai 7_700_000_000
             q['kunnallisvero']=20_480_000_000
             q['ptel']=6_486_150_000
-            q['elakemaksut']=22_085_700_000 # Lähde: ETK
+            q['tyoelakemaksu']=26_896_700_000 # Lähde: ETK
             q['tyottomyysvakuutusmaksu']=0.019*q['tyotulosumma']
-            q['tyoelakemaksu']=21_982_900_000
+            #q['tyoelakemaksu']=21_982_900_000
             q['sairausvakuutusmaksu']=1_335_000_000+407_000_000
             q['ylevero']=497_000_000
             q['ansiopvraha']=2_692_412_893 # Kelasto
@@ -1091,14 +1088,13 @@ class Empstats():
             q['asumistuki']=1_566_478_510 + 636_232_831 # yleinen plus eläkkeensaajan
             q['tyoelakemeno']=27_865_000_000
             q['kansanelakemeno']=2_211_425_285
-            q['takuuelakemeno']=2_515_000_000-q['kansanelakemeno']
-            q['kokoelakemeno']=q['tyoelakemeno']+2_357_000_000
+            q['takuuelakemeno']=262_146_342
             q['elatustuki']=208_633_000
             q['lapsilisa']=1_375_073_409
             q['opintotuki']=417_404_073+54_057
-            q['isyyspaivaraha']=104_212_164
-            q['aitiyspaivaraha']=341_304_991+462_228_789
-            q['kotihoidontuki']=245_768_701
+            q['isyyspaivaraha']=123_821_560
+            q['aitiyspaivaraha']=807_571_301
+            q['kotihoidontuki']=237_024_837
             q['sairauspaivaraha']=906_036_060
             q['toimeentulotuki']=715_950_847
             #q['perustulo']=0
@@ -1111,27 +1107,26 @@ class Empstats():
             q['etuusmeno']=0
             q['verot+maksut']=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
             q['verot+maksut+alv']=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
-            q['valtionvero']=5_542_000_000 # vai 7_700_000_000
-            q['kunnallisvero']=20_480_000_000
+            q['valtionvero']=6_006_507_551 # vai 7_700_000_000
+            q['kunnallisvero']=21_017_113_723
             q['ptel']=6_816_800_000
-            q['elakemaksut']=22_085_700_000 # Lähde: ETK
+            q['tyoelakemaksu']=29_030_800_000 # Lähde: ETK
             q['tyottomyysvakuutusmaksu']=0.019*q['tyotulosumma']
-            q['tyoelakemaksu']=21_982_900_000
-            q['sairausvakuutusmaksu']=1_335_000_000+407_000_000
-            q['ylevero']=497_000_000
+            #q['tyoelakemaksu']=21_982_900_000
+            q['sairausvakuutusmaksu']=1_266_864_206+989_752_446
+            q['ylevero']=522_675_066
             q['ansiopvraha']=2_482_485_746 # Kelasto
             q['peruspvraha']=2_154_726_201 # Kelasto
             q['asumistuki']=1_590_774_842 + 646_939_420 # yleinen plus eläkkeensaajan
-            q['tyoelakemeno']=27_865_000_000
+            q['tyoelakemeno']=30_497_100_000
             q['kansanelakemeno']=2_158_018_883
-            q['takuuelakemeno']=2_515_000_000-q['kansanelakemeno']
-            q['kokoelakemeno']=q['tyoelakemeno']+2_357_000_000
+            q['takuuelakemeno']=264_453_403
             q['elatustuki']=215_556_000
             q['lapsilisa']=1_362_112_599
             q['opintotuki']=417_404_073+54_057
-            q['isyyspaivaraha']=104_212_164
-            q['aitiyspaivaraha']=341_304_991+462_228_789
-            q['kotihoidontuki']=245_768_701
+            q['isyyspaivaraha']=134_378_695
+            q['aitiyspaivaraha']=862_794_683	
+            q['kotihoidontuki']=208_004_490
             q['sairauspaivaraha']=1_039_110_731
             q['toimeentulotuki']=715_950_847
             #q['perustulo']=0
@@ -1139,32 +1134,31 @@ class Empstats():
             q['alv']=20_217_000_000 #21_775_000_000
             q['ta_maksut']=0.2057*q['tyotulosumma'] # karkea
         elif self.year==2022:
-            q['tyotulosumma']=97_603_000_000 #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q['tyotulosumma']=102_480_300_000 # lähde: ETK, tyel + julkinen + yel + myel
             q['tyotulosumma eielakkeella']=np.nan #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
             q['etuusmeno']=0
             q['verot+maksut']=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
             q['verot+maksut+alv']=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
-            q['valtionvero']=5_542_000_000 # vai 7_700_000_000
-            q['kunnallisvero']=20_480_000_000
+            q['valtionvero']=6_006_507_551 # vai 7_700_000_000
+            q['kunnallisvero']=21_017_113_723
             q['ptel']=6_816_800_000
-            q['elakemaksut']=22_085_700_000 # Lähde: ETK
+            q['tyoelakemaksu']=30_439_600_000 # Lähde: ETK
             q['tyottomyysvakuutusmaksu']=0.019*q['tyotulosumma']
-            q['tyoelakemaksu']=21_982_900_000
-            q['sairausvakuutusmaksu']=1_335_000_000+407_000_000
-            q['ylevero']=497_000_000
-            q['ansiopvraha']=3_895_333_045 # 1_930_846_464+1_964_486_581 # ansioturva + perusturva = 3 895 333 045
-            q['peruspvraha']=1_869_864_476 # Kelasto
-            q['asumistuki']=1_488_900_000 + 600_100_000 # yleinen plus eläkkeensaajan
-            q['tyoelakemeno']=27_865_000_000
-            q['kansanelakemeno']=2_211_425_285
-            q['takuuelakemeno']=2_515_000_000-q['kansanelakemeno']
-            q['kokoelakemeno']=q['tyoelakemeno']+2_357_000_000
-            q['elatustuki']=215_556_000
-            q['lapsilisa']=1_375_100_000
+            #q['tyoelakemaksu']=21_982_900_000
+            q['sairausvakuutusmaksu']=1_266_864_206+989_752_446
+            q['ylevero']=522_675_066
+            q['ansiopvraha']=1_840_034_600 # 1_930_846_464+1_964_486_581 # ansioturva + perusturva = 3 895 333 045
+            q['peruspvraha']=1_843_804_553 # Kelasto
+            q['asumistuki']=1_565_008_002 + 650_228_976 # yleinen plus eläkkeensaajan
+            q['tyoelakemeno']=31_410_300_000
+            q['kansanelakemeno']=2_167_992_823
+            q['takuuelakemeno']=273_173_956
+            q['elatustuki']=210_137_558
+            q['lapsilisa']=1_460_295_266
             q['opintotuki']=417_404_073+54_057
-            q['isyyspaivaraha']=104_212_164
-            q['aitiyspaivaraha']=341_304_991+462_228_789
-            q['kotihoidontuki']=245_768_701
+            q['isyyspaivaraha']=149_559_776
+            q['aitiyspaivaraha']=850_374_956
+            q['kotihoidontuki']=198_714_946
             q['sairauspaivaraha']=1_039_110_731
             q['toimeentulotuki']=715_950_847
             #q['perustulo']=0
@@ -1173,7 +1167,7 @@ class Empstats():
             q['ta_maksut']=0.2057*q['tyotulosumma'] # karkea
         elif self.year==2023:
             kerroin=1.03
-            q['tyotulosumma']=97_603_000_000*kerroin #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q['tyotulosumma']=102_480_300_000*kerroin #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
             q['tyotulosumma eielakkeella']=np.nan #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
             q['etuusmeno']=0
             q['verot+maksut']=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
@@ -1181,23 +1175,22 @@ class Empstats():
             q['valtionvero']=17_000_000_000 # ok?
             q['kunnallisvero']=8_000_000_000 # ok?
             q['ptel']=6_816_800_000
-            q['elakemaksut']=22_085_700_000*kerroin # Lähde: ETK
+            q['tyoelakemaksu']=30_439_600_000*kerroin # Lähde: ETK
             q['tyottomyysvakuutusmaksu']=0.019*q['tyotulosumma']
-            q['tyoelakemaksu']=21_982_900_000*kerroin
-            q['sairausvakuutusmaksu']=(1_335_000_000+407_000_000)*kerroin
-            q['ylevero']=497_000_000*kerroin
-            q['ansiopvraha']=3_895_333_045*kerroin # 1_930_846_464+1_964_486_581 # ansioturva + perusturva = 3 895 333 045
-            q['peruspvraha']=1_869_864_476*kerroin # Kelasto
-            q['asumistuki']=(1_488_900_000 + 600_100_000)*kerroin # yleinen plus eläkkeensaajan
+            #q['tyoelakemaksu']=21_982_900_000*kerroin
+            q['sairausvakuutusmaksu']=(1_266_864_206+989_752_446)*kerroin
+            q['ylevero']=522_675_066*kerroin
+            q['ansiopvraha']=1_840_034_600*kerroin # 1_930_846_464+1_964_486_581 # ansioturva + perusturva = 3 895 333 045
+            q['peruspvraha']=1_843_804_553*kerroin # Kelasto
+            q['asumistuki']=(1_565_008_002 + 650_228_976)*kerroin # yleinen plus eläkkeensaajan
             q['tyoelakemeno']=27_865_000_000*kerroin
-            q['kansanelakemeno']=2_211_425_285*kerroin
-            q['takuuelakemeno']=(2_515_000_000-q['kansanelakemeno'])*kerroin
-            q['kokoelakemeno']=(q['tyoelakemeno']+2_357_000_000)*kerroin
-            q['elatustuki']=215_556_000*kerroin
-            q['lapsilisa']=1_375_100_000*kerroin
+            q['kansanelakemeno']=2_167_992_823*kerroin
+            q['takuuelakemeno']=273_173_956*kerroin
+            q['elatustuki']=210_137_558*kerroin
+            q['lapsilisa']=1_460_295_266*kerroin
             q['opintotuki']=(417_404_073+54_057)*kerroin
-            q['isyyspaivaraha']=104_212_164*kerroin
-            q['aitiyspaivaraha']=(341_304_991+462_228_789)*kerroin
+            q['isyyspaivaraha']=149_559_776*kerroin
+            q['aitiyspaivaraha']=850_374_956*kerroin
             q['kotihoidontuki']=245_768_701*kerroin
             q['sairauspaivaraha']=1_039_110_731*kerroin
             q['toimeentulotuki']=715_950_847*kerroin
@@ -1207,7 +1200,7 @@ class Empstats():
             q['ta_maksut']=0.2057*q['tyotulosumma'] # karkea                        
         elif self.year==2024: # update
             kerroin=1.03*1.01
-            q['tyotulosumma']=97_603_000_000*kerroin #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q['tyotulosumma']=102_480_300_000*kerroin #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
             q['tyotulosumma eielakkeella']=np.nan #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
             q['etuusmeno']=0
             q['verot+maksut']=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
@@ -1215,23 +1208,22 @@ class Empstats():
             q['valtionvero']=17_000_000_000 # ok?
             q['kunnallisvero']=8_000_000_000 # ok?
             q['ptel']=6_816_800_000
-            q['elakemaksut']=22_085_700_000*kerroin # Lähde: ETK
+            q['tyoelakemaksu']=30_439_600_000*kerroin # Lähde: ETK
             q['tyottomyysvakuutusmaksu']=0.019*q['tyotulosumma']
-            q['tyoelakemaksu']=21_982_900_000*kerroin
+            #q['tyoelakemaksu']=21_982_900_000*kerroin
             q['sairausvakuutusmaksu']=(1_335_000_000+407_000_000)*kerroin
             q['ylevero']=497_000_000*kerroin
-            q['ansiopvraha']=3_895_333_045*kerroin # 1_930_846_464+1_964_486_581 # ansioturva + perusturva = 3 895 333 045
-            q['peruspvraha']=1_869_864_476*kerroin # Kelasto
-            q['asumistuki']=(1_488_900_000 + 600_100_000)*kerroin # yleinen plus eläkkeensaajan
+            q['ansiopvraha']=1_840_034_600*kerroin # 1_930_846_464+1_964_486_581 # ansioturva + perusturva = 3 895 333 045
+            q['peruspvraha']=1_843_804_553*kerroin # Kelasto
+            q['asumistuki']=(1_565_008_002 + 650_228_976)*kerroin # yleinen plus eläkkeensaajan
             q['tyoelakemeno']=27_865_000_000*kerroin
-            q['kansanelakemeno']=2_211_425_285*kerroin
-            q['takuuelakemeno']=(2_515_000_000-q['kansanelakemeno'])*kerroin
-            q['kokoelakemeno']=(q['tyoelakemeno']+2_357_000_000)*kerroin
-            q['elatustuki']=215_556_000*kerroin
-            q['lapsilisa']=1_375_100_000*kerroin
+            q['kansanelakemeno']=2_167_992_823*kerroin
+            q['takuuelakemeno']=273_173_956*kerroin
+            q['elatustuki']=210_137_558*kerroin
+            q['lapsilisa']=1_460_295_266*kerroin
             q['opintotuki']=(417_404_073+54_057)*kerroin
-            q['isyyspaivaraha']=104_212_164*kerroin
-            q['aitiyspaivaraha']=(341_304_991+462_228_789)*kerroin
+            q['isyyspaivaraha']=149_559_776*kerroin
+            q['aitiyspaivaraha']=850_374_956*kerroin
             q['kotihoidontuki']=245_768_701*kerroin
             q['sairauspaivaraha']=1_039_110_731*kerroin
             q['toimeentulotuki']=715_950_847*kerroin
@@ -1241,6 +1233,7 @@ class Empstats():
             q['ta_maksut']=0.2057*q['tyotulosumma'] # karkea                                                   
 
         q['tyottomyyspvraha']=q['ansiopvraha']+q['peruspvraha']
+        q['kokoelakemeno']=q['tyoelakemeno']+q['kansanelakemeno']+q['takuuelakemeno']
         q['etuusmeno']=q['tyottomyyspvraha']+q['kokoelakemeno']+q['opintotuki']+q['isyyspaivaraha']+\
             q['aitiyspaivaraha']+q['sairauspaivaraha']+q['toimeentulotuki']+\
             q['asumistuki']+q['kotihoidontuki']+q['elatustuki']+q['lapsilisa']#+q['perustulo']+\
@@ -1329,3 +1322,58 @@ class Empstats():
             print('Empstats, unknown year',self.year)
 
         return self.map_ratios(emp_ratio)
+
+    def get_tyollisyysaste_tyovoimatutkimus(self,year,g=0):
+        if self.year==2018: # 
+            if g==0: # yhteensä
+                emp_ratio=75.1
+            elif g==1: # naiset
+                emp_ratio=73.5
+            else: # miehet
+                emp_ratio=76.7
+        elif self.year==2019: 
+            if g==0: # yhteensä
+                emp_ratio=75.9
+            elif g==1: # naiset
+                emp_ratio=74.6
+            else: # miehet
+                emp_ratio=77.2
+        elif self.year==2020: 
+            if g==0: # miehet
+                emp_ratio=75.2
+            elif g==1: # naiset
+                emp_ratio=74.0
+            else: # miehet
+                emp_ratio=76.5
+        elif self.year==2021: 
+            if g==0: # miehet
+                emp_ratio=76.6
+            elif g==1: # naiset
+                emp_ratio=75.8
+            else: # miehet
+                emp_ratio=77.4
+        elif self.year==2022: 
+            if g==0: # miehet
+                emp_ratio=78.1
+            elif g==1: # naiset
+                emp_ratio=77.7
+            else: # miehet
+                emp_ratio=78.5
+        elif self.year==2023: # 2022, päivitä
+            if g==0: # miehet
+                emp_ratio=78.1
+            elif g==1: # naiset
+                emp_ratio=77.7
+            else: # miehet
+                emp_ratio=78.5
+        elif self.year==2024: # 2022, päivitä
+            if g==0: # miehet
+                emp_ratio=78.1
+            elif g==1: # naiset
+                emp_ratio=77.7
+            else: # miehet
+                emp_ratio=78.5
+        else:
+            print('Empstats, unknown year',self.year)
+
+        return emp_ratio

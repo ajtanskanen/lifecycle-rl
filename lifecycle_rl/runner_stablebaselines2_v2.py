@@ -184,11 +184,12 @@ class runner_stablebaselines2():
         gae_lambda=0.9
         '''
         #n_cpu_tf_sess=16 #n_cpu #4 vai n_cpu??
-        n_cpu_tf_sess=8 #n_cpu #4 vai n_cpu??
+        n_cpu_tf_sess=4 #n_cpu #4 vai n_cpu?? vai 8?
         batch=max(1,int(np.ceil(batch/n_cpu)))
         
         full_tensorboard_log=False
-        vf=0.10
+        #vf=0.10*50 # 50 kerroin uutta, vain versiolle 7! FIXME
+        vf=0.1 #02 # 0.10*50#00 # vain versiolle 7! FIXME
         if vf is not None:
             vf_coef=vf
         ent_coef=0.005 #1 # 0.01 # default 0.01
@@ -196,7 +197,7 @@ class runner_stablebaselines2():
         if max_grad_norm is None:
             max_grad_norm=0.05 # default 0.50
             
-        max_grad_norm=0.05 # 0.01 # 0.001  was old
+        max_grad_norm=0.1 # 0.05 # 0.01 # 0.001  was old
         kfac_clip=0.001
 
         #if cont and not os.path.isfile(loadname):
@@ -473,6 +474,7 @@ class runner_stablebaselines2():
         args['arch']=arch
         args['set_seed']=set_seed
         args['render']=render
+        args['simfile']=save
 
         if processes is not None:
             self.args['processes']=processes
@@ -512,7 +514,7 @@ class runner_stablebaselines2():
 
         print('joined.')
 
-        self.combine_episodestats(self.args)
+        self.combine_episodestats(args)
         
         print('done')
             
@@ -532,7 +534,8 @@ class runner_stablebaselines2():
         print('pop',args['pop'],'procs',args['processes'])
         deterministic = args['deterministic']
         debug = args['debug']
-        savefile=args['save_dir']+args['simfile']+'_rank_'+str(rank)
+        #savefile=args['save_dir']+args['simfile']+'_rank_'+str(rank)
+        savefile=args['simfile']+'_rank_'+str(rank)
         #kwargs['silent']=True
         #print(kwargs)
 
@@ -577,29 +580,8 @@ class runner_stablebaselines2():
                             silent=True)
         episodestats.init_variables()
 
-        #print('Child',rank,'check point 6')
-
         if rank==0:
             tqdm_e = tqdm(range(args['pop']), desc='Population', leave=True, unit=" p")
-
-        # while n<n_pop_single:
-        #     act, predstate = model.predict(states,deterministic=deterministic)
-        #     newstate, rewards, dones, infos = env.step(act)
-        #     if n<n_pop_single: # do not save extras
-        #         if dones:
-        #             #print(infos)
-        #             episodestats.add(n,act[0],rewards[0],states[0],infos['terminal_observation'][0],infos[0],debug=debug)
-        #             #episodestats.add(n,act,rewards,states,newstate,infos,debug=debug)
-        #             n += n_add
-        #             #newstates = env.reset()
-
-        #             if rank==0:
-        #                 tqdm_e.update(n_add)
-        #                 tqdm_e.set_description("Pop " + str(n))
-
-        #         else:
-        #             episodestats.add(n,act[0],rewards[0],states[0],newstate[0],infos[0],debug=debug)
-        #             states = newstate
 
         k=0
         n=0
@@ -627,11 +609,14 @@ class runner_stablebaselines2():
         episodestats.scale_sim()
         episodestats.save_sim(savefile)
 
+        return 1
+
     def combine_results(self,results):
         self.combine_episodestats(self.args)
 
     def combine_episodestats(self,args):
-        save=args['save_dir']+args['simfile']+'_rank_'
+        #save=args['save_dir']+args['simfile']+'_rank_'
+        save=args['simfile']+'_rank_'
         
         base=SimStats(args['timestep'],args['n_time'],args['n_employment'],args['n_pop'],
                             self.env,args['minimal'],args['min_age'],args['max_age'],args['min_retirementage'],
@@ -646,4 +631,4 @@ class runner_stablebaselines2():
             eps.load_sim(save+str(k))
             base.append_episodestat(eps)
 
-        base.save_sim(args['save_dir']+args['simfile']+'_combined')
+        base.save_sim(args['simfile']+'_combined')

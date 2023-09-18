@@ -54,9 +54,9 @@ class SimStats(EpisodeStats):
             self.load_sim(results+'_'+str(100+startn),print_pop=False)
 
         if grouped:
-            base_empstate=self.gempstate[:,:,group]/self.n_pop
+            base_empstate=self.gempstate[:,:,group]/self.alive #/self.n_pop
         else:
-            base_empstate=self.empstate/self.n_pop
+            base_empstate=self.empstate/self.alive #self.n_pop
         
         emps[0,:,:]=base_empstate
         htv_base,tyoll_base,haj_base,tyollaste_base,tyolliset_base=self.comp_tyollisyys_stats(base_empstate,scale_time=True)
@@ -113,9 +113,9 @@ class SimStats(EpisodeStats):
             for i in range(startn+1,n): 
                 self.load_sim(results+'_'+str(100+i),print_pop=False)
                 if grouped:
-                    empstate=self.gempstate[:,:,group]/self.n_pop
+                    empstate=self.gempstate[:,:,group]/self.alive #self.n_pop
                 else:
-                    empstate=self.empstate/self.n_pop
+                    empstate=self.empstate/self.alive #self.n_pop
                 
                 emps[i,:,:]=empstate
                 reward=self.get_reward()
