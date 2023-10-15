@@ -210,9 +210,6 @@ class EpisodeStats():
         self.infostats_irr_tyel_reduced = np.zeros((self.n_pop,1),dtype=float)
         self.infostats_irr_tyel_full = np.zeros((self.n_pop,1),dtype=float)
         self.infostats_npv0 = np.zeros((self.n_pop,1),dtype=float)
-        self.infostats_mother_in_workforce = np.zeros((self.n_time,1),dtype = np.int64)
-        self.infostats_sv_in_workforce = np.zeros((self.n_time,self.n_groups),dtype = np.int64)
-        #self.infostats_father_in_workforce = np.zeros((self.n_time,1))
         self.infostats_children_under3 = np.zeros((self.n_time,self.n_pop),dtype = np.int8)
         self.infostats_children_under7 = np.zeros((self.n_time,self.n_pop),dtype = np.int8)
         self.infostats_children_under18 = np.zeros((self.n_time,self.n_pop),dtype = np.int8)
@@ -476,8 +473,6 @@ class EpisodeStats():
         self.infostats_irr_tyel_reduced = np.append(self.infostats_irr_tyel_reduced[:,:self.n_pop],cc.infostats_irr_tyel_reduced[:,:cc.n_pop],axis=0)
         self.infostats_irr_tyel_full = np.append(self.infostats_irr_tyel_full[:,:self.n_pop],cc.infostats_irr_tyel_full[:,:cc.n_pop],axis=0)
         self.infostats_npv0 = np.append(self.infostats_npv0[:,:self.n_pop],cc.infostats_npv0[:,:cc.n_pop],axis=0)
-        self.infostats_mother_in_workforce = self.infostats_mother_in_workforce+cc.infostats_mother_in_workforce
-        self.infostats_sv_in_workforce = self.infostats_sv_in_workforce+cc.infostats_sv_in_workforce
         self.infostats_children_under3 = np.append(self.infostats_children_under3[:,:self.n_pop],cc.infostats_children_under3[:,:cc.n_pop],axis=1)
         self.infostats_children_under7 = np.append(self.infostats_children_under7[:,:self.n_pop],cc.infostats_children_under7[:,:cc.n_pop],axis=1)
         self.infostats_children_under18 = np.append(self.infostats_children_under18[:,:self.n_pop],cc.infostats_children_under18[:,:cc.n_pop],axis=1)
@@ -574,10 +569,6 @@ class EpisodeStats():
             #self.salaries[t,n] = newsal
             self.salaries_emp[t,newemp] += newsal
             self.time_in_state[t,newemp] += tis
-            if tis<=0.26 and newemp==5:
-                self.infostats_mother_in_workforce[t] += 1
-            if tis<=0.26 and newemp==14:
-                self.infostats_sv_in_workforce[t,g] += 1
             self.infostats_pinkslip[t,newemp] += pink
             self.infostats_pop_pinkslip[t,n] = pink
             self.gempstate[t,newemp,g] += 1
@@ -638,10 +629,6 @@ class EpisodeStats():
             self.popempstate[t,n] = newemp
             self.salaries_emp[t,newemp] += newsal
             self.time_in_state[t,newemp] += tis
-            if tis<=0.26 and newemp==5:
-                self.infostats_mother_in_workforce[t] += 1
-            if tis<=0.26 and newemp==14:
-                self.infostats_sv_in_workforce[t,g] += 1
             self.infostats_pinkslip[t,newemp] += pink
             self.infostats_pop_pinkslip[t,n] = pink
             self.gempstate[t,newemp,g] += 1
@@ -703,10 +690,6 @@ class EpisodeStats():
             #self.salaries[t,n] = newsal
             self.salaries_emp[t,newemp] += newsal
             self.time_in_state[t,newemp] += tis
-            if tis<=0.26 and newemp==5:
-                self.infostats_mother_in_workforce[t] += 1
-            if tis<=0.26 and newemp==14:
-                self.infostats_sv_in_workforce[t,g] += 1
             self.infostats_pinkslip[t,newemp] += pink
             self.infostats_pop_pinkslip[t,n] = pink
             self.gempstate[t,newemp,g] += 1
@@ -791,10 +774,6 @@ class EpisodeStats():
                 self.popunemprightused[t,n] = bu
                 self.infostats_ove[t,newemp] += ove
                 self.infostats_ove_g[t,newemp,g] += ove
-                if tis<=0.26 and newemp==5:
-                    self.infostats_mother_in_workforce[t] += 1
-                if tis<=0.26 and newemp==14:
-                    self.infostats_sv_in_workforce[t,g] += 1
                 if q is not None:
                     self.add_taxes(t,q,newemp,n,g,person='omat_')
                 
@@ -822,10 +801,6 @@ class EpisodeStats():
                 self.popunemprightused[t,n+1] = p_bu
                 self.infostats_ove[t,p_tila] += p_ove
                 self.infostats_ove_g[t,p_tila,p_g] += p_ove
-                if p_tis<=0.26 and p_tila==5:
-                    self.infostats_mother_in_workforce[t] += 1
-                if p_tis<=0.26 and p_tila==14:
-                    self.infostats_sv_in_workforce[t,p_g] += 1
                 if q is not None:
                     self.add_taxes(t,q,p_tila,n+1,p_g,person='puoliso_')
                 
@@ -926,10 +901,6 @@ class EpisodeStats():
                 self.popunemprightused[t,n] = bu
                 self.infostats_ove[t,newemp] += ove
                 self.infostats_ove_g[t,newemp,g] += ove
-                if tis<=0.26 and newemp==5:
-                    self.infostats_mother_in_workforce[t] += 1
-                if tis<=0.26 and newemp==14:
-                    self.infostats_sv_in_workforce[t,g] += 1
                 if q is not None:
                     self.add_taxes(t,q,newemp,n,g,person='omat_')
                 
@@ -959,10 +930,6 @@ class EpisodeStats():
                 self.popunemprightused[t,n+1] = p_bu
                 self.infostats_ove[t,p_tila] += p_ove
                 self.infostats_ove_g[t,p_tila,p_g] += p_ove
-                if p_tis<=0.26 and p_tila==5:
-                    self.infostats_mother_in_workforce[t] += 1
-                if p_tis<=0.26 and p_tila==14:
-                    self.infostats_sv_in_workforce[t,p_g] += 1
                 if q is not None:
                     self.add_taxes(t,q,p_tila,n+1,p_g,person='puoliso_')
                 
@@ -1063,10 +1030,6 @@ class EpisodeStats():
                 #self.popunemprightused[t,n] = bu
                 self.infostats_ove[t,newemp] += ove
                 self.infostats_ove_g[t,newemp,g] += ove
-                if tis<=0.26 and newemp==5:
-                    self.infostats_mother_in_workforce[t] += 1
-                if tis<=0.26 and newemp==14:
-                    self.infostats_sv_in_workforce[t,g] += 1
                 if q is not None:
                     self.add_taxes_nopop(t,q,newemp,n,g,person='omat_')
                 
@@ -1096,10 +1059,6 @@ class EpisodeStats():
                 #self.popunemprightused[t,n+1] = p_bu
                 self.infostats_ove[t,p_tila] += p_ove
                 self.infostats_ove_g[t,p_tila,p_g] += p_ove
-                if p_tis<=0.26 and p_tila==5:
-                    self.infostats_mother_in_workforce[t] += 1
-                if p_tis<=0.26 and p_tila==14:
-                    self.infostats_sv_in_workforce[t,p_g] += 1
                 if q is not None:
                     self.add_taxes_nopop(t,q,p_tila,n+1,p_g,person='puoliso_')
                 
@@ -1201,11 +1160,6 @@ class EpisodeStats():
                 self.infostats_ove[t,newemp] += ove
                 self.infostats_ove_g[t,newemp,g] += ove
                 self.infostats_lleft[t,n] = m_lleft
-
-                if tis<=0.26 and newemp==5:
-                    self.infostats_mother_in_workforce[t] += 1
-                if tis<=0.26 and newemp==14:
-                    self.infostats_sv_in_workforce[t,g] += 1
                 if q is not None:
                     self.add_taxes(t,q,newemp,n,g,person='omat_')
                 
@@ -1236,10 +1190,6 @@ class EpisodeStats():
                 self.infostats_ove[t,p_tila] += p_ove
                 self.infostats_ove_g[t,p_tila,p_g] += p_ove
                 self.infostats_lleft[t,n+1] = s_lleft
-                if p_tis<=0.26 and p_tila==5:
-                    self.infostats_mother_in_workforce[t] += 1
-                if p_tis<=0.26 and p_tila==14:
-                    self.infostats_sv_in_workforce[t,p_g] += 1
                 if q is not None:
                     self.add_taxes(t,q,p_tila,n+1,p_g,person='puoliso_')
                 
@@ -1288,18 +1238,18 @@ class EpisodeStats():
 
     def add_v7(self,n,act,r,state,newstate,q=None,debug=False,plot=False,aveV=None,pred_r=None):
 
-        emp,_,_,_,a,_,_,_,_,_,\
+        emp,_,_,_,_,a,_,_,_,_,_,\
             _,_,_,_,_,_,_,_,_,_,\
-            _,_,_,_,_,_,p_tila_vanha,_,_,_,\
+            _,_,_,_,_,_,p_tila_vanha,_,_,\
             _,_,_,_,_,_,_,_,_,_,\
             _,_,_,_,_,_,_,_,_,_,\
             _,_,_,_,_,_,_,_,_,_,_,_,_,_,\
             _,_,_,_\
             =self.env.states.state_decode(state) # current employment state
             
-        newemp,g,newpen,newsal,a2,tis,paidpens,pink,toe,toek,\
+        newemp,g,p_g,newpen,newsal,a2,tis,paidpens,pink,toe,toek,\
             ura,bu,wr,upr,uw,uwr,pr,c3,c7,c18,\
-            unemp_left,aa,toe58,ove,jasen,puoliso,p_tila,p_g,p_w,p_newpen,\
+            unemp_left,aa,toe58,ove,jasen,puoliso,p_tila,p_w,p_newpen,\
             p_wr,p_paidpens,p_nw,p_bu,p_unemp_benefit_left,p_unemp_after_ra,p_uw,p_uwr,p_aa,p_toe58,\
             p_toe,p_toekesto,p_ura,p_tis,p_pink,p_ove,kansanelake,p_kansanelake,te_maksussa,p_te_maksussa,\
             nw,old_pw,s_old_pw,pt_act,s_pt_act,wbasis,s_wbasis,m_lleft,s_lleft,m_ud,s_ud,\
@@ -1350,10 +1300,6 @@ class EpisodeStats():
                 self.infostats_ove_g[t,newemp,g] += ove
                 self.infostats_lleft[t,n] = m_lleft
 
-                if tis<=0.26 and newemp==5:
-                    self.infostats_mother_in_workforce[t] += 1
-                if tis<=0.26 and newemp==14:
-                    self.infostats_sv_in_workforce[t,g] += 1
                 if q is not None:
                     self.add_taxes(t,q,newemp,n,g,person='omat_')
                 
@@ -1384,10 +1330,6 @@ class EpisodeStats():
                 self.infostats_ove[t,p_tila] += p_ove
                 self.infostats_ove_g[t,p_tila,p_g] += p_ove
                 self.infostats_lleft[t,n+1] = s_lleft
-                if p_tis<=0.26 and p_tila==5:
-                    self.infostats_mother_in_workforce[t] += 1
-                if p_tis<=0.26 and p_tila==14:
-                    self.infostats_sv_in_workforce[t,p_g] += 1
                 if q is not None:
                     self.add_taxes(t,q,p_tila,n+1,p_g,person='puoliso_')
                 
@@ -1575,14 +1517,6 @@ class EpisodeStats():
             self.popempstate[t,n+1] = p_tila
             self.time_in_state[t,newemp] += tis
             self.time_in_state[t,p_tila] += p_tis
-            if tis<=0.26 and newemp==5:
-                self.infostats_mother_in_workforce[t] += 1
-            if p_tis<=0.26 and p_tila==5:
-                self.infostats_mother_in_workforce[t] += 1
-            if tis<=0.26 and newemp==14:
-                self.infostats_sv_in_workforce[t,g] += 1
-            if p_tis<=0.26 and p_tila==14:
-                self.infostats_sv_in_workforce[t,p_g] += 1
             self.gempstate[t,newemp,g] += 1
             self.gempstate[t,p_tila,p_g] += 1
             self.stat_tyoura[t,newemp] += ura
@@ -1777,9 +1711,6 @@ class EpisodeStats():
         _ = f.create_dataset('infostats_pvhoitomaksu', data=self.infostats_pvhoitomaksu, dtype=ftype,compression="gzip", compression_opts=9)
         _ = f.create_dataset('infostats_ylevero', data=self.infostats_ylevero, dtype=ftype)
         _ = f.create_dataset('infostats_ylevero_distrib', data=self.infostats_ylevero_distrib, dtype=ftype,compression="gzip", compression_opts=9)
-        _ = f.create_dataset('infostats_mother_in_workforce', data=self.infostats_mother_in_workforce, dtype=ftype)
-        _ = f.create_dataset('infostats_sv_in_workforce', data=self.infostats_sv_in_workforce, dtype=ftype)
-        #_ = f.create_dataset('infostats_father_in_workforce', data=self.infostats_father_in_workforce, dtype=ftype)
         _ = f.create_dataset('infostats_children_under3', data=self.infostats_children_under3, dtype = np.int8,compression="gzip", compression_opts=9)
         _ = f.create_dataset('infostats_children_under7', data=self.infostats_children_under7, dtype = np.int8,compression="gzip", compression_opts=9)
         _ = f.create_dataset('infostats_children_under18', data=self.infostats_children_under18, dtype = np.int8,compression="gzip", compression_opts=9)
@@ -1987,11 +1918,6 @@ class EpisodeStats():
             self.infostats_sairausvakuutus=f['infostats_sairausvakuutus'][()]
             self.infostats_pvhoitomaksu=f['infostats_pvhoitomaksu'][()]
             self.infostats_ylevero=f['infostats_ylevero'][()]
-
-        if 'infostats_mother_in_workforce' in f.keys():
-            self.infostats_mother_in_workforce=f['infostats_mother_in_workforce'][()]
-        if 'infostats_sv_in_workforce' in f.keys():
-            self.infostats_sv_in_workforce=f['infostats_sv_in_workforce'][()]
 
         if 'stat_wage_reduction_g' in f.keys():
             self.stat_wage_reduction_g=f['stat_wage_reduction_g'][()]
@@ -2254,7 +2180,7 @@ class EpisodeStats():
         
         return ratio_med50,ratio_med60,pt_levl
                     
-    def comp_employed_ratio_by_age(self,emp=None,grouped=False,g=0,include_muut=True,muut=None):
+    def comp_employed_ratio_by_age(self,emp=None,grouped=False,g=0,muut=None):
         if emp is None:
             if grouped:
                 emp = np.squeeze(self.gempstate[:,:,g])
@@ -2270,17 +2196,11 @@ class EpisodeStats():
         else:
             # työllisiksi lasketaan kokoaikatyössä olevat, osa-aikaiset, ve+työ, ve+osatyö
             # isyysvapaalla olevat jötetty pois, vaikka vapaa kestöö alle 3kk
-            tyoll_osuus=(emp[:,1]+emp[:,8]+emp[:,9]+emp[:,10])
+            tyoll_osuus=(emp[:,1]+emp[:,5]+emp[:,6]+emp[:,8]+emp[:,9]+emp[:,10]+emp[:,14])
             htv_osuus=(emp[:,1]+0.5*emp[:,8]+emp[:,9]+0.5*emp[:,10])
 
-            if include_muut:
-                if muut is not None:
-                    tyoll_osuus += muut
-                else:
-                    aidit = self.infostats_mother_in_workforce[:,0].astype(np.int64)
-                    sv = np.sum(self.infostats_sv_in_workforce,1).astype(np.int64)
-                    isyys = emp[:,6]
-                    tyoll_osuus +=  aidit + sv + isyys            
+            if muut is not None:
+                tyoll_osuus += muut
 
             nn=self.alive[:,0]
             tyoll_osuus = tyoll_osuus / nn
@@ -2291,7 +2211,7 @@ class EpisodeStats():
 
         return tyoll_osuus,htv_osuus
 
-    def comp_employed_aggregate(self,emp=None,start=20,end=63.5,grouped=False,g=0):
+    def comp_employed_aggregate(self,emp=None,start=20,end=63.5,grouped=False,g=0,muut=None):
         if emp is None:
             if grouped:
                 emp=self.gempstate[:,:,g]
@@ -2306,24 +2226,16 @@ class EpisodeStats():
             # työllisiksi lasketaan kokoaikatyössä olevat, osa-aikaiset, ve+työ, ve+osatyö
             # isyysvapaalla olevat jötetty pois, vaikka vapaa kestöö alle 3kk
             nn=self.alive
-            tyoll_osuus=(emp[:,1]+emp[:,8]+emp[:,9]+emp[:,10])
+            tyoll_osuus=(emp[:,1]+emp[:,8]+emp[:,9]+emp[:,10]+emp[:,5]+emp[:,6]+emp[:,14])
             htv_osuus=(emp[:,1]+0.5*emp[:,8]+emp[:,9]+0.5*emp[:,10])/nn
 
-            if include_muut:
-                if muut is not None:
-                    tyoll_osuus += muut
-                else:
-                    print(tyoll_osuus.shape,self.infostats_mother_in_workforce.shape,emp[:,6].shape)
-                    aidit = self.infostats_mother_in_workforce[:].astype(float)
-                    sv = np.sum(self.infostats_sv_in_workforce,1).astype(float)
-                    isyys = emp[:,6].astype(float)
-                    tyoll_osuus +=  aidit + sv + isyys
+            if muut is not None:
+                tyoll_osuus += muut
 
             tyoll_osuus /= nn
-            print(tyoll_osuus)
 
-        htv_osuus=self.comp_state_stats(htv_osuus,start=start,end=end,ratio=True)
-        tyoll_osuus=self.comp_state_stats(tyoll_osuus,start=start,end=end,ratio=True)
+        htv_osuus=self.comp_state_stats(htv_osuus,start=start,end=end)
+        tyoll_osuus=self.comp_state_stats(tyoll_osuus,start=start,end=end)
 
         return tyoll_osuus,htv_osuus
 
@@ -2528,7 +2440,7 @@ class EpisodeStats():
         return employed,ahtv,unemployed,parttimeratio,i_ps,i_ps_norw,unempratio,empratio
 
 
-    def comp_unemployed_ratio_by_age(self,emp=None,grouped=False,g=0):
+    def comp_unemployed_ratio_by_age(self,emp=None,grouped=False,g=0,per_pop=True):
         if emp is None:
             if grouped:
                 emp=self.gempstate[:,:,g]
@@ -2540,7 +2452,12 @@ class EpisodeStats():
             tyot_osuus = np.reshape(tyot_osuus,(tyot_osuus.shape[0],1))
         else:
             # työllisiksi lasketaan kokoaikatyössä olevat, osa-aikaiset, ve+työ, ve+osatyö
-            nn = self.alive[:,0][:,None]
+            # suhteessa väestöön
+            if per_pop:
+                nn = self.alive[:,0][:,None]
+            else:
+                nn = self.comp_workforce(emp)
+
             tyot_osuus=(emp[:,0]+emp[:,4]+emp[:,13])[:,None]/nn
 
         return tyot_osuus
@@ -2555,12 +2472,83 @@ class EpisodeStats():
         if self.minimal:
             tyot_osuus=emp[:,0]/np.sum(emp,1)
         else:
-            nn=self.alive[:,0][:,None]
+            if per_pop:
+                nn = self.alive[:,0][:,None]
+            else:
+                nn = self.comp_workforce(emp)
+
             tyot_osuus=(emp[:,0]+emp[:,4]+emp[:,13])/nn
 
-        unemp=self.comp_state_stats(tyot_osuus,start=start,end=end,ratio=True)
+        unemp=self.comp_state_stats(tyot_osuus,start=start,end=end)
 
         return unemp
+
+    def comp_employed_ratio(self,emp):
+        tyoll_osuus,htv_osuus=self.comp_employed_ratio_by_age(emp)
+        tyot_osuus=self.comp_unemployed_ratio_by_age(emp)
+        kokotyo_osuus,osatyo_osuus=self.comp_parttime_ratio_by_age(emp)
+
+        return tyoll_osuus,htv_osuus,tyot_osuus,kokotyo_osuus,osatyo_osuus
+
+    def comp_unemployed_detailed(self,emp,per_pop=False):
+        if self.minimal:
+            ansiosid_osuus=emp[:,0]/np.sum(emp,1)
+            tm_osuus=ansiosid_osuus*0
+        else:
+            # työllisiksi lasketaan kokoaikatyössä olevat, osa-aikaiset, ve+työ, ve+osatyö
+            # isyysvapaalla olevat jötetty pois, vaikka vapaa kestöö alle 3kk
+            if per_pop:
+                nn = self.alive[:,0][:,None]
+            else:
+                nn = self.comp_workforce(emp)
+
+            ansiosid_osuus=(emp[:,0]+emp[:,4])[:,None]/nn
+            tm_osuus=(emp[:,13])[:,None]/nn
+
+        return ansiosid_osuus,tm_osuus    
+
+    def comp_unemp_stats_by_group(self,emp,scale_time=True,start=19,end=68,per_pop=True):
+        '''
+        Laskee työttömien osuuden ryhmittäin
+        '''
+        if emp is None:
+            emp=self.gempstate
+
+        if self.minimal:
+            tyot_osuus = emp[:,0]/np.sum(emp,1)
+            tyot_osuus = np.reshape(tyot_osuus,(tyot_osuus.shape[0],1))
+        else:
+            # työllisiksi lasketaan kokoaikatyössä olevat, osa-aikaiset, ve+työ, ve+osatyö
+            # suhteessa väestöön
+            if per_pop:
+                nn = self.galive[:,0,:]
+            else:
+                nn = self.comp_workforce_group(emp)
+
+            tyot_osuus=(emp[:,0,:]+emp[:,4,:]+emp[:,13,:])/nn
+
+        return tyot_osuus
+
+    def comp_unemp_stats_agg(self,emp=None,scale_time=True,start=19,end=68,per_pop=True):
+        '''
+        Laskee työttömien osuuden yhteensä
+        '''
+        if emp is None:
+            emp=self.empstate
+
+        if self.minimal:
+            tyot_osuus = np.sum(emp[:,0,:])/np.sum(emp,1)
+        else:
+            # työllisiksi lasketaan kokoaikatyössä olevat, osa-aikaiset, ve+työ, ve+osatyö
+            # suhteessa väestöön
+            if per_pop:
+                nn = self.alive[:,0]
+            else:
+                nn = self.comp_workforce(emp,ratio=False)
+
+            tyot_osuus=np.sum(emp[:,0]+emp[:,4]+emp[:,13])/np.sum(nn)
+
+        return tyot_osuus                    
 
     def comp_parttime_aggregate(self,emp=None,start=20,end=63.5,scale_time=True,grouped=False,g=0):
         '''
@@ -2582,8 +2570,7 @@ class EpisodeStats():
             tyossa=emp[:,1]/nn
             osatyossa=0*tyossa
 
-        osatyo_osuus=osatyossa/tyossa
-        osatyo_osuus=self.comp_state_stats(osatyo_osuus,start=start,end=end,ratio=True)
+        osatyo_osuus=self.comp_state_stats(osatyo_osuus,start=start,end=end)
         kokotyo_osuus=1-osatyo_osuus
 
         return kokotyo_osuus,osatyo_osuus
@@ -2614,25 +2601,6 @@ class EpisodeStats():
 
         return kokotyo_osuus,osatyo_osuus
 
-    def comp_employed_ratio(self,emp):
-        tyoll_osuus,htv_osuus=self.comp_employed_ratio_by_age(emp)
-        tyot_osuus=self.comp_unemployed_ratio_by_age(emp)
-        kokotyo_osuus,osatyo_osuus=self.comp_parttime_ratio_by_age(emp)
-
-        return tyoll_osuus,htv_osuus,tyot_osuus,kokotyo_osuus,osatyo_osuus
-
-    def comp_unemployed_detailed(self,emp):
-        if self.minimal:
-            ansiosid_osuus=emp[:,0]/np.sum(emp,1)
-            tm_osuus=ansiosid_osuus*0
-        else:
-            # työllisiksi lasketaan kokoaikatyössä olevat, osa-aikaiset, ve+työ, ve+osatyö
-            # isyysvapaalla olevat jötetty pois, vaikka vapaa kestöö alle 3kk
-            nn = self.alive[:,0]
-            ansiosid_osuus=(emp[:,0]+emp[:,4])/nn
-            tm_osuus=(emp[:,13])/nn
-
-        return ansiosid_osuus,tm_osuus
 
     def comp_children(self,scale_time=True):
         demog2=self.empstats.get_demog()
@@ -2656,7 +2624,7 @@ class EpisodeStats():
         
         return c3,c7,c18
 
-    def comp_tyollisyys_stats(self,emp,scale_time=True,start=19,end=68,full=False,tyot_stats=False,agg=False,shapes=False,only_groups=False,g=0,agegroups=False):
+    def comp_tyollisyys_stats(self,emp,scale_time=True,start=19,end=68,only_groups=False,agegroups=False):
         demog2=self.empstats.get_demog()
 
         if scale_time:
@@ -2667,52 +2635,30 @@ class EpisodeStats():
         min_cage=max(1,self.map_age(start))
         max_cage=self.map_age(end)+1
 
-        scalex=demog2[min_cage:max_cage]/self.alive[min_cage:max_cage]*scale #self.n_pop*scale
-        scalex2=demog2[min_cage:max_cage]*scale
+        scalex=demog2[min_cage:max_cage]*scale
 
         if only_groups:
             tyollosuus,htvosuus,tyot_osuus,kokotyo_osuus,osatyo_osuus=self.comp_employed_ratio(emp)
         else:
             tyollosuus,htvosuus,tyot_osuus,kokotyo_osuus,osatyo_osuus=self.comp_employed_ratio(emp)
 
-        htv = np.sum(scalex2*htvosuus[min_cage:max_cage])
-        tyollvaikutus = np.sum(scalex2*tyollosuus[min_cage:max_cage])
-        tyottomat = np.sum(scalex2*tyot_osuus[min_cage:max_cage])
-        osatyollvaikutus = np.sum(scalex2*osatyo_osuus[min_cage:max_cage])
-        kokotyollvaikutus = np.sum(scalex2*kokotyo_osuus[min_cage:max_cage])
+        htv = np.sum(scalex*htvosuus[min_cage:max_cage])
+        tyollvaikutus = np.sum(scalex*tyollosuus[min_cage:max_cage])
+        tyottomat = np.sum(scalex*tyot_osuus[min_cage:max_cage])
+        osatyollvaikutus = np.sum(scalex*osatyo_osuus[min_cage:max_cage])
+        kokotyollvaikutus = np.sum(scalex*kokotyo_osuus[min_cage:max_cage])
         haj = np.mean(np.std(tyollosuus[min_cage:max_cage]))
-        if self.minimal:
-            elossa = np.sum(scalex2)
-        else:
-            elossa = np.sum(scalex2)
+        elossa = np.sum(scalex)
 
         tyollaste=tyollvaikutus/elossa
         osatyollaste=osatyollvaikutus/(kokotyollvaikutus+osatyollvaikutus)
         kokotyollaste=kokotyollvaikutus/(kokotyollvaikutus+osatyollvaikutus)
 
-        if tyot_stats:
-            if agg:
-                #d2 = np.squeeze(demog2)
-                tyolliset_osuus = np.squeeze(tyollosuus)
-                tyottomat_osuus = np.squeeze(tyot_osuus)
-
-                return tyolliset_ika,tyottomat_ika,htv_ika,tyolliset_osuus,tyottomat_osuus
-            else:
-                d2 = np.squeeze(demog2)
-                tyolliset_ika = np.squeeze(scale*d2*np.squeeze(htvosuus))
-                tyottomat_ika = np.squeeze(scale*d2*np.squeeze(tyot_osuus))
-                htv_ika = np.squeeze(scale*d2*np.squeeze(htvosuus))
-                tyolliset_osuus = np.squeeze(tyollosuus)
-                tyottomat_osuus = np.squeeze(tyot_osuus)
-
-                return tyolliset_ika,tyottomat_ika,htv_ika,tyolliset_osuus,tyottomat_osuus
-        elif full:
-            return htv,tyollvaikutus,haj,tyollaste,tyollosuus,osatyollvaikutus,kokotyollvaikutus,osatyollaste,kokotyollaste
-        elif agegroups:
+        if agegroups:
             tyot_osuus=self.comp_unemployed_aggregate(start=start,end=end)
             return htv,tyollvaikutus,tyollaste,tyot_osuus,tyottomat,osatyollaste
         else:
-            return htv,tyollvaikutus,haj,tyollaste,tyollosuus
+            return htv,tyollvaikutus,haj,tyollaste,tyollosuus,osatyollvaikutus,kokotyollvaikutus,osatyollaste,kokotyollaste
 
     def comp_employment_stats(self,scale_time=True,returns=False):
         demog2=self.empstats.get_demog()
@@ -2754,8 +2700,6 @@ class EpisodeStats():
         '''
         demog2=self.empstats.get_demog()
 
-        #scalex = np.squeeze(demog2/self.n_pop*self.timestep)
-        #scalex_lkm = np.squeeze(demog2/self.n_pop*self.timestep)
         scalex = np.squeeze(demog2/self.alive*self.timestep)
         scalex_lkm = np.squeeze(demog2/self.alive*self.timestep)
         if lkm:
@@ -2819,61 +2763,50 @@ class EpisodeStats():
 
         return q
 
-    def comp_employment_groupstats(self,scale_time=True,g=0,include_retwork=True,grouped=True):
-        demog2=self.empstats.get_demog()
+    # def comp_employment_groupstats(self,scale_time=True,g=0,include_retwork=True,grouped=True):
+    #     demog2=self.empstats.get_demog()
 
-        if scale_time:
-            scale=self.timestep
-        else:
-            scale=1.0
+    #     if scale_time:
+    #         scale=self.timestep
+    #     else:
+    #         scale=1.0
 
-        #min_cage=self.map_age(self.min_age)
-        #max_cage=self.map_age(self.max_age)+1
+    #     #min_cage=self.map_age(self.min_age)
+    #     #max_cage=self.map_age(self.max_age)+1
 
-        scalex = np.squeeze(demog2/self.alive*scale) # self.n_pop
+    #     scalex = np.squeeze(demog2/self.alive*scale) # self.n_pop
 
-        #d = np.squeeze(demog2[min_cage:max_cage])
+    #     #d = np.squeeze(demog2[min_cage:max_cage])
 
-        if grouped:
-            ratiostates = np.squeeze(self.gempstate[:,:,g])/self.alive
-            demogstates = np.squeeze(self.gempstate[:,:,g])
-        else:
-            ratiostates=self.empstate[:,:]/self.alive
-            demogstates=self.empstate[:,:]
+    #     if grouped:
+    #         ratiostates = np.squeeze(self.gempstate[:,:,g])/self.alive
+    #         demogstates = np.squeeze(self.gempstate[:,:,g])
+    #     else:
+    #         ratiostates=self.empstate[:,:]/self.alive
+    #         demogstates=self.empstate[:,:]
 
-        if self.version in set([1,2,3,4,5,6,7,104]):
-            if include_retwork:
-                stats_employed = np.sum((demogstates[:,1]+demogstates[:,9])*scalex)
-                stats_parttime = np.sum((demogstates[:,10]+demogstates[:,8])*scalex)
-            else:
-                stats_employed = np.sum((demogstates[:,1])*scalex)
-                stats_parttime = np.sum((demogstates[:,10])*scalex)
-            stats_unemployed = np.sum((demogstates[:,0]+demogstates[:,4]+demogstates[:,13])*scalex)
-        else:
-            stats_employed = np.sum((demogstates[:,0]+demogstates[:,3])*scalex)
-            stats_parttime = np.sum((demogstates[:,3])*scalex)
-            stats_unemployed = np.sum((demogstates[:,0])*scalex)
-            #stats_all = np.sum(demogstates,1)
+    #     if self.version in set([1,2,3,4,5,6,7,104]):
+    #         if include_retwork:
+    #             stats_employed = np.sum((demogstates[:,1]+demogstates[:,9])*scalex)
+    #             stats_parttime = np.sum((demogstates[:,10]+demogstates[:,8])*scalex)
+    #         else:
+    #             stats_employed = np.sum((demogstates[:,1])*scalex)
+    #             stats_parttime = np.sum((demogstates[:,10])*scalex)
+    #         stats_unemployed = np.sum((demogstates[:,0]+demogstates[:,4]+demogstates[:,13])*scalex)
+    #     else:
+    #         stats_employed = np.sum((demogstates[:,0]+demogstates[:,3])*scalex)
+    #         stats_parttime = np.sum((demogstates[:,3])*scalex)
+    #         stats_unemployed = np.sum((demogstates[:,0])*scalex)
+    #         #stats_all = np.sum(demogstates,1)
 
-        return stats_employed,stats_parttime,stats_unemployed
+    #     return stats_employed,stats_parttime,stats_unemployed
 
-    def comp_state_stats(self,state,scale_time=True,start=20,end=63.5,ratio=False):
-        demog2 = np.squeeze(self.empstats.get_demog())
-
-        #if scale_time:
-        #    scale=self.timestep
-        #else:
-        #    scale=1.0
+    def comp_state_stats(self,state,start=20,end=63.5):
 
         min_cage=self.map_age(start)
         max_cage=self.map_age(end)+1
-
-        #vaikutus = np.round(scale*np.sum(demog2[min_cage:max_cage]*state[min_cage:max_cage]))/np.sum(demog2[min_cage:max_cage])
+        demog2 = np.squeeze(self.empstats.get_demog())
         vaikutus = np.sum(demog2[min_cage:max_cage]*state[min_cage:max_cage])/np.sum(demog2[min_cage:max_cage])
-        x = np.sum(demog2[min_cage:max_cage]*state[min_cage:max_cage])
-        y = np.sum(demog2[min_cage:max_cage])
-
-        print(x,y,vaikutus)
 
         return vaikutus
 
@@ -2888,11 +2821,8 @@ class EpisodeStats():
         tyovoimassa_m = np.sum(self.gempstate[:,6,0:3],axis=1)[:,None]/alive
 
         alive[:,0] = np.sum(self.galive[:,3:6],1)
-        nn = np.sum(self.gempstate[:,5,3:6]+self.gempstate[:,7,3:6],axis=1)[:,None]
-        if not all:
-            nn-=self.infostats_mother_in_workforce
-        ulkopuolella_n=nn/alive
-        tyovoimassa_n=self.infostats_mother_in_workforce/alive
+        ulkopuolella_n=np.sum(self.gempstate[:,7,3:6],axis=1)[:,None]/alive
+        tyovoimassa_n= np.sum(self.gempstate[:,5,0:3],axis=1)[:,None]/alive
 
         if show:
             m,n=ulkopuolella_m[::skip],ulkopuolella_n[::skip]
@@ -2966,12 +2896,10 @@ class EpisodeStats():
         alive[:,0] = np.sum(self.galive[:,0:3],1)
         ulkopuolella_m = np.sum(self.gempstate[:,7,0:3],axis=1)[:,None]/alive
         tyovoimassa_m = np.sum(self.gempstate[:,6,0:3],axis=1)[:,None]/alive
-        sv_tyovoimassa_m = np.sum(self.infostats_sv_in_workforce[:,0:3],axis=1)[:,None]/alive
 
         alive[:,0] = np.sum(self.galive[:,3:6],1)
-        ulkopuolella_n=(np.sum(self.gempstate[:,5,3:6]+self.gempstate[:,7,3:6],axis=1)[:,None] - self.infostats_mother_in_workforce)/alive
-        tyovoimassa_n=self.infostats_mother_in_workforce/alive
-        sv_tyovoimassa_n = np.sum(self.infostats_sv_in_workforce[:,3:6],axis=1)[:,None]/alive
+        ulkopuolella_n=(np.sum(self.gempstate[:,7,3:6],axis=1)[:,None] )/alive
+        tyovoimassa_n = np.sum(self.gempstate[:,5,3:6],axis=1)[:,None]/alive
 
         if show:
             m,n=ulkopuolella_m[::skip],ulkopuolella_n[::skip]
@@ -2997,7 +2925,7 @@ class EpisodeStats():
             n=muut_m[::skip].shape[0]
             x = np.linspace(self.min_age,self.min_age+n-1,n).reshape(-1,1)
             df = pd.DataFrame(np.hstack([x,muut_m[::skip],muut_n[::skip],opisk_m[::skip],opisk_n[::skip],svpaivaraha_m[::skip],svpaivaraha_n[::skip],
-                ulkopuolella_m[::skip],ulkopuolella_n[::skip],tyovoimassa_m[::skip],tyovoimassa_n[::skip],sv_tyovoimassa_m[::skip],sv_tyovoimassa_n[::skip]]), 
+                ulkopuolella_m[::skip],ulkopuolella_n[::skip],tyovoimassa_m[::skip],tyovoimassa_n[::skip],svpaivaraha_m[::skip],svpaivaraha_m[::skip]]), 
                 columns = ['ikä','muut_m','muut_n','opisk_m','opisk_n','svpaivaraha_m','svpaivaraha_n','vv_ulkopuolella_m','vv_ulkopuolella_n','vv_tyovoimassa_m','vv_tyovoimassa_n','sv_tyovoimassa_m','sv_tyovoimassa_n'])
             df.to_csv(csv, sep=";", decimal=",",index=False)
         
@@ -3563,55 +3491,98 @@ class EpisodeStats():
 
         return ratio
 
-    def comp_gempratios(self,unempratio=True,gender='men'):
+    def comp_empratios_gender(self,unempratio=True,gender='men'):
         if gender=='men': # men
             gempstate = np.sum(self.gempstate[:,:,0:3],axis=2)
             alive = np.zeros((self.galive.shape[0],1))
             alive[:,0] = np.sum(self.galive[:,0:3],1)
-            mother_in_workforce=0
         else: # women
             gempstate = np.sum(self.gempstate[:,:,3:6],axis=2)
             alive = np.zeros((self.galive.shape[0],1))
             alive[:,0] = np.sum(self.galive[:,3:6],1)
-            mother_in_workforce=self.infostats_mother_in_workforce
 
-        tyollisyysaste,osatyoaste,tyottomyysaste,ka_tyottomyysaste=self.comp_empratios(gempstate,alive,unempratio=unempratio)#,mother_in_workforce=mother_in_workforce)
+        tyollisyysaste,osatyoaste,tyottomyysaste,ka_tyottomyysaste = \
+            self.comp_empratios(gempstate,alive,unempratio=unempratio)
 
         return tyollisyysaste,osatyoaste,tyottomyysaste,ka_tyottomyysaste
 
-    def comp_workforce(self,emp,alive):
-        employed=emp[:,1]
-        retired=emp[:,2]
-        unemployed=emp[:,0]
+    def comp_empratios_groups(self,unempratio=True,g=None):
+        if g is None:
+            x = self.galive.shape[0]
+            tyollisyysaste = np.zeros((x,6))
+            osatyoaste = np.zeros((x,6))
+            tyottomyysaste = np.zeros((x,6))
+            ka_tyottomyysaste = np.zeros(6)
 
+            for g in range(6):
+                gempstate = self.gempstate[:,:,g]#,axis=2)
+                alive = self.galive[:,g][:,None] # np.sum(self.galive[:,g],1)
+
+                ta,ota,tta,ka_tta = \
+                    self.comp_empratios(gempstate,alive,unempratio=unempratio)
+                tyollisyysaste[:,g]=ta
+                osatyoaste[:,g]=ota
+                tyottomyysaste[:,g]=tta
+                ka_tyottomyysaste[g]=ka_tta
+        else:
+            gempstate = self.gempstate[:,:,g]#,axis=2)
+            alive = self.galive[:,g][:,None] # np.sum(self.galive[:,g],1)
+
+            #print('comp_empratios_groups',gempstate.shape,alive.shape)
+
+            tyollisyysaste,osatyoaste,tyottomyysaste,ka_tyottomyysaste = \
+                self.comp_empratios(gempstate,alive,unempratio=unempratio)
+
+        #print('comp_empratios_groups',tyollisyysaste.shape,osatyoaste.shape,tyottomyysaste.shape,ka_tyottomyysaste.shape)
+
+        return tyollisyysaste,osatyoaste,tyottomyysaste,ka_tyottomyysaste        
+
+    def comp_workforce_group(self,by_age=True,ratio=False):
         if self.version in set([1,2,3,4,5,6,7,104]):
-            disabled=emp[:,3]
-            piped=emp[:,4]
-            mother=emp[:,5]
-            dad=emp[:,6]
-            kotihoidontuki=emp[:,7]
-            vetyo=emp[:,9]
-            veosatyo=emp[:,8]
-            osatyo=emp[:,10]
-            outsider=emp[:,11]
-            student=emp[:,12]
-            tyomarkkinatuki=emp[:,13]
-            workforce=100*(employed+osatyo+veosatyo+vetyo+unemployed+piped+tyomarkkinatuki)/alive[:,0]
+            employed=self.gempstate[:,1,:]
+            retired=self.gempstate[:,2,:]
+            unemployed=self.gempstate[:,0,:]
+            disabled=self.gempstate[:,1,:]
+            piped=self.gempstate[:,4,:]
+            mother=self.gempstate[:,5,:]
+            dad=self.gempstate[:,6,:]
+            kotihoidontuki=self.gempstate[:,7,:]
+            vetyo=self.gempstate[:,9,:]
+            veosatyo=self.gempstate[:,8,:]
+            osatyo=self.gempstate[:,10,:]
+            outsider=self.gempstate[:,11,:]
+            student=self.gempstate[:,12,:]
+            tyomarkkinatuki=self.gempstate[:,13,:]
+            sv=self.gempstate[:,14,:]
+            if ratio:
+                workforce=(employed+osatyo+veosatyo+vetyo+unemployed+piped+tyomarkkinatuki+dad+mother+sv)/self.galive[:,:]
+            else:
+                workforce=(employed+osatyo+veosatyo+vetyo+unemployed+piped+tyomarkkinatuki+dad+mother+sv)
         elif self.version in set([0,101]):
             if False:
                 osatyo=emp[:,3]
             else:
                 osatyo=0
-            workforce=100*(employed+osatyo+veosatyo+vetyo+unemployed+piped+tyomarkkinatuki)/alive[:,0]
 
-        return workforce
+            if ratio:
+                workforce=(employed+osatyo+veosatyo+vetyo+unemployed+piped+tyomarkkinatuki)/alive[:,0]
+            else:
+                workforce=(employed+osatyo+veosatyo+vetyo+unemployed+piped+tyomarkkinatuki)
 
-    def comp_empratios(self,emp,alive,unempratio=True,mother_in_workforce=None):
+        if not by_age:
+            workforce=np.sum(workforce,1)
+
+        return workforce        
+
+    def comp_workforce(self,emp=None,alive=None,by_age=True,ratio=False):
+        if emp is None:
+            emp=self.empstate
+        if alive is None:
+            alive=self.alive
+
         employed=emp[:,1]
         retired=emp[:,2]
         unemployed=emp[:,0]
-        if mother_in_workforce is None:
-            mother_in_workforce=np.zeros((emp.shape[0],1))
 
         if self.version in set([1,2,3,4,5,6,7,104]):
             disabled=emp[:,3]
@@ -3625,8 +3596,47 @@ class EpisodeStats():
             outsider=emp[:,11]
             student=emp[:,12]
             tyomarkkinatuki=emp[:,13]
-            #print(vetyo.shape,dad.shape,mother_in_workforce.shape)
-            tyollisyysaste=100*(employed+osatyo+veosatyo+vetyo+dad+mother_in_workforce[:,0])/alive[:,0]
+            sv=emp[:,14]
+            if ratio:
+                workforce=(employed+osatyo+veosatyo+vetyo+unemployed+piped+tyomarkkinatuki+mother+dad+sv)/alive[:,0]
+            else:
+                workforce=(employed+osatyo+veosatyo+vetyo+unemployed+piped+tyomarkkinatuki+mother+dad+sv)
+        elif self.version in set([0,101]):
+            if False:
+                osatyo=emp[:,3]
+            else:
+                osatyo=0
+
+            if ratio:
+                workforce=(employed+osatyo+veosatyo+vetyo+unemployed+piped+tyomarkkinatuki)/alive[:,0]
+            else:
+                workforce=(employed+osatyo+veosatyo+vetyo+unemployed+piped+tyomarkkinatuki)
+
+        if not by_age:
+            workforce=np.sum(workforce,1)
+
+        return workforce
+
+    def comp_empratios(self,emp,alive,unempratio=True):
+
+        employed=emp[:,1]
+        retired=emp[:,2]
+        unemployed=emp[:,0]
+
+        if self.version in set([1,2,3,4,5,6,7,104]):
+            disabled=emp[:,3]
+            piped=emp[:,4]
+            mother=emp[:,5]
+            dad=emp[:,6]
+            kotihoidontuki=emp[:,7]
+            vetyo=emp[:,9]
+            veosatyo=emp[:,8]
+            osatyo=emp[:,10]
+            outsider=emp[:,11]
+            student=emp[:,12]
+            tyomarkkinatuki=emp[:,13]
+            sv=emp[:,14]
+            tyollisyysaste=100*(employed+osatyo+veosatyo+vetyo+dad+mother+sv)/alive[:,0]
             if False:
                 student_at_work=emp[:,16]
                 osatyoaste=100*(osatyo+veosatyo+student_at_work)/(employed+osatyo+veosatyo+vetyo+student_at_work)
@@ -3634,8 +3644,9 @@ class EpisodeStats():
                 osatyoaste=100*(osatyo+veosatyo)/(employed+osatyo+veosatyo+vetyo)
 
             if unempratio:
-                tyottomyysaste=100*(unemployed+piped+tyomarkkinatuki)/(tyomarkkinatuki+unemployed+employed+piped+osatyo+veosatyo+vetyo+dad+mother_in_workforce[:,0])
-                ka_tyottomyysaste=100*np.sum(unemployed+tyomarkkinatuki+piped)/np.sum(tyomarkkinatuki+unemployed+employed+piped+osatyo+veosatyo+vetyo+dad+mother_in_workforce[:,0])
+                workforce = self.comp_workforce(emp,alive)
+                tyottomyysaste=100*(unemployed+piped+tyomarkkinatuki)/workforce
+                ka_tyottomyysaste=100*np.sum(unemployed+tyomarkkinatuki+piped)/np.sum(workforce)
             else:
                 tyottomyysaste=100*(unemployed+piped+tyomarkkinatuki)/alive[:,0]
                 ka_tyottomyysaste=100*np.sum(unemployed+tyomarkkinatuki+piped)/np.sum(alive[:,0])
@@ -3654,9 +3665,11 @@ class EpisodeStats():
                 tyottomyysaste=100*(unemployed)/alive[:,0]
                 ka_tyottomyysaste=100*np.sum(unemployed)/np.sum(alive[:,0])
 
+        #print('comp_empratios',tyollisyysaste.shape,osatyoaste.shape,tyottomyysaste.shape,ka_tyottomyysaste.shape)
+
         return tyollisyysaste,osatyoaste,tyottomyysaste,ka_tyottomyysaste
 
-    def comp_decisionratios(self,emp,alive,mother_in_workforce=0):
+    def comp_decisionratios(self,emp,alive):
         '''
         Päätöspohjaisesti valitut tilat
         '''
@@ -3675,7 +3688,8 @@ class EpisodeStats():
         outsider=emp[:,11]
         student=emp[:,12]
         tyomarkkinatuki=emp[:,13]
-        tyolliset=(employed+osatyo+veosatyo+vetyo+dad+mother_in_workforce[:,0])/alive[:,0]
+        sv=emp[:,14]
+        tyolliset=(employed+osatyo+veosatyo+vetyo+dad+mother+sv)/alive[:,0]
         tyottomat=(unemployed+piped+tyomarkkinatuki)/alive[:,0]
         vella=(retired+disabled)/alive[:,0]
         yhteensa=vella+tyolliset+tyottomat
