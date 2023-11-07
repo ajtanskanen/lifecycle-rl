@@ -186,7 +186,7 @@ class EpisodeStats():
         self.infostats_toimeentulotuki = np.zeros((self.n_time,1))
         self.infostats_tulot_netto = np.zeros((self.n_time,1))
         self.infostats_tulot_netto_emp = np.zeros((self.n_time,n_emps))
-        self.infostats_pinkslip = np.zeros((self.n_time,n_emps))
+        self.infostats_pinkslip = np.zeros((self.n_time,n_emps),dtype = np.int64)
         self.infostats_group = np.zeros((self.n_pop,1),dtype = np.int8)
         self.infostats_pop_pinkslip = np.zeros((self.n_time,self.n_pop),dtype = np.int8)
         self.infostats_pop_wage_reduction = np.zeros((self.n_time,self.n_pop),dtype=float)
@@ -218,13 +218,13 @@ class EpisodeStats():
         self.infostats_toe = np.zeros((self.n_time,self.n_pop),dtype=float)
         self.infostats_ove = np.zeros((self.n_time,n_emps))
         self.infostats_ove_g = np.zeros((self.n_time,n_emps,self.n_groups))
-        self.infostats_kassanjasen = np.zeros((self.n_time,1))
+        self.infostats_kassanjasen = np.zeros((self.n_time,1),dtype = np.int64)
         self.infostats_poptulot_netto = np.zeros((self.n_time,self.n_pop),dtype=float)
         self.infostats_pop_wage = np.zeros((self.n_time,self.n_pop),dtype=float)
         self.infostats_equivalent_income = np.zeros((self.n_time,1))
         self.infostats_alv = np.zeros((self.n_time,1))
-        self.pop_predrew = np.zeros((self.n_time,self.n_pop))
-        self.stat_pop_diswage5y = np.zeros((self.n_pop,1))
+        self.pop_predrew = np.zeros((self.n_time,self.n_pop),dtype=float)
+        self.stat_pop_diswage5y = np.zeros((self.n_pop,1),dtype=float)
         self.initial_reward=0
         self.average_discounted_reward=0
         self.rewards_computed=False
@@ -1567,6 +1567,7 @@ class EpisodeStats():
         '''
         self.stat_tyoura=self.stat_tyoura/np.maximum(1,self.empstate)
         self.time_in_state=self.time_in_state/np.maximum(1,self.empstate)
+        print(self.stat_wage_reduction.shape,self.empstate.shape)
         self.stat_wage_reduction=self.stat_wage_reduction/np.maximum(1,self.empstate)
         #self.infostats_ove=self.infostats_ove/np.maximum(1,self.empstate)
         self.stat_unemp_after_ra=self.stat_unemp_after_ra/np.maximum(1,self.empstate)
@@ -2141,6 +2142,30 @@ class EpisodeStats():
 
         return G
 
+    def comp_family_matrix(self):
+        spouse_g = np.zeros((3,3))
+        for t in range(self.n_time):
+            for k in range(0,self.n_pop,2):
+                if self.infostats_puoliso[t,k]>0 and self.popempstate[t,k]!=15:
+                    m_g=self.infostats_group[k]
+                    p_g=self.infostats_group[k+1]-3
+                    spouse_g[m_g,p_g] += 1
+
+        spouse_g /= np.sum(spouse_g)
+
+        q = {}
+        q['male basic'] = spouse_g[0,:]
+        q['male secondary'] = spouse_g[1,:]
+        q['male higher'] = spouse_g[2,:]
+
+        df = pd.DataFrame.from_dict(q,orient='index',columns=['female basic','female secondary','female higher'])
+        #df.['basic']=spouse_g[:,0]
+        #df['secondary']=spouse_g[:,1]
+        #df['higher']=spouse_g[:,2]
+
+        print('cross-sections',df)
+
+
     def comp_gini(self):
         '''
         Laske Gini-kerroin populaatiolle
@@ -2683,7 +2708,7 @@ class EpisodeStats():
             self.stats_unemployed=self.demogstates[:,0]
             self.stats_all = np.sum(self.demogstates,1)
         else:
-            self.stats_employed=self.demogstates[:,0]+self.demogstates[:,10]+self.demogstates[:,8]+self.demogstates[:,9]
+            self.stats_employed=self.demogstates[:,0]+self.demogstates[:,10]+self.demogstates[:,8]+self.demogstates[:,9]+self.demogstates[:,5]+self.demogstates[:,6]
             self.stats_parttime=self.demogstates[:,10]+self.demogstates[:,8]
             self.stats_unemployed=self.demogstates[:,0]+self.demogstates[:,4]+self.demogstates[:,13]
             self.stats_all = np.sum(self.demogstates,1)
@@ -2732,7 +2757,7 @@ class EpisodeStats():
             q['työkyvyttömyyseläke'] = np.sum(emp[:retage,3]*scalex_lkm[:retage])
             q['svpäiväraha'] = osa_aika_kerroin*np.sum(emp[:,14]*scalex_lkm)
             q['vanhempainvapaalla'] = np.sum(emp[:,5]*scalex_lkm)
-            q['opiskelijoita'] = np.sum((emp[:,12])*scalex_lkm)
+            q['opiskelijoita'] = np.sum((emp[:,12]+emp[:,16])*scalex_lkm)
             q['ovella'] = np.sum(np.sum(self.infostats_ove,axis=1)*scalex)
             q['pareja'] = np.sum(np.sum(self.infostats_puoliso,axis=1)*scalex)/2
             q['lapsia'] = np.sum(np.sum(self.infostats_children_under18,axis=1)*scalex)
@@ -2863,13 +2888,13 @@ class EpisodeStats():
         alive[:,0] = np.sum(self.galive[:,0:3],1)
         muut_m = np.sum(self.gempstate[:,0,0:3]+self.gempstate[:,1,0:3]+self.gempstate[:,4,0:3]
             +self.gempstate[:,10,0:3]+self.gempstate[:,13,0:3],axis=1)[:,None]/alive
-        opisk_m = np.sum(self.gempstate[:,12,0:3],axis=1)[:,None]/alive
+        opisk_m = np.sum(self.gempstate[:,12,0:3]+self.gempstate[:,16,0:3],axis=1)[:,None]/alive
         svpaivaraha_m = np.sum(self.gempstate[:,14,0:3],axis=1)[:,None]/alive
 
         alive[:,0] = np.sum(self.galive[:,3:6],1)
         muut_n = np.sum(self.gempstate[:,0,3:6]+self.gempstate[:,1,3:6]+self.gempstate[:,4,3:6]
             +self.gempstate[:,10,3:6]+self.gempstate[:,13,3:6],axis=1)[:,None]/alive
-        opisk_n = np.sum(self.gempstate[:,12,3:6],axis=1)[:,None]/alive
+        opisk_n = np.sum(self.gempstate[:,12,3:6]+self.gempstate[:,16,3:6],axis=1)[:,None]/alive
         svpaivaraha_n = np.sum(self.gempstate[:,14,3:6],axis=1)[:,None]/alive
 
         if show:
@@ -2925,7 +2950,7 @@ class EpisodeStats():
             n=muut_m[::skip].shape[0]
             x = np.linspace(self.min_age,self.min_age+n-1,n).reshape(-1,1)
             df = pd.DataFrame(np.hstack([x,muut_m[::skip],muut_n[::skip],opisk_m[::skip],opisk_n[::skip],svpaivaraha_m[::skip],svpaivaraha_n[::skip],
-                ulkopuolella_m[::skip],ulkopuolella_n[::skip],tyovoimassa_m[::skip],tyovoimassa_n[::skip],svpaivaraha_m[::skip],svpaivaraha_m[::skip]]), 
+                ulkopuolella_m[::skip],ulkopuolella_n[::skip],tyovoimassa_m[::skip],tyovoimassa_n[::skip],svpaivaraha_m[::skip],svpaivaraha_n[::skip]]), 
                 columns = ['ikä','muut_m','muut_n','opisk_m','opisk_n','svpaivaraha_m','svpaivaraha_n','vv_ulkopuolella_m','vv_ulkopuolella_n','vv_tyovoimassa_m','vv_tyovoimassa_n','sv_tyovoimassa_m','sv_tyovoimassa_n'])
             df.to_csv(csv, sep=";", decimal=",",index=False)
         
@@ -3149,7 +3174,7 @@ class EpisodeStats():
         if laaja:
             unempset=[0,4,11,13]
         if kaikki:
-            unempset=[0,2,3,4,5,6,7,8,9,11,12,13,14]
+            unempset=[0,2,3,4,5,6,7,8,9,11,12,13,14,16]
 
         unempset=set(unempset)
 
@@ -3229,7 +3254,7 @@ class EpisodeStats():
         if laaja:
             unempset=[0,4,11,13]
         if kaikki:
-            unempset=[0,2,3,4,5,6,7,8,9,11,12,13,14]
+            unempset=[0,2,3,4,5,6,7,8,9,11,12,13,14,16]
 
         unempset=set(unempset)
 
@@ -3307,7 +3332,7 @@ class EpisodeStats():
         if laaja:
             unempset=[0,4,11,13]
         if kaikki:
-            unempset=[0,2,3,4,5,6,7,8,9,11,12,13,14]
+            unempset=[0,2,3,4,5,6,7,8,9,11,12,13,14,16]
 
         empset=set([1,10])
         unempset=set(unempset)
@@ -3551,7 +3576,7 @@ class EpisodeStats():
             veosatyo=self.gempstate[:,8,:]
             osatyo=self.gempstate[:,10,:]
             outsider=self.gempstate[:,11,:]
-            student=self.gempstate[:,12,:]
+            student=self.gempstate[:,12,:]+self.gempstate[:,16,:]
             tyomarkkinatuki=self.gempstate[:,13,:]
             sv=self.gempstate[:,14,:]
             if ratio:
@@ -3594,7 +3619,7 @@ class EpisodeStats():
             veosatyo=emp[:,8]
             osatyo=emp[:,10]
             outsider=emp[:,11]
-            student=emp[:,12]
+            student=emp[:,12]+emp[:,16]
             tyomarkkinatuki=emp[:,13]
             sv=emp[:,14]
             if ratio:
@@ -3633,7 +3658,7 @@ class EpisodeStats():
             veosatyo=emp[:,8]
             osatyo=emp[:,10]
             outsider=emp[:,11]
-            student=emp[:,12]
+            student=emp[:,12]+emp[:,6]
             tyomarkkinatuki=emp[:,13]
             sv=emp[:,14]
             tyollisyysaste=100*(employed+osatyo+veosatyo+vetyo+dad+mother+sv)/alive[:,0]
@@ -3686,7 +3711,7 @@ class EpisodeStats():
         veosatyo=emp[:,8]
         osatyo=emp[:,10]
         outsider=emp[:,11]
-        student=emp[:,12]
+        student=emp[:,12]+emp[:,16]
         tyomarkkinatuki=emp[:,13]
         sv=emp[:,14]
         tyolliset=(employed+osatyo+veosatyo+vetyo+dad+mother+sv)/alive[:,0]

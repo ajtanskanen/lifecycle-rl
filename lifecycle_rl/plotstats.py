@@ -465,7 +465,6 @@ class PlotStats():
     def plot_tekematon_tyo(self):
         self.plot_compare_disab_menetys()
         w1,wplt=self.episodestats.comp_potential_palkkasumma(grouped=True,full=True,include_kela=True)
-        print(wplt.shape)
         wplt2=wplt.copy()
         for k in range(15):
             w2=2.1*w1[k] # kerroin 2,1 muuttaa palkan työpanoksen arvoksi
@@ -1721,6 +1720,8 @@ class PlotStats():
 
         self.plot_y(spouseratio,ylabel=self.labels['spouses'],figname=fname)
 
+        print(self.episodestats.comp_family_matrix())
+
     def plot_unemp_all(self,unempratio=True,figname=None,grayscale=False,tyovoimatutkimus=False):
         '''
         Plottaa työttömyysaste (unempratio=True) tai työttömien osuus väestöstö (False)
@@ -2149,7 +2150,8 @@ class PlotStats():
 
     def plot_states(self,statistic,ylabel='',ylimit=None,show_legend=True,parent=False,unemp=False,no_ve=False,
                     start_from=None,end_at=None,stack=True,figname=None,yminlim=None,ymaxlim=None,work60=False,
-                    onlyunemp=False,reverse=False,grayscale=False,emp=False,oa_emp=False,oa_unemp=False,all_emp=False,sv=False):
+                    onlyunemp=False,reverse=False,grayscale=False,emp=False,oa_emp=False,oa_unemp=False,
+                    all_emp=False,sv=False,normalize=False):
         if start_from is None:
             x=np.linspace(self.min_age,self.max_age,self.n_time)
             x=x[:statistic.shape[0]]
@@ -2179,6 +2181,28 @@ class PlotStats():
             ura_svpaiva=statistic[:,14]
         else:
             ura_osatyo=0 #statistic[:,3]
+
+        if normalize:
+            ymaxlim = 1.00
+            scale = np.sum(statistic,1)
+            ura_emp /= scale
+            ura_ret /= scale
+            ura_unemp /= scale
+            if self.version in self.complex_models:
+                ura_disab /= scale
+                ura_pipe /= scale
+                ura_mother /= scale
+                ura_dad /= scale
+                ura_kht /= scale
+                ura_vetyo /= scale
+                ura_veosatyo /= scale
+                ura_osatyo /= scale
+                ura_outsider /= scale
+                ura_student /= scale
+                ura_tyomarkkinatuki /= scale
+                ura_svpaiva /= scale
+            else:
+                ura_osatyo=0 #statistic[:,3]
 
         if no_ve:
             ura_ret[-2:-1]=None
@@ -2335,6 +2359,8 @@ class PlotStats():
         siirtyneet_ratio=self.episodestats.siirtyneet_det[:,7,:]/self.episodestats.alive*100
         self.plot_states(siirtyneet_ratio,ylabel='Siirtyneet kotihoitotuki tilasta',stack=True,
                         yminlim=0,ymaxlim=min(100,1.1*np.nanmax(np.cumsum(siirtyneet_ratio,1))))
+        self.plot_states(siirtyneet_ratio,ylabel='Siirtyneet kotihoitotuki tilasta',stack=True,
+                        yminlim=0,ymaxlim=1,normalize=True)
         siirtyneet_ratio=self.episodestats.siirtyneet_det[:,8,:]/self.episodestats.alive*100
         self.plot_states(siirtyneet_ratio,ylabel='Siirtyneet ve+oatyö tilasta',stack=True,start_from=60,
                         yminlim=0,ymaxlim=min(100,1.1*np.nanmax(np.cumsum(siirtyneet_ratio,1))))
@@ -2348,41 +2374,45 @@ class PlotStats():
         self.plot_states(siirtyneet_ratio,start_from=58,ylabel='Siirtyneet putkesta tilasta',stack=True,
                         yminlim=0,ymaxlim=min(100,1.1*np.nanmax(np.cumsum(siirtyneet_ratio,1))))
         siirtyneet_ratio=self.episodestats.siirtyneet_det[:,:,0]/self.episodestats.alive*100
-        self.plot_states(siirtyneet_ratio,ylabel='Siirtyneet työttömäksi tilaan',stack=True,
+        self.plot_states(siirtyneet_ratio,ylabel='Siirtyneet työttömäksi-tilaan tilasta',stack=True,
                         yminlim=0,ymaxlim=min(100,1.1*np.nanmax(np.cumsum(siirtyneet_ratio,1))))
+        self.plot_states(siirtyneet_ratio,ylabel='Siirtyneet työttömäksi-tilaan tilasta',stack=True,
+                        yminlim=0,ymaxlim=1,normalize=True)
         siirtyneet_ratio=self.episodestats.siirtyneet_det[:,:,13]/self.episodestats.alive*100
-        self.plot_states(siirtyneet_ratio,ylabel='Siirtyneet tm-tuelle tilaan',stack=True,
+        self.plot_states(siirtyneet_ratio,ylabel='Siirtyneet tm-tuelle-tilaan tilasta',stack=True,
                         yminlim=0,ymaxlim=min(100,1.1*np.nanmax(np.cumsum(siirtyneet_ratio,1))))
+        self.plot_states(siirtyneet_ratio,ylabel='Siirtyneet tm-tuelle-tilaan tilasta',stack=True,
+                        yminlim=0,ymaxlim=1,normalize=True)
         siirtyneet_ratio=self.episodestats.siirtyneet_det[:,:,10]/self.episodestats.alive*100
-        self.plot_states(siirtyneet_ratio,ylabel='Siirtyneet osa-aikatyö tilaan',stack=True,
+        self.plot_states(siirtyneet_ratio,ylabel='Siirtyneet osa-aikatyö-tilaan tilasta',stack=True,
                         yminlim=0,ymaxlim=min(100,1.1*np.nanmax(np.cumsum(siirtyneet_ratio,1))))
         siirtyneet_ratio=self.episodestats.siirtyneet_det[:,:,11]/self.episodestats.alive*100
-        self.plot_states(siirtyneet_ratio,ylabel='Siirtyneet outsider tilaan',stack=True,
+        self.plot_states(siirtyneet_ratio,ylabel='Siirtyneet outsider-tilaan tilasta',stack=True,
                         yminlim=0,ymaxlim=min(100,1.1*np.nanmax(np.cumsum(siirtyneet_ratio,1))))
         siirtyneet_ratio=self.episodestats.siirtyneet_det[:,11,:]/self.episodestats.alive*100
-        self.plot_states(siirtyneet_ratio,ylabel='Siirtyneet outsider tilasta',stack=True,
+        self.plot_states(siirtyneet_ratio,ylabel='Siirtyneet outsider-tilasta',stack=True,
                         yminlim=0,ymaxlim=min(100,1.1*np.nanmax(np.cumsum(siirtyneet_ratio,1))))
         siirtyneet_ratio=self.episodestats.siirtyneet_det[:,:,12]/self.episodestats.alive*100
-        self.plot_states(siirtyneet_ratio,ylabel='Siirtyneet opiskelu tilaan',stack=True,
+        self.plot_states(siirtyneet_ratio,ylabel='Siirtyneet opiskelu-tilaan tilasta',stack=True,
                         yminlim=0,ymaxlim=min(100,1.1*np.nanmax(np.cumsum(siirtyneet_ratio,1))))
         siirtyneet_ratio=self.episodestats.siirtyneet_det[:,12,:]/self.episodestats.alive*100
         self.plot_states(siirtyneet_ratio,ylabel='Siirtyneet opiskelu tilasta',stack=True,
                         yminlim=0,ymaxlim=min(100,1.1*np.nanmax(np.cumsum(siirtyneet_ratio,1))))
         siirtyneet_ratio=self.episodestats.siirtyneet_det[:,:,16]/self.episodestats.alive*100
-        self.plot_states(siirtyneet_ratio,ylabel='Siirtyneet työ+opiskelu tilaan',stack=True,
+        self.plot_states(siirtyneet_ratio,ylabel='Siirtyneet työ+opiskelu-tilaan tilasta',stack=True,
                         yminlim=0,ymaxlim=min(100,1.1*np.nanmax(np.cumsum(siirtyneet_ratio,1))))
         # ei tiedetä: vanha act ei talletu                        
         #siirtyneet_ratio=self.episodestats.siirtyneet_det[:,16,:]/self.episodestats.alive*100
         #self.plot_states(siirtyneet_ratio,ylabel='Siirtyneet työ+opiskelu tilasta',stack=True,
         #                yminlim=0,ymaxlim=min(100,1.1*np.nanmax(np.cumsum(siirtyneet_ratio,1))))
         siirtyneet_ratio=self.episodestats.siirtyneet_det[:,:,14]/self.episodestats.alive*100
-        self.plot_states(siirtyneet_ratio,ylabel='Siirtyneet svpäivärahalta tilaan',stack=True,
+        self.plot_states(siirtyneet_ratio,ylabel='Siirtyneet svpäivärahalta-tilaan tilasta',stack=True,
                         yminlim=0,ymaxlim=min(100,1.1*np.nanmax(np.cumsum(siirtyneet_ratio,1))))
         siirtyneet_ratio=self.episodestats.siirtyneet_det[:,14,:]/self.episodestats.alive*100
         self.plot_states(siirtyneet_ratio,ylabel='Siirtyneet svpäivärahalle tilasta',stack=True,
                         yminlim=0,ymaxlim=min(100,1.1*np.nanmax(np.cumsum(siirtyneet_ratio,1))))
         siirtyneet_ratio=self.episodestats.siirtyneet_det[:,:,2]/self.episodestats.alive*100
-        self.plot_states(siirtyneet_ratio,start_from=62,ylabel='Siirtyneet vanhuuseläkkeelle tilasta',stack=True,
+        self.plot_states(siirtyneet_ratio,start_from=62,ylabel='Siirtyneet vanhuuseläkkeelle-tilaan tilasta',stack=True,
                         yminlim=0,ymaxlim=min(100,1.1*np.nanmax(np.cumsum(siirtyneet_ratio,1))))
 
     def plot_ave_stay(self):
@@ -2424,6 +2454,9 @@ class PlotStats():
         emp=np.array([1,10])
         unemp=np.array([0,13,4])
         gen_red=np.sum(self.episodestats.stat_wage_reduction*self.episodestats.empstate,axis=1)[:,None]/np.maximum(1,self.episodestats.alive)
+        print(np.mean(self.episodestats.stat_wage_reduction),np.sum(self.episodestats.stat_wage_reduction*self.episodestats.empstate),np.sum(self.episodestats.alive))
+        for k in range(16):
+            print(k,np.mean(self.episodestats.stat_wage_reduction[:,k]))
         self.plot_y(gen_red,ylabel='Average wage reduction')
         gen_red_w=np.sum(np.sum(self.episodestats.stat_wage_reduction_g[:,:,0:3]*self.episodestats.gempstate[:,:,0:3],axis=2),axis=1)[:,None]/np.maximum(1,np.sum(self.episodestats.galive[:,0:3],axis=1))[:,None]
         gen_red_m=np.sum(np.sum(self.episodestats.stat_wage_reduction_g[:,:,3:6]*self.episodestats.gempstate[:,:,3:6],axis=2),axis=1)[:,None]/np.maximum(1,np.sum(self.episodestats.galive[:,3:6],axis=1))[:,None]
@@ -3300,7 +3333,8 @@ class PlotStats():
         axvcolor='gray'
         lstyle='--'
         maxt=self.map_age(64)
-        emtr_tilat=set([0,1,4,7,8,9,10,13]) # include 14?
+        #emtr_tilat=set([0,1,4,7,8,9,10,13]) # include 14?
+        emtr_tilat=set([0,1,4,5,6,7,8,9,10,11,12,13,14])
         
         etla_x_ptr,etla_ptr,etla_x_emtr,etla_emtr=self.empstats.get_emtr()
 
