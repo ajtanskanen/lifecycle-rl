@@ -2525,7 +2525,7 @@ class EpisodeStats():
             if per_pop:
                 nn = self.alive[:,0][:,None]
             else:
-                nn = self.comp_workforce(emp)
+                nn = self.comp_workforce(emp)[:,None]
 
             ansiosid_osuus=(emp[:,0]+emp[:,4])[:,None]/nn
             tm_osuus=(emp[:,13])[:,None]/nn

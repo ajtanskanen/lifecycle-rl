@@ -2,3 +2,6 @@ gym
 fin_benefits
 numpy
 gym_unemployment
+numpy_financial
+tabulate
+bayesian-optimization

@@ -163,7 +163,7 @@ class Lifecycle():
         if self.version in set([4,5,6,7,104]):
             self.min_retirementage=self.env.get_retirementage()
 
-        self.episodestats=SimStats(self.timestep,self.n_time,self.n_employment,1, #self.n_pop,
+        self.episodestats=SimStats(self.timestep,self.n_time,self.n_employment,1, 
                                    self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,
                                    version=self.version,params=self.gym_kwargs,year=self.year,gamma=self.gamma,
                                    silent=self.silent)
@@ -177,13 +177,13 @@ class Lifecycle():
         
                                    
     def setup_solver(self,use_solver):
-        self.use_tianshou=False
+        self.runner_sac=False
         self.use_standalone=False
         self.use_sb3=False
         self.use_sb2=False
-        if use_solver==2: # not working
-            from .runner_tianshou import runner_tianshou
-            self.use_tianshou=True
+        if use_solver==2: # WIP
+            from .runner_sac import runner_SAC
+            self.runner_sac=True
         elif use_solver==3: # does not implement ACKTR
             from .runner_stablebaselines3 import runner_stablebaselines3
             self.use_sb3=True
@@ -195,17 +195,22 @@ class Lifecycle():
             #from .runner_stablebaselines2 import runner_stablebaselines2 # older, roughly 11 p/s
             self.use_sb2=True
 
-        if self.use_tianshou:
-            self.runner=runner_tianshou(self.environment,self.gamma,self.timestep,self.n_time,self.n_pop,
+        if self.runner_sac:
+            print("runner SAC")
+            #self.runner=runner_SAC("Q"+self.environment,self.gamma,self.timestep,self.n_time,self.n_pop,
+            #     self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year,self.episodestats,self.gym_kwargs,self.version)
+            self.runner=runner_SAC(self.environment,self.gamma,self.timestep,self.n_time,self.n_pop,
                  self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year,self.episodestats,self.gym_kwargs,self.version)
         elif self.use_standalone:
-            print('pop',self.n_pop)
+            print("runner standalone")
             self.runner=runner_standalone(self.environment,self.gamma,self.timestep,self.n_time,self.n_pop,
                  self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year,self.episodestats,self.gym_kwargs,self.version,self.processes)
         elif self.use_sb3:
+            print("runner SB3")
             self.runner=runner_stablebaselines3(self.environment,self.gamma,self.timestep,self.n_time,self.n_pop,
                  self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year,self.episodestats,self.gym_kwargs,self.version)
         else:
+            print("runner SB2")
             self.runner=runner_stablebaselines2(self.environment,self.gamma,self.timestep,self.n_time,self.n_pop,
                  self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year,self.episodestats,self.gym_kwargs,self.version,self.processes)
         

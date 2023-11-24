@@ -26,7 +26,7 @@ import torch, os, gym, time, glob, argparse, sys
 import numpy as np
 from scipy.signal import lfilter
 #from scipy.misc import imresize # preserves single-pixel info _unlike_ img = img[::2,::2]
-from cv2 import resize
+#from cv2 import resize
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.multiprocessing as mp
@@ -146,7 +146,7 @@ class A3CPolicy_GRU(nn.Module): # an actor-critic neural network _with_Attention
         config = GPTConfig()
         self.memsize=memsize
         self.attn = CausalSelfAttention(config)
-        self.conv1 = nn.Linear(99, 256)
+        self.conv1 = nn.Linear(channels, 256)
         self.conv2 = nn.Linear(256, 128)
         self.conv3 = nn.Linear(128, 128)
         self.gru = nn.GRUCell(128, memsize)
@@ -178,7 +178,7 @@ class A3CPolicy_MLP(nn.Module): # an actor-critic neural network _with_Attention
         num_pt=num_actions[1]
         num_act=num_actions[0]
         config = GPTConfig()
-        self.conv1 = nn.Linear(99, 256)
+        self.conv1 = nn.Linear(channels, 256)
         self.conv2 = nn.Linear(256, 256)
         self.conv3 = nn.Linear(256, 256)
         self.critic_linear = nn.Linear(256, 1)
@@ -286,6 +286,8 @@ class runner_standalone():
         '''
         Opetusrutiini
         '''
+
+        print('a3c cont',cont)
         self.test=False
         if render:  
             self.processes = 1 
@@ -398,7 +400,7 @@ class runner_standalone():
                 if include_GRU:
                     value, logit_act1, logit_pt1, logit_act2, logit_pt2, hx = model((state.view(1,1,1,args['state_shape']), hx))
                 else:
-                    value, logit_act1, logit_pt1, logit_act2, logit_pt2 = model(state.view(1,1,99))
+                    value, logit_act1, logit_pt1, logit_act2, logit_pt2 = model(state.view(1,1,args['state_shape']))
 
                 logp_act1 = F.log_softmax(logit_act1, dim=-1)
                 logp_pt1 = F.log_softmax(logit_pt1, dim=-1)
@@ -764,6 +766,7 @@ class runner_standalone():
 
         info = {k: torch.DoubleTensor([0]).share_memory_() for k in ['run_epr', 'run_loss', 'pop_num', 'frames', 'pop']}
         info['frames'] += shared_model.try_load(self.args['save_dir']) * 1e6
+
         if int(info['frames'].item()) == 0: printlog(self.args,'', end='', mode='w') # clear log file
         
         gkwargs=self.args['gym_kwargs'].copy()

@@ -3035,6 +3035,7 @@ class PlotStats():
             plt.rcParams['figure.facecolor'] = 'white' # Or any suitable colour...
 
         diff_emp=self.episodestats.empstate/self.episodestats.alive-cc2.episodestats.empstate/cc2.episodestats.alive
+        diff_emp=diff_emp*100
         x=np.linspace(self.min_age,self.max_age,self.n_time)
         real1=self.episodestats.comp_presentvalue()
         real2=cc2.episodestats.comp_presentvalue()
@@ -3130,7 +3131,6 @@ class PlotStats():
         fig,ax=plt.subplots()
         ax.set_xlabel(self.labels['age'])
         ax.set_ylabel(self.labels['ero osuuksissa'])
-        diff_emp=diff_emp*100
         #print(tyot_osuus1.shape,tyot_osuus2.shape,kokotyo_osuus1.shape,kokotyo_osuus2.shape,osatyo_osuus1.shape,osatyo_osuus2.shape,tyolliset1.shape,tyolliset2.shape,htv_osuus1.shape,htv_osuus2.shape)
         ax.plot(x,100*(tyot_osuus1-tyot_osuus2),label='unemployment')
         ax.plot(x,100*(kokotyo_osuus1-kokotyo_osuus2),label='fulltime work')
@@ -3144,7 +3144,6 @@ class PlotStats():
         fig,ax=plt.subplots()
         ax.set_xlabel(self.labels['age'])
         ax.set_ylabel(self.labels['tyottomyysaste'])
-        diff_emp=diff_emp*100
         ax.plot(x,100*tyot_osuus1,label=label1)
         ax.plot(x,100*tyot_osuus2,ls=ls,label=label2)
         ax.legend()
@@ -3179,7 +3178,7 @@ class PlotStats():
         fig,ax=plt.subplots()
         ax.set_xlabel(self.labels['age'])
         ax.set_ylabel(self.labels['ero osuuksissa'])
-        diff_emp=diff_emp*100
+        print(diff_emp.shape,ansiosid_osuus2.shape,ansiosid_osuus1.shape,tm_osuus2.shape,tm_osuus1.shape)
         ax.plot(x,100*ansiosid_osuus2,ls=ls,label='ansiosid. työttömyys, '+label2)
         ax.plot(x,100*ansiosid_osuus1,label='ansiosid. työttömyys, '+label1)
         ax.plot(x,100*tm_osuus2,ls=ls,label='tm-tuki, '+label2)

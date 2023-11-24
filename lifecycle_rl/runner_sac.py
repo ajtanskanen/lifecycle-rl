@@ -5,17 +5,7 @@ Runner for fitting the model with multidiscrete-SAC
 
 import gym, numpy as np
 import os
-#from stable_baselines.common import make_vec_env
-#from stable_baselines.common.vec_env import SubprocVecEnv,DummyVecEnv, VecNormalize
-#from stable_baselines.common.env_checker  import check_env as env_checker_check_env
-#from stable_baselines import A2C, ACER, DQN, ACKTR, PPO2 #, TRPO
-#from stable_baselines.bench import Monitor
-#from stable_baselines.results_plotter import load_results, ts2xy
-#from stable_baselines import results_plotter
-#from .vec_monitor import VecMonitor
-#from stable_baselines.common.policies import FeedForwardPolicy, register_policy
 from .utils import make_env
-import tensorflow as tf
 
 #from tqdm import tqdm_notebook as tqdm # jos notebookissa
 from tqdm import tqdm
@@ -23,18 +13,11 @@ from tqdm import tqdm
 from . episodestats import EpisodeStats
 from . simstats import SimStats
 
+from . sacd.sacd import SacdAgent
+
 #from multiprocessing import shared_memory
 from multiprocessing import Process,Manager
 
-
-#Custom MLP policy of three layers of size 128 each
-class CustomPolicy(FeedForwardPolicy):
-    def __init__(self, *args, **kwargs):
-        super(CustomPolicy, self).__init__(*args, **kwargs,
-                                           net_arch=[dict(pi=[128, 128, 16],
-                                                          vf=[512, 256, 128])],
-                                           feature_extraction="mlp")
-                                           #act_fun=tf.nn.relu)
 
 class runner_SAC():
     def __init__(self,environment,gamma,timestep,n_time,n_pop,
@@ -52,6 +35,8 @@ class runner_SAC():
         self.year=year
         self.gym_kwargs=gym_kwargs.copy()
         self.gym_kwargs['silent']=True
+
+        self.logdir = "log"
         
         self.env = gym.make(self.environment,kwargs=self.gym_kwargs)
         self.n_employment,self.n_acts=self.env.get_n_states()
@@ -90,31 +75,17 @@ class runner_SAC():
               'year': year}
 
         self.episodestats=episodestats
-        #SimStats(self.timestep,self.n_time,self.n_employment,self.n_pop,
-        #                       self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,
-        #                       version=self.version,params=self.gym_kwargs,year=self.year,gamma=self.gamma)
         
     def check_env(self,env):
         return
-        #env_checker_check_env(env, warn=True)
 
     def get_multiprocess_env(self,rlmodel,debug=False,arch=None,predict=False):
 
         if arch is not None:
             print('arch',arch)
 
-        # multiprocess environment
-        policy_kwargs = dict(act_fun=tf.nn.relu, net_arch=[64, 64, 16])
         n_cpu = 4
-        #elif rlmodel=='leaky_acktr': # tf.nn.leakyrelu
-        #    if arch is not None:
-        #        policy_kwargs = dict(act_fun=tf.nn.leaky_relu, net_arch=arch) 
-        #    else:
-        #        policy_kwargs = dict(act_fun=tf.nn.leaky_relu, net_arch=[256, 256, 128]) 
-        #    if predict:
-        #        n_cpu = 10
-        #    else:
-        #        n_cpu = 10 # 12 
+        policy_kwargs = {}
 
         if debug:
             n_cpu=1
@@ -129,53 +100,21 @@ class runner_SAC():
         
         gae_lambda=0.9
         '''
-        #n_cpu_tf_sess=16 #n_cpu #4 vai n_cpu??
-        n_cpu_tf_sess=4 #n_cpu #4 vai n_cpu?? vai 8?
         batch=max(1,int(np.ceil(batch/n_cpu)))
         
-        full_tensorboard_log=False
-        #vf=0.10*50 # 50 kerroin uutta, vain versiolle 7! FIXME
-        vf=0.1 #02 # 0.10*50#00 # vain versiolle 7! FIXME
-        if vf is not None:
-            vf_coef=vf
-        ent_coef=0.005 #1 # 0.01 # default 0.01
-
-        if max_grad_norm is None:
-            max_grad_norm=0.05 # default 0.50
+        #full_tensorboard_log=False
+        #if max_grad_norm is None:
+        #    max_grad_norm=0.05 # default 0.50
             
-        max_grad_norm=0.1 # 0.05 # 0.01 # 0.001  was old
-        kfac_clip=0.001
+        #max_grad_norm=0.1 # 0.05 # 0.01 # 0.001  was old
 
-        #if cont and not os.path.isfile(loadname):
-        #    cont=False
-        #    print(f'File {loadname} does not exist, switching to cont=False')
-        
-        if cont:
-            learning_rate=0.25*learning_rate
-            #learning_rate=0.5*learning_rate
-            
-        #scaled_learning_rate=learning_rate*np.sqrt(batch)
-        #scaled_learning_rate=learning_rate*batch
-        #scaled_learning_rate=learning_rate*8
-        scaled_learning_rate=learning_rate
-        print('batch {} learning rate {} scaled {} n_cpu {}'.format(batch,learning_rate,
-            scaled_learning_rate,n_cpu))
+        print('batch {} learning rate {}'.format(batch,learning_rate))
 
         if cont:
-            if rlmodel=='a2c':
-                #from stable_baselines.common.policies import MlpPolicy 
-                if tensorboard:
-                    model = A2C.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time,
-                                     tensorboard_log=self.tenb_dir, policy_kwargs=policy_kwargs,lr_schedule=learning_schedule,
-                                     n_cpu_tf_sess=n_cpu_tf_sess)
-                else:
-                    model = A2C.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time,
-                                     policy_kwargs=policy_kwargs,lr_schedule=learning_schedule,n_cpu_tf_sess=n_cpu_tf_sess)
+            print('continuing from ',loadname)
+            model = SacdAgent(env,env,self.logdir,cont=True,loadname=loadname)
         else:
-            if rlmodel=='a2c':
-                #from stable_baselines.common.policies import MlpPolicy 
-                model = A2C(MlpPolicy, env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time, 
-                            tensorboard_log=self.tenb_dir, policy_kwargs=policy_kwargs,lr_schedule=learning_schedule)
+            model = SacdAgent(env,env,self.logdir)
                             
         return model
         
@@ -214,51 +153,47 @@ class runner_SAC():
 
         print('n_cpu',n_cpu)
 
-        if debug:
-            print('use_vecmonitor',use_vecmonitor)
-            print('use_callback',use_callback)
-
         gkwargs=self.gym_kwargs.copy()
         gkwargs.update({'train':True})
     
-        nonvec=False
-        if nonvec:
-            env=self.env
-        else:
+        #env = self.env
+        #nonvec=False
+        #if nonvec:
+        #   env=self.env
+        #else:
             #env = make_vec_env(self.environment, n_envs=n_cpu, seed=1, vec_env_cls=SubprocVecEnv)
-            env = SubprocVecEnv([lambda: make_env(self.environment, i, gkwargs) for i in range(n_cpu)], start_method='spawn')
+            #env = SubprocVecEnv([lambda: make_env(self.environment, i, gkwargs) for i in range(n_cpu)], start_method='spawn')
             #env = DummyVecEnv([lambda: make_env(self.environment, i, gkwargs) for i in range(n_cpu)])
             #env = ShmemVecEnv([lambda: self.make_env(self.environment, i, gkwargs, use_monitor=use_callback) for i in range(n_cpu)], start_method='fork')
 
             #if False:
                 #env = DummyVecEnv([lambda: gym.make(self.environment,kwargs=gkwargs) for i in range(n_cpu)])
 
-        model=self.setup_rlmodel(self.rlmodel,start_from,env,batch,policy_kwargs,learning_rate,
+        model=self.setup_rlmodel(self.rlmodel,start_from,self.env,batch,policy_kwargs,learning_rate,
                                 cont,max_grad_norm=max_grad_norm,verbose=verbose,n_cpu=n_cpu,
                                 learning_schedule=learning_schedule,vf=vf,gae_lambda=gae_lambda)
         print('training..')
 
-        if use_callback: # tässä ongelma, vecmonitor toimii => kuitenkin monta callbackia
-            model.learn(total_timesteps=steps, callback=self.callback,log_interval=log_interval)
-        else:
-            model.learn(total_timesteps=steps, log_interval=log_interval)
+        model.run(cont=cont,total_timesteps=steps)
 
         model.save(save)
         print('done')
 
-        del model,env
+        del model #,env
 
     def setup_model_v2(self,env,rank=1,debug=False,rlmodel='acktr',plot=True,load=None,
                     deterministic=False,arch=None,predict=False,n_cpu_tf_sess=1):
+        '''
+        Set up simulation
+        '''
 
         if rank==0:    
             print('simulating ',load)
 
         # multiprocess environment
         policy_kwargs,_=self.get_multiprocess_env(rlmodel,debug=debug,arch=arch,predict=predict)
+        model = SacdAgent(env,env,self.logdir,cont=True,loadname=load,batch_size=1)
 
-        model = A2C.load(load, env=env, verbose=1,gamma=self.gamma, policy_kwargs=policy_kwargs,n_cpu_tf_sess=n_cpu_tf_sess)
-        
         return model
 
     def simulate(self,debug=False,rlmodel='acktr',load=None,pop=None,startage=None,
@@ -306,8 +241,7 @@ class runner_SAC():
             p.start()
             processes.append(p)
 
-        print('switching to join')
-        print(processes)
+        print('switching to join', processes)
             
         for p in processes: 
             print('exitcode',p.exitcode)
@@ -349,23 +283,25 @@ class runner_SAC():
         #print('Child',rank,'check point 3')
         seed = 20_000 + rank*100 # must not be identical to train seed
         #env = SubprocVecEnv([lambda: make_env(args['environment'],seed+i,kwargs=kwargs) for i in range(1)], start_method='spawn')
-        envlist=[lambda: make_env(args['environment'],seed+i,kwargs=kwargs) for i in range(1)]
+        #envlist=[lambda: make_env(args['environment'],seed+i,kwargs=kwargs) for i in range(1)]
         #print('Child',rank,'check point 3b')
-        env = DummyVecEnv(envlist)
+        #env = DummyVecEnv(envlist)
         #env = SubprocVecEnv(envlist, start_method='spawn')
         #print('spawning',args['environment'])
         #env = SubprocVecEnv([lambda: make_env(args['environment'],seed,kwargs=kwargs) for i in range(1)], start_method='spawn')
         #print('Child',rank,'check point 4')
 
+        print(args['environment'])
+
+        env = gym.make(args['environment'],kwargs=kwargs)
+        #env = make_env(args['environment'],seed,kwargs=kwargs)
         env.seed(args['seed'] + rank)
 
         model=self.setup_model_v2(env,rank=rank,debug=args['debug'],rlmodel=args['rlmodel'],load=args['load'],
-                 deterministic=args['deterministic'],arch=args['arch'],predict=True,n_cpu_tf_sess=1)
+                                  deterministic=args['deterministic'],arch=args['arch'],predict=True,n_cpu_tf_sess=1)
 
         if args['startage'] is not None:
             env.set_startage(args['startage'])
-
-        #print('Child',rank,'check point 5')
 
         states = env.reset()
 
@@ -389,18 +325,24 @@ class runner_SAC():
         pred=0
         while n<n_pop_single:
             act, predstate = model.predict(states,deterministic=deterministic)
+            #act2 = env.get_Qactions(act)
             newstate, rewards, dones, infos = env.step(act)
             if n<n_pop_single: # do not save extras
-                if dones[k]:
-                    episodestats.add(n,act[k],rewards[k],states[k],infos[k]['terminal_observation'],infos[k])
+                if dones:
+                    #episodestats.add(n,act2,rewards,states,infos['terminal_observation'],infos)
+                    #episodestats.add(n,act2,rewards,states,newstate,infos)
+                    episodestats.add(n,act,rewards,states,newstate,infos)
                     n += n_add
                     info['pop'] += n_add
+                    newstate = env.reset()
+                    #episodestats.add(n,0,0,newstate,newstates,infos)
                     if rank==0:
                         tqdm_e.update(info['pop']-pred)
                         tqdm_e.set_description("Pop " + str(info['pop']))
                         pred=info['pop']
                 else:
-                    episodestats.add(n,act[k],rewards[k],states[k],newstate[k],infos[k])
+                    #episodestats.add(n,act2,rewards,states,newstate,infos)
+                    episodestats.add(n,act,rewards,states,newstate,infos)
     
             states = newstate
 

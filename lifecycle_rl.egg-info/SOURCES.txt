@@ -1,6 +1,12 @@
+.gitattributes
+.gitignore
 LICENCE.txt
 README.md
 setup.py
+example/v0 baseline.ipynb
+example/v4 baseline.ipynb
+example/v5 baseline.ipynb
+images/kuva1a.png
 lifecycle_rl/__init__.py
 lifecycle_rl/dyn_prog.py
 lifecycle_rl/dyn_prog_rev.py
@@ -10,12 +16,21 @@ lifecycle_rl/empstats.py
 lifecycle_rl/episodestats.py
 lifecycle_rl/lifecycle_orig.py
 lifecycle_rl/lifecycle_v2.py
+lifecycle_rl/mcts.py
 lifecycle_rl/openai_monitor.py
 lifecycle_rl/optimizer.py
-lifecycle_rl/runner_stablebaselines.py
+lifecycle_rl/plotstats.py
+lifecycle_rl/runner_sac.py
+lifecycle_rl/runner_stablebaselines2_v1.py
+lifecycle_rl/runner_stablebaselines2_v2.py
+lifecycle_rl/runner_stablebaselines3.py
+lifecycle_rl/runner_standalone.py
+lifecycle_rl/runner_standalone_a3c.py
 lifecycle_rl/runner_tianshou.py
+lifecycle_rl/sacd.py
 lifecycle_rl/simhelper.py
 lifecycle_rl/simstats.py
+lifecycle_rl/utils.py
 lifecycle_rl/vec_monitor.py
 lifecycle_rl.egg-info/PKG-INFO
 lifecycle_rl.egg-info/SOURCES.txt
