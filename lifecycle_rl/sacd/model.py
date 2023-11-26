@@ -139,7 +139,7 @@ class TwinnedQNetwork(BaseNetwork):
         q1 = self.Q1(states)
         q2 = self.Q2(states)
         return q1, q2
-        
+
 
 class TwinnedQNetwork_multidiscrete(BaseNetwork):
     def __init__(self, num_channels, num_actions, shared=False,
@@ -177,11 +177,11 @@ class CateoricalPolicy(BaseNetwork):
             action_logits, dim=1, keepdim=True)
         return greedy_actions
 
-    def sample(self, states):
+    def sample(self, states, temp=1.0):
         if not self.shared:
             states = self.conv(states)
 
-        action_probs = F.softmax(self.head(states), dim=1)
+        action_probs = F.softmax(self.head(states)/temp, dim=1)
         action_dist = Categorical(action_probs)
         actions = action_dist.sample().view(-1, 1)
 
@@ -223,9 +223,9 @@ class MultidiscretePolicy(BaseNetwork):
 
         return acts
 
-    def sample(self, states, cat=True):
-        def subsample(acts):
-            action_probs1 = F.softmax(acts, dim=1)
+    def sample(self, states, cat=True, temp=1.0):
+        def subsample(acts, temp=1.0):
+            action_probs1 = F.softmax(acts/temp, dim=1)
             action_dist = Categorical(action_probs1)
             actions1 = action_dist.sample().view(-1,1)
             # Avoid numerical instability.
@@ -238,10 +238,10 @@ class MultidiscretePolicy(BaseNetwork):
             states = self.conv(states)
 
         acts = self.head(states)
-        acts1,action_probs1,log_action_probs1 = subsample(acts[:,0:5])
-        acts2,action_probs2,log_action_probs2 = subsample(acts[:,5:10])
-        acts3,action_probs3,log_action_probs3 = subsample(acts[:,10:13])
-        acts4,action_probs4,log_action_probs4 = subsample(acts[:,13:16])
+        acts1,action_probs1,log_action_probs1 = subsample(acts[:,0:5], temp=temp)
+        acts2,action_probs2,log_action_probs2 = subsample(acts[:,5:10], temp=temp)
+        acts3,action_probs3,log_action_probs3 = subsample(acts[:,10:13], temp=temp)
+        acts4,action_probs4,log_action_probs4 = subsample(acts[:,13:16], temp=temp)
         acts = torch.cat([acts1,acts2,acts3,acts4],dim=1)
         acts = acts.cpu().numpy()
 

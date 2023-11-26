@@ -71,15 +71,17 @@ class SacdAgent(BaseAgent):
 
         # Target entropy is -log(1/|A|) * ratio (= maximum entropy * ratio).
         if multidiscrete:
-            #A = np.sum(env.action_space.nvec)
-            A = env.action_space.nvec.shape[0]
+            A = np.log(1.0 / env.action_space.nvec)
+            B = np.sum(A) / 4
+            #A = env.action_space.nvec.shape[0]
         else:
             A = self.actionspace_n
+            B = np.log(1.0 / A) 
 
         self.target_entropy = \
-            -np.log(1.0 / A) * target_entropy_ratio
+            - B * target_entropy_ratio
 
-        print('target_entropy',self.target_entropy)
+        #print('target_entropy',self.target_entropy)
 
         # We optimize log(alpha), instead of alpha.
         self.log_alpha = torch.zeros(1, requires_grad=True, device=self.device)
@@ -168,17 +170,19 @@ class SacdAgent(BaseAgent):
         # Expectations of entropies.
         # sign: original -
         if self.multidiscrete: # multidiscrete
-            entropies = (-torch.sum(action_probs[:,:5] * log_action_probs[:,:5], dim=1, keepdim=True) 
-                        -torch.sum(action_probs[:,5:10] * log_action_probs[:,5:10], dim=1, keepdim=True) 
-                        -torch.sum(action_probs[:,10:13] * log_action_probs[:,10:13], dim=1, keepdim=True) 
-                        -torch.sum(action_probs[:,13:16] * log_action_probs[:,13:16], dim=1, keepdim=True))
-            #print(torch.mean(action_probs,dim=0))
+            #entropies = -(torch.sum(action_probs[:,:5] * log_action_probs[:,:5], dim=1, keepdim=True) 
+            #              +torch.sum(action_probs[:,5:10] * log_action_probs[:,5:10], dim=1, keepdim=True) 
+            #              +torch.sum(action_probs[:,10:13] * log_action_probs[:,10:13], dim=1, keepdim=True) 
+            #              +torch.sum(action_probs[:,13:16] * log_action_probs[:,13:16], dim=1, keepdim=True)
+            #            )
+            #print(torch.mean(entropies,dim=0))
+            # produces the same result, since entropy is additive
+            entropies = -torch.sum(
+                action_probs * log_action_probs / 4.0, dim=1, keepdim=True) # sum = 4.0, not 1.0
+            print(torch.mean(entropies))
         else:
             entropies = torch.sum(
                 action_probs * log_action_probs, dim=1, keepdim=True) # dim=1
-
-        #print('entropies',entropies)
-        #print('action_probs',action_probs)
 
         # Expectations of Q.
         q = torch.sum(q * action_probs, dim=1, keepdim=True)
@@ -186,7 +190,7 @@ class SacdAgent(BaseAgent):
         # Policy objective is maximization of (Q + alpha * entropy) with
         # priority weights.
         # NOTICE SIGN
-        policy_loss = -(weights * (self.alpha * entropies - q)).mean()
+        policy_loss = (weights * (-self.alpha * entropies + q)).mean()
 
         return policy_loss, entropies.detach()
 
@@ -198,7 +202,7 @@ class SacdAgent(BaseAgent):
         # etumerkki?? FIXME. Perus: - ; -
         # onko oikein? tämä laskee entropyn 
         entropy_loss = -torch.mean(
-            self.log_alpha * (-entropies + self.target_entropy)
+            self.log_alpha * (entropies - self.target_entropy)
             * weights)
         #entropy_loss = -self.log_alpha * (self.target_entropy - torch.mean(entropies * weights))
         #print(entropy_loss.item(),torch.mean(entropies).item(),self.log_alpha.item(),self.alpha.item())

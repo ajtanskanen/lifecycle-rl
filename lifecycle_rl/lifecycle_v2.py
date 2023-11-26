@@ -687,10 +687,10 @@ class Lifecycle():
         '''
         self.plotstats.compare_with(cc2,label1=label1,label2=label2,grayscale=grayscale,figname=figname,dash=dash)
 
-    def run_results(self,steps1=100,steps2=100,pop=1_000,rlmodel='acktr',twostage=False,
+    def run_results(self,steps=100,pop=1_000,rlmodel='acktr',twostage=False,
                save='saved/perusmalli',debug=False,simut='simut',results='results/simut_res',
                stats='results/simut_stats',deterministic=True,train=True,predict=True,
-               batch1=1,batch2=100,cont=False,start_from=None,callback_minsteps=None,
+               batch=1,cont=False,start_from=None,callback_minsteps=None,
                verbose=1,max_grad_norm=None,learning_rate=0.25,log_interval=10,
                learning_schedule='linear',vf=None,arch=None,gae_lambda=None,
                startage=None,processes=None):
@@ -713,14 +713,14 @@ class Lifecycle():
         if train: 
             print('train...')
             if cont:
-                self.train_protocol(rlmodel=rlmodel,steps1=steps1,steps2=steps2,verbose=verbose,
-                                  debug=debug,save=save,batch1=batch1,batch2=batch2,
+                self.train_protocol(rlmodel=rlmodel,steps=steps,verbose=verbose,
+                                  debug=debug,save=save,batch=batch,
                                   cont=cont,start_from=start_from,twostage=twostage,
                                   max_grad_norm=max_grad_norm,learning_rate=learning_rate,log_interval=log_interval,
                                   learning_schedule=learning_schedule,vf=vf,arch=arch,gae_lambda=gae_lambda,processes=processes)
             else:
-                self.train_protocol(rlmodel=rlmodel,steps1=steps1,steps2=steps2,verbose=verbose,
-                                 debug=debug,batch1=batch1,batch2=batch2,cont=cont,
+                self.train_protocol(rlmodel=rlmodel,steps=steps,verbose=verbose,
+                                 debug=debug,batch=batch,cont=cont,
                                  save=save,twostage=twostage,
                                  max_grad_norm=max_grad_norm,learning_rate=learning_rate,log_interval=log_interval,
                                  learning_schedule=learning_schedule,vf=vf,arch=arch,gae_lambda=gae_lambda,processes=processes)
@@ -729,8 +729,8 @@ class Lifecycle():
             self.predict_protocol(pop=pop,rlmodel=rlmodel,load=save,startage=startage,
                           debug=debug,deterministic=deterministic,results=results,arch=arch,processes=processes)
           
-    def train_protocol(self,steps1=2_000_000,steps2=1_000_000,rlmodel='acktr',
-               debug=False,batch1=1,batch2=1000,cont=False,twostage=False,log_interval=10,
+    def train_protocol(self,steps=2_000_000,rlmodel='acktr',
+               debug=False,batch=1,cont=False,twostage=False,log_interval=10,
                start_from=None,save='best3',verbose=1,max_grad_norm=None,
                learning_rate=0.25,learning_schedule='linear',vf=None,arch=None,gae_lambda=None,processes=None):
         '''
@@ -746,24 +746,15 @@ class Lifecycle():
         else:
             tmpname=save
             
-        if steps1>0:
-            print('phase 1')
-            if cont:
-                self.runner.train(steps=steps1,cont=cont,rlmodel=rlmodel,save=tmpname,batch=batch1,debug=debug,
-                           start_from=start_from,use_callback=False,use_vecmonitor=False,
-                           log_interval=log_interval,verbose=1,vf=vf,arch=arch,gae_lambda=gae_lambda,
-                           max_grad_norm=max_grad_norm,learning_rate=learning_rate,learning_schedule=learning_schedule,processes=processes)
-            else:
-                self.runner.train(steps=steps1,cont=False,rlmodel=rlmodel,save=tmpname,batch=batch1,debug=debug,vf=vf,arch=arch,
-                           use_callback=False,use_vecmonitor=False,log_interval=log_interval,verbose=1,gae_lambda=gae_lambda,
-                           max_grad_norm=max_grad_norm,learning_rate=learning_rate,learning_schedule=learning_schedule,processes=processes)
-
-        if twostage and steps2>0:
-            print('phase 2')
-            self.runner.train(steps=steps2,cont=True,rlmodel=rlmodel,save=tmpname,
-                       debug=debug,start_from=tmpname,batch=batch2,verbose=verbose,
-                       use_callback=False,use_vecmonitor=False,log_interval=log_interval,bestname=save,plotdebug=plotdebug,
-                       max_grad_norm=max_grad_norm,learning_rate=learning_rate,learning_schedule=learning_schedule,processes=processes)
+        if cont:
+            self.runner.train(steps=steps,cont=cont,rlmodel=rlmodel,save=tmpname,batch=batch,debug=debug,
+                        start_from=start_from,use_callback=False,use_vecmonitor=False,
+                        log_interval=log_interval,verbose=1,vf=vf,arch=arch,gae_lambda=gae_lambda,
+                        max_grad_norm=max_grad_norm,learning_rate=learning_rate,learning_schedule=learning_schedule,processes=processes)
+        else:
+            self.runner.train(steps=steps,cont=False,rlmodel=rlmodel,save=tmpname,batch=batch,debug=debug,vf=vf,arch=arch,
+                        use_callback=False,use_vecmonitor=False,log_interval=log_interval,verbose=1,gae_lambda=gae_lambda,
+                        max_grad_norm=max_grad_norm,learning_rate=learning_rate,learning_schedule=learning_schedule,processes=processes)
 
     def predict_protocol(self,pop: float=1_00,rlmodel: str='acktr',results: str='results/simut_res',arch=None,
                          load: str='saved/malli',debug: bool=False,deterministic: bool=False,startage: float=None,processes: int=None):
@@ -787,9 +778,9 @@ class Lifecycle():
         run_sim()
         
 
-    def run_distrib(self,n=5,steps1=100,steps2=100,pop=1_000,rlmodel='acktr',
+    def run_distrib(self,n=5,steps=100,pop=1_000,rlmodel='acktr',
                save='saved/distrib_base_',debug=False,simut='simut',results='results/distrib_',
-               deterministic=True,train=True,predict=True,batch1=1,batch2=100,cont=False,
+               deterministic=True,train=True,predict=True,batch=1,cont=False,
                start_from=None,twostage=False,callback_minsteps=None,
                stats_results='results/distrib_stats',startn=None,verbose=1,
                learning_rate=0.25,learning_schedule='linear',log_interval=100):
@@ -812,10 +803,10 @@ class Lifecycle():
             results2=results+'_'+str(100+num)
             print('computing {}'.format(num))
         
-            self.run_results(steps1=steps1,steps2=steps2,pop=pop,rlmodel=rlmodel,
+            self.run_results(steps=steps,pop=pop,rlmodel=rlmodel,
                twostage=twostage,save=bestname2,debug=debug,simut=simut,results=results2,
                deterministic=deterministic,train=train,predict=predict,
-               batch1=batch1,batch2=batch2,cont=cont,start_from=start_from,
+               batch=batch,cont=cont,start_from=start_from,
                callback_minsteps=callback_minsteps,verbose=verbose,learning_rate=learning_rate,
                learning_schedule=learning_schedule,log_interval=log_interval)
 
@@ -1074,7 +1065,7 @@ class Lifecycle():
     def comp_verokiila(self,grouped=True):
         return self.episodestats.comp_verokiila(grouped=grouped)
 
-    def combine_results(self,results='results/simut_res'):
+    def combine_results(self,results=None):
         '''
         combine_results
         '''

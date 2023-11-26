@@ -144,13 +144,14 @@ class BaseAgent(ABC):
         q2loss = 0
         eloss = 0
         entr_av = 0
+        temp = 1.0
 
         time_begin = time.perf_counter()
 
         while (not done) and episode_steps <= self.max_episode_steps:
 
             if self.start_steps > self.steps or cont:
-                action = self.env.action_space.sample()
+                action = self.env.action_space.sample(temp)
             else:
                 action = self.explore(state)[0,:]
 
@@ -170,11 +171,11 @@ class BaseAgent(ABC):
 
             if self.is_update():
                 policy_loss,entropy_loss,q1_loss, q2_loss, entr = self.learn()
-                ploss += policy_loss / 228
-                q1loss += q1_loss / 228
-                q2loss += q2_loss / 228
-                eloss += entropy_loss / 228  
-                entr_av += entr / 228
+                ploss += policy_loss / 228 * self.update_interval
+                q1loss += q1_loss / 228 * self.update_interval
+                q2loss += q2_loss / 228 * self.update_interval
+                eloss += entropy_loss / 228 * self.update_interval  
+                entr_av += entr / 228 * self.update_interval
 
             if self.steps % self.target_update_interval == 0:
                 print('update target')
@@ -209,11 +210,12 @@ class BaseAgent(ABC):
         else:
             self.running_time = self.running_time * (1. - 0.1) + time_elapsed * 0.1
 
+        la = self.log_alpha.item()
         print(f'Episode: {self.episodes:<4}  '
               f'Episode steps: {episode_steps:<4}  '
               f'Return: {episode_return:<5.1f} ave {self.running_ave:1.5f} time {self.running_time:1.5f} '
               f'policy {ploss:<7.5f} Q1 {q1loss:<5.5f} Q2 {q2loss:<5.5f} eloss {eloss:<5.7f} '
-              f'target {self.target_entropy:<5.7f} entropy {entr_av:<5.7f}')
+              f'target {self.target_entropy:<5.7f} entropy {entr_av:<5.7f}, log_alpha {la:<5.7f}')
 
     def learn(self):
         assert hasattr(self, 'q1_optim') and hasattr(self, 'q2_optim') and\
@@ -232,8 +234,8 @@ class BaseAgent(ABC):
             self.calc_critic_loss(batch, weights)
         policy_loss, entropies = self.calc_policy_loss(batch, weights)
         entr = torch.mean(entropies)
-        #self.target_entropy = (1.-self.target_entropy_alpha) * self.target_entropy + self.target_entropy_alpha * entr
-        print('target_entropy',self.target_entropy,'entr',entr)
+        self.target_entropy = (1.-self.target_entropy_alpha) * self.target_entropy + self.target_entropy_alpha * entr
+        #print('target_entropy',self.target_entropy,'entr',entr)
         entropy_loss = self.calc_entropy_loss(entropies, weights)
 
         update_params(self.q1_optim, q1_loss)

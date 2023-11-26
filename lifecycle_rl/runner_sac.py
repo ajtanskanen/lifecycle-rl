@@ -359,7 +359,7 @@ class runner_SAC():
 
     def combine_episodestats(self,args):
         #save=args['save_dir']+args['simfile']+'_rank_'
-        save=args['simfile']+'_rank_'
+        save=args['save_dir'] + args['simfile']+'_rank_'
         
         base=SimStats(args['timestep'],args['n_time'],args['n_employment'],args['n_pop'],
                             self.env,args['minimal'],args['min_age'],args['max_age'],args['min_retirementage'],
@@ -374,4 +374,4 @@ class runner_SAC():
             eps.load_sim(save+str(k))
             base.append_episodestat(eps)
 
-        base.save_sim(args['simfile']+'_combined')
+        base.save_sim(args['save_dir'] + args['simfile']+'_combined')

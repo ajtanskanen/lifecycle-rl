@@ -611,12 +611,14 @@ class runner_stablebaselines2():
 
         return 1
 
-    def combine_results(self,results):
-        self.combine_episodestats(self.args)
+    def combine_results(self,results=None):
+        self.combine_episodestats(self.args,results=results)
 
-    def combine_episodestats(self,args):
-        #save=args['save_dir']+args['simfile']+'_rank_'
-        save=args['simfile']+'_rank_'
+    def combine_episodestats(self,args,results=None):
+        if results is None:
+            save=args['sim_dir']+args['simfile']+'_rank_'
+        else:
+            save=results+'_rank_'
         
         base=SimStats(args['timestep'],args['n_time'],args['n_employment'],args['n_pop'],
                             self.env,args['minimal'],args['min_age'],args['max_age'],args['min_retirementage'],
