@@ -616,7 +616,7 @@ class runner_stablebaselines2():
 
     def combine_episodestats(self,args,results=None):
         if results is None:
-            save=args['sim_dir']+args['simfile']+'_rank_'
+            save=args['simfile']+'_rank_'
         else:
             save=results+'_rank_'
         
@@ -633,4 +633,7 @@ class runner_stablebaselines2():
             eps.load_sim(save+str(k))
             base.append_episodestat(eps)
 
-        base.save_sim(args['simfile']+'_combined')
+        if results is None:
+            base.save_sim(args['simfile']+'_combined')
+        else:
+            base.save_sim(results+'_combined')

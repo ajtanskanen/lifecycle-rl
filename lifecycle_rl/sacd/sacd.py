@@ -79,7 +79,7 @@ class SacdAgent(BaseAgent):
             B = np.log(1.0 / A) 
 
         self.target_entropy = \
-            - B * target_entropy_ratio
+            B * target_entropy_ratio
 
         #print('target_entropy',self.target_entropy)
 
@@ -177,9 +177,9 @@ class SacdAgent(BaseAgent):
             #            )
             #print(torch.mean(entropies,dim=0))
             # produces the same result, since entropy is additive
-            entropies = -torch.sum(
+            entropies = torch.sum(
                 action_probs * log_action_probs / 4.0, dim=1, keepdim=True) # sum = 4.0, not 1.0
-            print(torch.mean(entropies))
+            #print(torch.mean(entropies))
         else:
             entropies = torch.sum(
                 action_probs * log_action_probs, dim=1, keepdim=True) # dim=1
@@ -190,7 +190,7 @@ class SacdAgent(BaseAgent):
         # Policy objective is maximization of (Q + alpha * entropy) with
         # priority weights.
         # NOTICE SIGN
-        policy_loss = (weights * (-self.alpha * entropies + q)).mean()
+        policy_loss = (weights * (self.alpha * entropies - q)).mean()
 
         return policy_loss, entropies.detach()
 

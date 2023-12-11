@@ -3,13 +3,19 @@
     lifecycle.py
 
     implements the lifecycle model that predicts how people will act in the presence of
-    social security
+    discrete choice of working or not, and how much to work
+    Includes social security and wage dynamics
     
-    uses stable baselines 2 instead of stable baselines
-    - can use tianshou in principle (NOT WORKING)
+    uses stable baselines 2 
     - can use stable baselines 3 (NOT TESTED)
-    - can use self implemented algorithms
-    
+    - can use self implemented algorithms, including discrete SAC and AC3
+
+    Algorithms:
+    0 stable baselines 2
+    1 standalone AC3
+    2 standalone DSAC
+    3 stable baselines 3
+
     recent
 
 '''
@@ -41,13 +47,12 @@ os.environ['OMP_NUM_THREADS'] = '4'  # or any {'0', '1', '2'}
 OMP_NUM_THREADS=4
 
 import warnings
-# https://stackoverflow.com/questions/15777951/how-to-suppress-pandas-future-warning
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.simplefilter(action='ignore', category=Warning)
 
 # use stable baselines
 
-# 0 sb2, 1 standalone, 2 tianshou, 3 stable baselines 3
 class Lifecycle():
 
     def __init__(self,**kwargs):

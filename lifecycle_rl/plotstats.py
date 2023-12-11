@@ -173,8 +173,9 @@ class PlotStats():
 
         print_html('<h1>Statistics</h1>')
         
-        self.episodestats.comp_total_netincome()
-        #self.plot_rewdist()
+        if self.episodestats.include_pop_pension:
+            net1,eqnet1 = self.episodestats.comp_total_netincome()
+            print(f'netincome {net1:.2f} eq {eqnet1:.3f}')
 
         if self.version in self.complex_models:
             self.compare_against()
@@ -240,8 +241,9 @@ class PlotStats():
             self.plot_group_emp()
             self.plot_emp_vs_workforce()
             self.plot_workforce()
-            print_html('<h2>Tekemätön työ</h2>')
-            self.plot_tekematon_tyo()
+            if self.episodestats.include_pop_pension:
+                print_html('<h2>Tekemätön työ</h2>')
+                self.plot_tekematon_tyo()
 
         print_html('<h2>Osa-aika</h2>')
         if self.version in set([5,6,7]):
@@ -275,15 +277,17 @@ class PlotStats():
 
         print_html('<h2>Työttömyys</h2>')
         self.plot_toe()
-        print('Keskikestot käytettyjen ansiosidonnaisten päivärahojen mukaan')
-        keskikesto=self.episodestats.comp_unemp_durations()
-        df = pd.DataFrame.from_dict(keskikesto,orient='index',columns=['0-6 kk','6-12 kk','12-18 kk','18-24kk','yli 24 kk'])
-        print(tabulate(df, headers='keys', tablefmt='psql', floatfmt=",.2f"))
 
-        print('Keskikestot viimeisimmän työttömyysjakson mukaan')
-        keskikesto=self.episodestats.comp_unemp_durations_v2()
-        df = pd.DataFrame.from_dict(keskikesto,orient='index',columns=['0-6 kk','6-12 kk','12-18 kk','18-24kk','yli 24 kk'])
-        print(tabulate(df, headers='keys', tablefmt='psql', floatfmt=",.2f"))
+        if self.episodestats.include_pop_pension:
+            print('Keskikestot käytettyjen ansiosidonnaisten päivärahojen mukaan')
+            keskikesto=self.episodestats.comp_unemp_durations()
+            df = pd.DataFrame.from_dict(keskikesto,orient='index',columns=['0-6 kk','6-12 kk','12-18 kk','18-24kk','yli 24 kk'])
+            print(tabulate(df, headers='keys', tablefmt='psql', floatfmt=",.2f"))
+
+            print('Keskikestot viimeisimmän työttömyysjakson mukaan')
+            keskikesto=self.episodestats.comp_unemp_durations_v2()
+            df = pd.DataFrame.from_dict(keskikesto,orient='index',columns=['0-6 kk','6-12 kk','12-18 kk','18-24kk','yli 24 kk'])
+            print(tabulate(df, headers='keys', tablefmt='psql', floatfmt=",.2f"))
 
         self.plot_unemp_after_ra()
 
@@ -299,22 +303,25 @@ class PlotStats():
             self.plot_kassanjasen()
             self.plot_pinkslip()
 
-        #self.plot_distrib(label='Jakauma ansiosidonnainen+tmtuki+putki, no max age',ansiosid=True,tmtuki=True,putki=True,outsider=False)
-        self.plot_distrib(label='Jakauma ansiosidonnainen+tmtuki+putki, jakso päättynyt ennen 50v ikää',ansiosid=True,tmtuki=True,putki=True,outsider=False,max_age=50,figname=figname)
+        if self.episodestats.include_pop_pension:
+            #self.plot_distrib(label='Jakauma ansiosidonnainen+tmtuki+putki, no max age',ansiosid=True,tmtuki=True,putki=True,outsider=False)
+            self.plot_distrib(label='Jakauma ansiosidonnainen+tmtuki+putki, jakso päättynyt ennen 50v ikää',ansiosid=True,tmtuki=True,putki=True,outsider=False,max_age=50,figname=figname)
 
-        if self.version in self.complex_models:
-            #self.plot_distrib(label='Jakauma ansiosidonnainen+tmtuki+putki, jakso päättynyt ennen 50v ikää, jäljellä oleva aika',plot_bu=True,ansiosid=True,tmtuki=True,putki=True,outsider=False,max_age=50)
-            self.plot_distrib(label='Jakauma ansiosidonnainen+putki, jakso päättynyt ennen 50v ikää, jäljellä oleva aika',plot_bu=False,ansiosid=True,tmtuki=False,putki=True,outsider=False,max_age=50)
-            #self.plot_distrib(label='Jakauma ansiosidonnainen+tmtuki ilman putkea',ansiosid=True,tmtuki=True,putki=False,outsider=False)
-            #self.plot_distrib(label='Jakauma ansiosidonnainen+tmtuki ilman putkea, max Ikä 50v',ansiosid=True,tmtuki=True,putki=False,outsider=False,max_age=50)
-            self.plot_distrib(label='Jakauma tmtuki',ansiosid=False,tmtuki=True,putki=False,outsider=False)
-            #self.plot_distrib(label='Jakauma työvoiman ulkopuoliset',ansiosid=False,tmtuki=False,putki=False,outsider=True)
-            #self.plot_distrib(label='Jakauma laaja (ansiosidonnainen+tmtuki+putki+ulkopuoliset)',laaja=True)
+            if self.version in self.complex_models:
+                #self.plot_distrib(label='Jakauma ansiosidonnainen+tmtuki+putki, jakso päättynyt ennen 50v ikää, jäljellä oleva aika',plot_bu=True,ansiosid=True,tmtuki=True,putki=True,outsider=False,max_age=50)
+                self.plot_distrib(label='Jakauma ansiosidonnainen+putki, jakso päättynyt ennen 50v ikää, jäljellä oleva aika',plot_bu=False,ansiosid=True,tmtuki=False,putki=True,outsider=False,max_age=50)
+                #self.plot_distrib(label='Jakauma ansiosidonnainen+tmtuki ilman putkea',ansiosid=True,tmtuki=True,putki=False,outsider=False)
+                #self.plot_distrib(label='Jakauma ansiosidonnainen+tmtuki ilman putkea, max Ikä 50v',ansiosid=True,tmtuki=True,putki=False,outsider=False,max_age=50)
+                self.plot_distrib(label='Jakauma tmtuki',ansiosid=False,tmtuki=True,putki=False,outsider=False)
+                #self.plot_distrib(label='Jakauma työvoiman ulkopuoliset',ansiosid=False,tmtuki=False,putki=False,outsider=True)
+                #self.plot_distrib(label='Jakauma laaja (ansiosidonnainen+tmtuki+putki+ulkopuoliset)',laaja=True)
             
-        print_html('<h2>Eläkkeet</h2>')
-        self.plot_all_pensions()
-        print_html('<h2>Työkyvyttömyyseläke</h2>')
-        self.plot_disab()
+        if self.episodestats.include_pop_pension:
+            print_html('<h2>Eläkkeet</h2>')
+            self.plot_all_pensions()
+            print_html('<h2>Työkyvyttömyyseläke</h2>')
+            self.plot_disab()
+
         print_html('<h2>Kuolleet</h2>')
         self.plot_mort()
 
@@ -333,104 +340,55 @@ class PlotStats():
             print_html('<h2>Siirtymät</h2>')
             self.plot_alive()
             self.plot_moved()
-            self.plot_emtr()
+            if self.episodestats.include_pop_pension:
+                self.plot_emtr()
             
             
     def plot_pt_act(self):
-        mask_osaaika=(self.episodestats.popempstate!=10) # osa-aika
-        arr=ma.ravel(ma.array(self.episodestats.infostats_pop_pt_act,mask=mask_osaaika)).compressed()
-        plt.hist(arr,density=True)
-        plt.title('Osa-aika, pt-tila: ave {}'.format(ma.mean(arr)))
+        agg_pt,agg_ft,pt,ft,vept,veft=self.episodestats.comp_ptproportions()
+
+        x=np.linspace(0,2,3)
+        plt.bar(x,agg_pt[0,:])
+        plt.title('Osa-aika, pt-tila: ave {}'.format(ma.mean(agg_pt[0,:])))
+        plt.show()
+
+        plt.bar(x,agg_ft[0,:])
+        plt.title('Kokoaika, pt-tila')
         plt.show()
 
         x=np.linspace(self.min_age,self.max_age,self.n_time)
-        arr=ma.array(self.episodestats.infostats_pop_pt_act,mask=mask_osaaika)
-        plt.plot(x,ma.mean(arr,axis=1))
-        plt.title('Osa-aika, pt-tila')
-        plt.show()
-
-        x=np.linspace(self.min_age,self.max_age,self.n_time)
-        pt,ft,vept,veft=self.episodestats.comp_ptproportions()
-        plt.stackplot(x,pt.T)
+        plt.stackplot(x,pt[0,:,:].T)
         plt.legend(labels=['25%','50%','75%'])
         plt.title('Osa-aika, pt-tila')
         plt.show()
-        plt.stackplot(x,ft.T)
+        plt.stackplot(x,ft[0,:,:].T)
         plt.legend(labels=['100%','125%','150%'])
         plt.title('Kokoaika, pt-tila')
         plt.show()
-        plt.stackplot(x,vept.T)
+        plt.stackplot(x,vept[0,:,:].T)
         plt.legend(labels=['25%','50%','75%'])
         plt.title('Ve+Osa-aika, pt-tila')
         plt.show()
-        plt.stackplot(x,veft.T)
+        plt.stackplot(x,veft[0,:,:].T)
         plt.legend(labels=['100%','125%','150%'])
         plt.title('Ve+Kokoaika, pt-tila')
         plt.show()
 
-        men_mask=(self.episodestats.infostats_group<4).T
-        women_mask=~men_mask
-
-        x=np.linspace(self.min_age,self.max_age,self.n_time)
-        mask=ma.mask_or(mask_osaaika,men_mask) # miehet pois
-        arr=ma.ravel(ma.array(self.episodestats.infostats_pop_pt_act,mask=mask)).compressed()
-        plt.hist(arr,density=True)
-        plt.title('Osa-aika naiset, pt-tila: ave {}'.format(ma.mean(arr)))
+        x=np.linspace(0,2,3)
+        plt.bar(x,agg_pt[2,:])
+        plt.title('Osa-aika naiset, pt-tila: ave {}'.format(ma.mean(agg_pt[2,:])))
         plt.show()
 
-        x=np.linspace(self.min_age,self.max_age,self.n_time)
-        mask=ma.mask_or(mask_osaaika,women_mask) # naiset pois
-        arr=ma.ravel(ma.array(self.episodestats.infostats_pop_pt_act,mask=mask)).compressed()
-        plt.hist(arr,density=True)
-        plt.title('Osa-aika miehet, pt-tila: ave {}'.format(ma.mean(arr)))
+        plt.bar(x,agg_pt[1,:])
+        plt.title('Osa-aika miehet, pt-tila: ave {}'.format(ma.mean(agg_pt[1,:])))
         plt.show()
 
-        mask_osaaika=(self.episodestats.popempstate!=8) # ve+osa-aika
-        arr=ma.ravel(ma.array(self.episodestats.infostats_pop_pt_act,mask=mask_osaaika)).compressed()
-        plt.hist(arr,density=True)
-        plt.title('ve+osa-aika, pt-tila: ave {}'.format(ma.mean(arr)))
+        plt.bar(x,agg_ft[1,:])
+        plt.title('Kokoaika miehet, pt-tila: ave {}'.format(ma.mean(agg_ft[1,:])))
         plt.show()
 
-        mask_osaaika=(self.episodestats.popempstate!=9) # ve+koko-aika
-        arr=ma.ravel(ma.array(self.episodestats.infostats_pop_pt_act,mask=mask_osaaika)).compressed()
-        plt.hist(arr,density=True)
-        plt.title('ve+koko-aika, pt-tila: ave {}'.format(ma.mean(arr)))
-        plt.show()
-        
-        mask_kokoaika=(self.episodestats.popempstate!=1) # kokoaika
-        arr=ma.ravel(ma.array(self.episodestats.infostats_pop_pt_act,mask=mask_kokoaika)).compressed()
-        plt.hist(arr,density=True)
-        plt.title('Kokoaika, pt-tila: ave {}'.format(ma.mean(arr)))
-        plt.show()
-
-        mask=ma.mask_or(mask_kokoaika,men_mask) # naiset pois
-        arr=ma.ravel(ma.array(self.episodestats.infostats_pop_pt_act,mask=mask)).compressed()
-        plt.hist(arr,density=True)
-        plt.title('Kokoaika naiset, pt-tila: ave {}'.format(ma.mean(arr)))
-        plt.show()
-
-        mask=ma.mask_or(mask_kokoaika,women_mask) # naiset pois
-        arr=ma.ravel(ma.array(self.episodestats.infostats_pop_pt_act,mask=mask_kokoaika)).compressed()
-        plt.hist(arr,density=True)
-        plt.title('Kokoaika miehet, pt-tila: ave {}'.format(ma.mean(arr)))
-        plt.show()
-
-        mask=mask_kokoaika
-        arr=ma.array(self.episodestats.infostats_pop_pt_act,mask=mask)
-        plt.plot(x,ma.mean(arr,axis=1))
-        plt.title('Kokoaika, pt-tila')
-        plt.show()
-
-        mask=mask_osaaika
-        arr=ma.ravel(ma.array(self.episodestats.infostats_pop_pt_act,mask=mask)).compressed()
-        plt.hist(arr,density=True)
-        plt.title('Kokoaika, unemp')
-        plt.show()
-
-        mask_osaaika=(self.episodestats.popempstate!=12) # opiskelijat
-        arr=ma.ravel(ma.array(self.episodestats.infostats_pop_pt_act,mask=mask_osaaika)).compressed()
-        plt.hist(arr,density=True)
-        plt.title('Opiskelijat Osa-aika, pt-tila: ave {}'.format(ma.mean(arr)))
+        plt.bar(x,agg_ft[2,:])
+        plt.title('Kokoaika naiset, pt-tila: ave {}'.format(ma.mean(agg_ft[2,:])))
         plt.show()
 
     def plot_unemp_after_ra(self):
@@ -497,6 +455,8 @@ class PlotStats():
         self.plot_states(wplt2,ylabel='Menetetty palkkasumma [%]',stack=True)
 
     def plot_all_pensions(self):
+        #self.compare_takuu_kansanelake()
+
         alivemask=(self.episodestats.popempstate==self.env.get_mortstate()) # pois kuolleet
         kemask=(self.episodestats.infostats_pop_kansanelake<0.1)
         kemask=ma.mask_or(kemask,alivemask)
@@ -514,18 +474,10 @@ class PlotStats():
         self.plot_pension_stats(self.episodestats.infostats_pop_kansanelake/self.timestep,65,'kansanelake>0',max_pen=10_000,mask=kemask,plot_ke=True)
         self.plot_pension_stats(self.episodestats.infostats_pop_kansanelake/self.timestep,65,'kansaneläke, ei työeläkettä',max_pen=10_000,mask=notemask,plot_ke=True)
         self.plot_pension_stats(self.episodestats.infostats_pop_tyoelake/self.timestep,65,'työeläke, jos kansanelake>0',max_pen=20_000,mask=kemask)
-        self.plot_pension_stats(self.episodestats.infostats_pop_pension,60,'tulevat eläkkeet')
-        self.plot_pension_stats(self.episodestats.infostats_pop_pension,60,'tulevat eläkkeet, vain elossa',mask=alivemask)
+        if self.episodestats.include_pop_pension:
+            self.plot_pension_stats(self.episodestats.infostats_pop_pension,60,'tulevat eläkkeet')
+            self.plot_pension_stats(self.episodestats.infostats_pop_pension,60,'tulevat eläkkeet, vain elossa',mask=alivemask)
         self.plot_pension_time()
-
-
-    def min_max(self):
-        min_wage=np.min(self.episodestats.infostats_pop_wage)
-        max_wage=np.max(self.episodestats.infostats_pop_wage)
-        max_pension=np.max(self.episodestats.infostats_pop_pension)
-        min_pension=np.min(self.episodestats.infostats_pop_pension)
-        print(f'min wage {min_wage} max wage {max_wage}')
-        print(f'min pension {min_pension} max pension {max_pension}')
 
     def setup_labels(self):
         self.labels=self.lab.get_labels(self.language)
@@ -1720,7 +1672,8 @@ class PlotStats():
 
         self.plot_y(spouseratio,ylabel=self.labels['spouses'],figname=fname)
 
-        print(self.episodestats.comp_family_matrix())
+        if self.episodestats.include_pop_pension:
+            print(self.episodestats.comp_family_matrix())
 
     def plot_unemp_all(self,unempratio=True,figname=None,grayscale=False,tyovoimatutkimus=False):
         '''
@@ -2497,7 +2450,8 @@ class PlotStats():
         self.plot_aggirr()
         self.plot_aggirr(gender=1)
         self.plot_aggirr(gender=2)
-        self.episodestats.comp_irr()
+        if self.episodestats.include_pop_pension:
+            self.episodestats.comp_irr()
         self.plot_irrdistrib(self.episodestats.infostats_irr_tyel_reduced,figname=figname+'_reduced',reduced=True,grayscale=grayscale)
         self.plot_irrdistrib(self.episodestats.infostats_irr_tyel_full,figname=figname+'_full',grayscale=grayscale)
         self.plot_irrdistrib(self.episodestats.infostats_irr_tyel_full,figname=figname+'_full_naiset',gender=1,grayscale=grayscale)
@@ -2600,6 +2554,13 @@ class PlotStats():
         v2data=v2_irrdata.compressed() # nans dropped
         
         return v2data
+
+    def compare_takuu_kansanelake(self):
+        suhde,n_minus,lkm_takuuelake,lkm_kansanelake = self.episodestats.comp_pop_takuuelake()
+        print('Kansaneläkkeen saajia {:.2f} tukineljännesvuotta'.format(lkm_kansanelake))
+        print('Takuueläkkeen saajia {:.2f} tukineljännesvuotta'.format(lkm_takuuelake))
+        print('Takuueläke > 0, kansaneläke = 0, lkm {:.2f} tukineljännesvuotta'.format(n_minus))
+        print('Takuueläke / Kansaneläke {:.2f} %'.format(100*suhde))
     
     def get_gendername(self,gender):
         if gender is None:
@@ -3044,13 +3005,14 @@ class PlotStats():
         initial1=np.mean(real1[1,:])
         initial2=np.mean(real2[1,:])
 
-        rew1=self.episodestats.comp_total_reward(output=False,discounted=True)
-        rew2=cc2.episodestats.comp_total_reward(output=False,discounted=True)
-        net1,eqnet1=self.episodestats.comp_total_netincome(output=False)
-        net2,eqnet2=cc2.episodestats.comp_total_netincome(output=False)
+        if self.episodestats.include_pop_pension:
+            rew1=self.episodestats.comp_total_reward(output=False,discounted=True)
+            rew2=cc2.episodestats.comp_total_reward(output=False,discounted=True)
+            net1,eqnet1=self.episodestats.comp_total_netincome(output=False)
+            net2,eqnet2=cc2.episodestats.comp_total_netincome(output=False)
 
-        print(f'{label1} reward {rew1} netincome {net1:.2f} eq {eqnet1:.3f} initial {initial1}')
-        print(f'{label2} reward {rew2} netincome {net2:.2f} eq {eqnet2:.3f} initial {initial2}')
+            print(f'{label1} reward {rew1} netincome {net1:.2f} eq {eqnet1:.3f} initial {initial1}')
+            print(f'{label2} reward {rew2} netincome {net2:.2f} eq {eqnet2:.3f} initial {initial2}')
 
         gini1 = self.episodestats.comp_gini()
         gini2 = cc2.episodestats.comp_gini()
@@ -3271,29 +3233,30 @@ class PlotStats():
             self.plot_compare_tyolldistribs(unemp_distrib,tyoll_distrib,unemp_distrib2,tyoll_distrib2,tyollistyneet=False,label1=label1,label2=label2)
             self.plot_compare_tyolldistribs(unemp_distrib,tyoll_distrib,unemp_distrib2,tyoll_distrib2,tyollistyneet=True,label1=label1,label2=label2)
 
-        print(label2)
-        keskikesto=self.episodestats.comp_unemp_durations(return_q=False)
-        self.plot_unemp_durdistribs(keskikesto)
+        if self.episodestats.include_pop_pension:
+            print(label2)
+            keskikesto=self.episodestats.comp_unemp_durations(return_q=False)
+            self.plot_unemp_durdistribs(keskikesto)
 
-        print(label1)
-        keskikesto=cc2.episodestats.comp_unemp_durations(return_q=False)
-        self.plot_unemp_durdistribs(keskikesto)
+            print(label1)
+            keskikesto=cc2.episodestats.comp_unemp_durations(return_q=False)
+            self.plot_unemp_durdistribs(keskikesto)
 
-        tyoll_virta,tyot_virta=self.episodestats.comp_virrat(ansiosid=True,tmtuki=True,putki=True,outsider=False)
-        tyoll_virta2,tyot_virta2=cc2.episodestats.comp_virrat(ansiosid=True,tmtuki=True,putki=True,outsider=False)
-        self.plot_compare_virrat(tyoll_virta,tyoll_virta2,virta_label='Työllisyys',label1=label1,label2=label2)
-        self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time=40,max_time=64,virta_label='Työttömyys',label1=label1,label2=label2)
-        self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time=55,max_time=64,virta_label='Työttömyys',label1=label1,label2=label2)
+            tyoll_virta,tyot_virta=self.episodestats.comp_virrat(ansiosid=True,tmtuki=True,putki=True,outsider=False)
+            tyoll_virta2,tyot_virta2=cc2.episodestats.comp_virrat(ansiosid=True,tmtuki=True,putki=True,outsider=False)
+            self.plot_compare_virrat(tyoll_virta,tyoll_virta2,virta_label='Työllisyys',label1=label1,label2=label2)
+            self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time=40,max_time=64,virta_label='Työttömyys',label1=label1,label2=label2)
+            self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time=55,max_time=64,virta_label='Työttömyys',label1=label1,label2=label2)
 
-        tyoll_virta,tyot_virta=self.episodestats.comp_virrat(ansiosid=True,tmtuki=False,putki=True,outsider=False)
-        tyoll_virta2,tyot_virta2=cc2.episodestats.comp_virrat(ansiosid=True,tmtuki=False,putki=True,outsider=False)
-        self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time=40,max_time=64,virta_label='ei-tm-Työttömyys',label1=label1,label2=label2)
-        self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time=55,max_time=64,virta_label='ei-tm-Työttömyys',label1=label1,label2=label2)
+            tyoll_virta,tyot_virta=self.episodestats.comp_virrat(ansiosid=True,tmtuki=False,putki=True,outsider=False)
+            tyoll_virta2,tyot_virta2=cc2.episodestats.comp_virrat(ansiosid=True,tmtuki=False,putki=True,outsider=False)
+            self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time=40,max_time=64,virta_label='ei-tm-Työttömyys',label1=label1,label2=label2)
+            self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time=55,max_time=64,virta_label='ei-tm-Työttömyys',label1=label1,label2=label2)
 
-        tyoll_virta,tyot_virta=self.episodestats.comp_virrat(ansiosid=False,tmtuki=True,putki=True,outsider=False)
-        tyoll_virta2,tyot_virta2=cc2.episodestats.comp_virrat(ansiosid=False,tmtuki=True,putki=True,outsider=False)
-        self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time=40,max_time=64,virta_label='tm-Työttömyys',label1=label1,label2=label2)
-        self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time=55,max_time=64,virta_label='tm-Työttömyys',label1=label1,label2=label2)
+            tyoll_virta,tyot_virta=self.episodestats.comp_virrat(ansiosid=False,tmtuki=True,putki=True,outsider=False)
+            tyoll_virta2,tyot_virta2=cc2.episodestats.comp_virrat(ansiosid=False,tmtuki=True,putki=True,outsider=False)
+            self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time=40,max_time=64,virta_label='tm-Työttömyys',label1=label1,label2=label2)
+            self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time=55,max_time=64,virta_label='tm-Työttömyys',label1=label1,label2=label2)
 
     def plot_density(self,emtr,figname=None,etla_x_emtr=None,etla_emtr=None,xlabel='EMTR',foretitle='in all states:'):
         axvcolor='gray'

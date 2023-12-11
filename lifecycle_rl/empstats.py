@@ -789,10 +789,15 @@ class Empstats():
         htv=6*52
         htv_tt=21.5*12
         h_to_v=1.0 / 1860.0
+ 
 
         q={}
         if self.year==2018:
-            q['yhteensä']=np.sum(np.sum(demog2))*self.timestep
+            aikuisia = np.sum(np.sum(demog2))*self.timestep
+            lapsia = 1_049_041  # v2019
+            q['yhteensä'] = aikuisia + lapsia
+            q['aikuisia'] = aikuisia
+            q['lapsia'] = lapsia
             q['työllisiä']= 4_132_662_000 * h_to_v # yritykset, statfin
             q['työssä ja eläkkeellä']=31_000 # ETK 2020
             q['työssä yli 63v']=86_000 # ETK 2020
@@ -804,9 +809,12 @@ class Empstats():
             q['kotihoidontuella']=42_042  # saajia Kelan tilasto 2018
             q['vanhempainvapaalla']=(4_964_669+7_590_429)/htv  # Kelan tilasto 2022, äideille
             q['pareja']=0
-            q['lapsia']=0
         elif self.year==2019:
+            aikuisia = np.sum(np.sum(demog2))*self.timestep
+            lapsia = 1_049_041
             q['yhteensä']=np.sum(np.sum(demog2))*self.timestep
+            q['aikuisia'] = aikuisia
+            q['lapsia'] = lapsia
             q['työllisiä']= 4_141_593_000 * h_to_v # yritykset, statfin
             q['työssä ja eläkkeellä']=31_000 # ETK 2020
             q['työssä yli 63v']=86_000 # ETK 2020
@@ -818,9 +826,12 @@ class Empstats():
             q['kotihoidontuella']=42_042  # saajia Kelan tilasto 2018
             q['vanhempainvapaalla']=(4_727_809+7_070_436)/htv  # Kelan tilasto 2022, äideille
             q['pareja']=0
-            q['lapsia']=0
         elif self.year==2020:
+            aikuisia = np.sum(np.sum(demog2))*self.timestep
+            lapsia = 1_040_218 
             q['yhteensä']=np.sum(np.sum(demog2))*self.timestep
+            q['aikuisia'] = aikuisia
+            q['lapsia'] = lapsia
             q['työllisiä']= 4_062_562_000 * h_to_v # yritykset, statfin
             q['työssä ja eläkkeellä']=31_000 # ETK 2020
             q['työssä yli 63v']=86_000 # ETK 2020
@@ -832,9 +843,12 @@ class Empstats():
             q['kotihoidontuella']=42_042  # saajia Kelan tilasto 2018
             q['vanhempainvapaalla']=(4_819_360+7_162_896)/htv  # Kelan tilasto 2022, äideille
             q['pareja']=0
-            q['lapsia']=0
         elif self.year==2021:
-            q['yhteensä']=np.sum(np.sum(demog2))*self.timestep
+            aikuisia = np.sum(np.sum(demog2))*self.timestep
+            lapsia = 1_030_131
+            q['yhteensä']=aikuisia + lapsia
+            q['aikuisia'] = aikuisia
+            q['lapsia'] = lapsia
             q['työllisiä']= 4_062_562_000 * h_to_v # yritykset, statfin
             q['työssä ja eläkkeellä']=31_000 # ETK 2020
             q['työssä yli 63v']=86_000 # ETK 2020
@@ -846,9 +860,12 @@ class Empstats():
             q['kotihoidontuella']=42_042  # saajia Kelan tilasto 2018
             q['vanhempainvapaalla']=(5_084_479+7_311_157)/htv  # Kelan tilasto 2022, äideille
             q['pareja']=0
-            q['lapsia']=0
         elif self.year==2022:
-            q['yhteensä']=np.sum(np.sum(demog2))*self.timestep
+            aikuisia = np.sum(np.sum(demog2))*self.timestep
+            lapsia = 1_018_559
+            q['yhteensä']=aikuisia + lapsia
+            q['aikuisia'] = aikuisia
+            q['lapsia'] = lapsia
             q['työllisiä']= 4_062_562_000 * h_to_v # yritykset, statfin
             q['työssä ja eläkkeellä']=31_000 # ETK 2020
             q['työssä yli 63v']=86_000 # ETK 2020
@@ -860,9 +877,12 @@ class Empstats():
             q['kotihoidontuella']=42_042  # saajia Kelan tilasto 2018
             q['vanhempainvapaalla']=12_571_400/htv  # Kelan tilasto 2018, äideille
             q['pareja']=0
-            q['lapsia']=0
         elif self.year==2023:
-            q['yhteensä']=np.sum(np.sum(demog2))*self.timestep
+            aikuisia = np.sum(np.sum(demog2))*self.timestep
+            lapsia = 1_018_559 # 2022
+            q['yhteensä']=aikuisia + lapsia
+            q['aikuisia'] = aikuisia
+            q['lapsia'] = lapsia
             q['työllisiä']= 4_062_562_000 * h_to_v # yritykset, statfin
             q['työssä ja eläkkeellä']=31_000 # ETK 2020
             q['työssä yli 63v']=86_000 # ETK 2020
@@ -874,9 +894,12 @@ class Empstats():
             q['kotihoidontuella']=42_042  # saajia Kelan tilasto 2018
             q['vanhempainvapaalla']=12_571_400/htv  # Kelan tilasto 2018, äideille
             q['pareja']=0
-            q['lapsia']=0
         elif self.year==2024: # päivitä
-            q['yhteensä']=np.sum(np.sum(demog2))*self.timestep
+            aikuisia = np.sum(np.sum(demog2))*self.timestep
+            lapsia = 1_018_559 # 2021
+            q['yhteensä']=aikuisia + lapsia
+            q['aikuisia'] = aikuisia
+            q['lapsia'] = lapsia
             q['työllisiä']= 4_062_562_000 * h_to_v # yritykset, statfin
             q['työssä ja eläkkeellä']=31_000 # ETK 2020
             q['työssä yli 63v']=86_000 # ETK 2020
@@ -888,7 +911,6 @@ class Empstats():
             q['kotihoidontuella']=42_042  # saajia Kelan tilasto 2018
             q['vanhempainvapaalla']=12_571_400/htv  # Kelan tilasto 2018, äideille
             q['pareja']=0
-            q['lapsia']=0
 
         return q    
 
@@ -902,7 +924,11 @@ class Empstats():
 
         q={}
         if self.year==2018:
-            q['yhteensä']=np.sum(demog2)*self.timestep
+            aikuisia = np.sum(np.sum(demog2))*self.timestep
+            lapsia = 1_049_041  # v2019
+            q['yhteensä'] = aikuisia + lapsia
+            q['aikuisia'] = aikuisia
+            q['lapsia'] = lapsia
             q['työllisiä']=2_540_000 # TK
             q['työssä ja eläkkeellä']=31_000 # ETK 2020
             q['työssä yli 63v']=86_000 # ETK 2020
@@ -916,7 +942,11 @@ class Empstats():
             q['opiskelijoita']=109076+111441
             q['ovella']=39_000
         elif self.year==2019:
-            q['yhteensä']=np.sum(demog2)*self.timestep
+            aikuisia = np.sum(np.sum(demog2))*self.timestep
+            lapsia = 1_049_041  # v2019
+            q['yhteensä'] = aikuisia + lapsia
+            q['aikuisia'] = aikuisia
+            q['lapsia'] = lapsia
             q['työllisiä']=2_566_000 # TK
             q['työssä ja eläkkeellä']=31_000 # ETK 2020
             q['työssä yli 63v']=86_000 # ETK 2020
@@ -929,7 +959,11 @@ class Empstats():
             q['opiskelijoita']=114433+109652
             q['ovella']=39_000
         elif self.year==2020:
-            q['yhteensä']=np.sum(demog2)*self.timestep
+            aikuisia = np.sum(np.sum(demog2))*self.timestep
+            lapsia = 1_049_041  # v2019
+            q['yhteensä'] = aikuisia + lapsia
+            q['aikuisia'] = aikuisia
+            q['lapsia'] = lapsia
             q['työllisiä']=2_528_000 # TK
             q['työssä yli 63v']=86_000 # ETK 2020
             q['työssä ja eläkkeellä']=31_000 # ETK 2020
@@ -943,7 +977,11 @@ class Empstats():
             q['opiskelijoita']=126153+118325
             q['ovella']=39_000
         elif self.year==2021:
-            q['yhteensä']=np.sum(demog2)*self.timestep
+            aikuisia = np.sum(np.sum(demog2))*self.timestep
+            lapsia = 1_049_041  # v2019
+            q['yhteensä'] = aikuisia + lapsia
+            q['aikuisia'] = aikuisia
+            q['lapsia'] = lapsia
             q['työllisiä']=2_528_000 # TK
             q['työssä ja eläkkeellä']=31_000 # ETK 2020
             q['työssä yli 63v']=86_000 # ETK 2020
@@ -957,7 +995,11 @@ class Empstats():
             q['opiskelijoita']=126153+118325
             q['ovella']=39_000
         elif self.year==2022:
-            q['yhteensä']=np.sum(demog2)*self.timestep
+            aikuisia = np.sum(np.sum(demog2))*self.timestep
+            lapsia = 1_049_041  # v2019
+            q['yhteensä'] = aikuisia + lapsia
+            q['aikuisia'] = aikuisia
+            q['lapsia'] = lapsia
             q['työllisiä']=2_528_000 # TK
             q['työssä ja eläkkeellä']=31_000 # ETK 2020
             q['työssä yli 63v']=86_000 # ETK 2020
@@ -971,7 +1013,11 @@ class Empstats():
             q['opiskelijoita']=126153+118325
             q['ovella']=39_000
         elif self.year==2023:
-            q['yhteensä']=np.sum(demog2)*self.timestep
+            aikuisia = np.sum(np.sum(demog2))*self.timestep
+            lapsia = 1_049_041  # v2019
+            q['yhteensä'] = aikuisia + lapsia
+            q['aikuisia'] = aikuisia
+            q['lapsia'] = lapsia
             q['työllisiä']=2_528_000 # TK
             q['työssä ja eläkkeellä']=31_000 # ETK 2020
             q['työssä yli 63v']=86_000 # ETK 2020
@@ -985,7 +1031,11 @@ class Empstats():
             q['opiskelijoita']=126153+118325
             q['ovella']=39_000
         elif self.year==2024: # päivitä
-            q['yhteensä']=np.sum(demog2)*self.timestep
+            aikuisia = np.sum(np.sum(demog2))*self.timestep
+            lapsia = 1_049_041  # v2019
+            q['yhteensä'] = aikuisia + lapsia
+            q['aikuisia'] = aikuisia
+            q['lapsia'] = lapsia
             q['työllisiä']=2_528_000 # TK
             q['työssä ja eläkkeellä']=31_000 # ETK 2020
             q['työssä yli 63v']=86_000 # ETK 2020
@@ -1057,14 +1107,14 @@ class Empstats():
             q['tyoelakemeno']=27_865_000_000
             q['kansanelakemeno']=2_054_030_972
             q['takuuelakemeno']=230_809_165
-            q['elatustuki']=206_977_000
+            q['elatustuki']=208_633_460
             q['lapsilisa']=1_358_971_519
             q['opintotuki']=417_404_073+54_057
             q['isyyspaivaraha']=118_477_043
             q['aitiyspaivaraha']=767_134_967
             q['kotihoidontuki']=253_877_650
             q['sairauspaivaraha']=875_502_895
-            q['toimeentulotuki']=715_950_847
+            q['toimeentulotuki']=698_430_807	
             #q['perustulo']=0
             q['pvhoitomaksu']=271_000_000
             q['alv']=18_786_000_000 # Lähde: ?
@@ -1089,14 +1139,14 @@ class Empstats():
             q['tyoelakemeno']=27_865_000_000
             q['kansanelakemeno']=2_211_425_285
             q['takuuelakemeno']=262_146_342
-            q['elatustuki']=208_633_000
+            q['elatustuki']=215_555_923
             q['lapsilisa']=1_375_073_409
             q['opintotuki']=417_404_073+54_057
             q['isyyspaivaraha']=123_821_560
             q['aitiyspaivaraha']=807_571_301
             q['kotihoidontuki']=237_024_837
-            q['sairauspaivaraha']=906_036_060
-            q['toimeentulotuki']=715_950_847
+            q['sairauspaivaraha']=818_657_072
+            q['toimeentulotuki']=784_025_858	
             #q['perustulo']=0
             q['pvhoitomaksu']=271_000_000
             q['alv']=19_354_000_000 #21_775_000_000
@@ -1121,14 +1171,14 @@ class Empstats():
             q['tyoelakemeno']=30_497_100_000
             q['kansanelakemeno']=2_158_018_883
             q['takuuelakemeno']=264_453_403
-            q['elatustuki']=215_556_000
+            q['elatustuki']=213_640_966
             q['lapsilisa']=1_362_112_599
             q['opintotuki']=417_404_073+54_057
             q['isyyspaivaraha']=134_378_695
             q['aitiyspaivaraha']=862_794_683	
             q['kotihoidontuki']=208_004_490
-            q['sairauspaivaraha']=1_039_110_731
-            q['toimeentulotuki']=715_950_847
+            q['sairauspaivaraha']=855_555_940	
+            q['toimeentulotuki']=686_452_825	
             #q['perustulo']=0
             q['pvhoitomaksu']=271_000_000
             q['alv']=20_217_000_000 #21_775_000_000
@@ -1159,8 +1209,8 @@ class Empstats():
             q['isyyspaivaraha']=149_559_776
             q['aitiyspaivaraha']=850_374_956
             q['kotihoidontuki']=198_714_946
-            q['sairauspaivaraha']=1_039_110_731
-            q['toimeentulotuki']=715_950_847
+            q['sairauspaivaraha']=883_920_774
+            q['toimeentulotuki']=678_391_090
             #q['perustulo']=0
             q['pvhoitomaksu']=271_000_000
             q['alv']=20_217_000_000 #21_775_000_000

@@ -151,7 +151,7 @@ class BaseAgent(ABC):
         while (not done) and episode_steps <= self.max_episode_steps:
 
             if self.start_steps > self.steps or cont:
-                action = self.env.action_space.sample(temp)
+                action = self.env.action_space.sample()
             else:
                 action = self.explore(state)[0,:]
 
@@ -234,7 +234,7 @@ class BaseAgent(ABC):
             self.calc_critic_loss(batch, weights)
         policy_loss, entropies = self.calc_policy_loss(batch, weights)
         entr = torch.mean(entropies)
-        self.target_entropy = (1.-self.target_entropy_alpha) * self.target_entropy + self.target_entropy_alpha * entr
+        #self.target_entropy = (1.-self.target_entropy_alpha) * self.target_entropy + self.target_entropy_alpha * entr
         #print('target_entropy',self.target_entropy,'entr',entr)
         entropy_loss = self.calc_entropy_loss(entropies, weights)
 
