@@ -3140,7 +3140,6 @@ class PlotStats():
         fig,ax=plt.subplots()
         ax.set_xlabel(self.labels['age'])
         ax.set_ylabel(self.labels['ero osuuksissa'])
-        print(diff_emp.shape,ansiosid_osuus2.shape,ansiosid_osuus1.shape,tm_osuus2.shape,tm_osuus1.shape)
         ax.plot(x,100*ansiosid_osuus2,ls=ls,label='ansiosid. työttömyys, '+label2)
         ax.plot(x,100*ansiosid_osuus1,label='ansiosid. työttömyys, '+label1)
         ax.plot(x,100*tm_osuus2,ls=ls,label='tm-tuki, '+label2)
@@ -3202,7 +3201,7 @@ class PlotStats():
             print('- putkeen {:.0f}-{:.0f}-vuotiailla noin {:.0f} työllistä ({:.0f} vs {:.0f})'.format(s,e,(f_unemp_htv1-f_unemp_htv2),f_unemp_htv1,f_unemp_htv2))
             print('epävarmuus työllisyysasteissa {:.4f}, hajonta {:.4f}'.format(delta,haj1))
 
-        if True:
+        if self.episodestats.include_pop_pension:
             unemp_distrib,emp_distrib,unemp_distrib_bu=self.episodestats.comp_empdistribs(ansiosid=True,tmtuki=True,putki=True,outsider=False)
             tyoll_distrib,tyoll_distrib_bu=self.episodestats.comp_tyollistymisdistribs(ansiosid=True,tmtuki=True,putki=True,outsider=False)
             unemp_distrib2,emp_distrib2,unemp_distrib_bu2=cc2.episodestats.comp_empdistribs(ansiosid=True,tmtuki=True,putki=True,outsider=False)
