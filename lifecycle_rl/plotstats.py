@@ -125,8 +125,9 @@ class PlotStats():
 
             q=self.episodestats.comp_participants(scale=True,lkm=False)
             q_lkm=self.episodestats.comp_participants(scale=True,lkm=True)
+
             if cc is None:
-                q_stat=self.empstats.stat_participants()
+                q_stat=self.empstats.stat_participants(scale=True,lkm=True)
                 q_days=self.empstats.stat_days()
             else:
                 q_stat=cc.episodestats.comp_participants(scale=True,lkm=True)
@@ -202,8 +203,12 @@ class PlotStats():
 
         print_html('<h2>Tilastot</h2>')
 
-        tyoll_osuus1,htv_osuus1,tyot_osuus1,kokotyo_osuus1,osatyo_osuus1=self.episodestats.comp_employed_ratio(self.episodestats.empstate)
-        htv1,tyoll1,haj1,tyollaste1,tyolliset1,osatyolliset1,kokotyolliset1,osata1,kokota1=self.episodestats.comp_tyollisyys_stats(self.episodestats.empstate,scale_time=True,start=20,end=64)
+        emp_htv2 = np.sum(self.episodestats.emp_htv,axis=1)
+
+        tyoll_osuus1,htv_osuus1,tyot_osuus1,kokotyo_osuus1,osatyo_osuus1 = \
+            self.episodestats.comp_employed_ratio(self.episodestats.empstate,emp_htv=emp_htv2)
+        htv1,tyoll1,haj1,tyollaste1,tyolliset1,osatyolliset1,kokotyolliset1,osata1,kokota1 = \
+            self.episodestats.comp_tyollisyys_stats(self.episodestats.empstate,scale_time=True,start=20,end=64,emp_htv=emp_htv2)
 
         tyollaste=tyollaste1*100
         tyotaste=self.episodestats.comp_unemp_stats_agg(per_pop=False)*100
@@ -1431,7 +1436,9 @@ class PlotStats():
         return 'Etuudella olevat {:.2f}\nTyössä {:.2f}\nEläkkeellä {:.2f}\n'.format(x[0],x[1],x[2])
 
     def plot_children(self,figname=None):
-        c3,c7,c18=self.episodestats.comp_children()
+        c3,c7,c18,c_vrt=self.episodestats.comp_children()
+
+        print('Alle 3v lapsia {:.0f}, alle 7v lapsia {:.0f}, alle 18v lapsia {:.0f} vrt {:.0f}'.format(np.sum(c3),np.sum(c7),np.sum(c18),np.sum(c_vrt)))
         
         self.plot_y(c3,label='Alle 3v lapset',
                     y2=c7,label2='Alle 7v lapset',
@@ -1661,10 +1668,18 @@ class PlotStats():
             ylabel=self.labels['ratio'],y2=empstate_ratio[:,6],label2='isyysvapaa')
 
     def plot_spouse(self,figname=None,grayscale=False):
-        x=np.linspace(self.min_age,self.max_age,self.n_time)
-        puolisoita=np.sum(self.episodestats.infostats_puoliso,axis=1)
+        x = np.linspace(self.min_age,self.max_age,self.n_time)
+        puolisoita = np.sum(self.episodestats.infostats_puoliso,axis=1,keepdims=True)
+        print(x.shape,puolisoita.shape)
+        women,men = self.episodestats.comp_genders()
+        spouseratio = puolisoita/self.episodestats.alive[:,0]
+        n_spouses = np.sum(puolisoita)
+        av_spouseratio = np.mean(spouseratio)
+        print(puolisoita.shape,women.shape,puolisoita.shape)
+
+        print(f'Naisia {women:.0f} miehiä {men:.0f}')
+        print(f'Puolisoita {n_spouses:.0f}, osuus kaikista {av_spouseratio:.2f}')
             
-        spouseratio=puolisoita/self.episodestats.alive[:,0]
         if figname is not None:
             fname=figname+'spouses.'+self.figformat
         else:
@@ -3025,12 +3040,17 @@ class PlotStats():
             s=21
             e=60 #63.5
 
-        tyoll_osuus1,htv_osuus1,tyot_osuus1,kokotyo_osuus1,osatyo_osuus1=self.episodestats.comp_employed_ratio(self.episodestats.empstate)
-        tyoll_osuus2,htv_osuus2,tyot_osuus2,kokotyo_osuus2,osatyo_osuus2=cc2.episodestats.comp_employed_ratio(cc2.episodestats.empstate)
+        emp_htv2 = np.sum(self.episodestats.emp_htv,axis=1)
+
+        tyoll_osuus1,htv_osuus1,tyot_osuus1,kokotyo_osuus1,osatyo_osuus1 = \
+            self.episodestats.comp_employed_ratio(self.episodestats.empstate,emp_htv=emp_htv2)
+        tyoll_osuus2,htv_osuus2,tyot_osuus2,kokotyo_osuus2,osatyo_osuus2 = \
+            cc2.episodestats.comp_employed_ratio(cc2.episodestats.empstate,emp_htv=emp_htv2)
         htv1,tyoll1,haj1,tyollaste1,tyolliset1,osatyolliset1,kokotyolliset1,osata1,kokota1 =\
-            self.episodestats.comp_tyollisyys_stats(self.episodestats.empstate,scale_time=True,start=s,end=e) # /self.episodestats.n_pop
+            self.episodestats.comp_tyollisyys_stats(self.episodestats.empstate,scale_time=True,start=s,end=e,emp_htv=emp_htv2) # /self.episodestats.n_pop
         htv2,tyoll2,haj2,tyollaste2,tyolliset2,osatyolliset2,kokotyolliset2,osata2,kokota2 =\
-            cc2.episodestats.comp_tyollisyys_stats(cc2.episodestats.empstate,scale_time=True,start=s,end=e) # /cc2.episodestats.n_pop
+            cc2.episodestats.comp_tyollisyys_stats(cc2.episodestats.empstate,scale_time=True,start=s,end=e,emp_htv=emp_htv2) # /cc2.episodestats.n_pop
+
         ansiosid_osuus1,tm_osuus1=self.episodestats.comp_unemployed_detailed(self.episodestats.empstate)
         ansiosid_osuus2,tm_osuus2=cc2.episodestats.comp_unemployed_detailed(cc2.episodestats.empstate)
         #khh_osuus1=self.episodestats.comp_kht(self.episodestats.empstate)
@@ -3159,7 +3179,7 @@ class PlotStats():
             print('Työllisyysvaikutus {:.0f}-{:.0f}-vuotiaisiin noin {:.0f} htv ja {:.0f} työllistä'.format(s,e,htv1-htv2,tyoll1-tyoll2))
             print('- kokoaikaisiin {:.0f}-{:.0f}-vuotiailla noin {:.0f} työllistä ({:.0f} vs {:.0f})'.format(s,e,(kokotyolliset1-kokotyolliset2),kokotyolliset1,kokotyolliset2))
             print('- osa-aikaisiin {:.0f}-{:.0f}-vuotiailla noin {:.0f} työllistä ({:.0f} vs {:.0f})'.format(s,e,(osatyolliset1-osatyolliset2),osatyolliset1,osatyolliset2))
-            print('Työllisiä {:.0f} vs {:.0f} htv'.format(htv1,htv2))
+            print(f'Työllisiä {s:.0f}-{e:.0f} -vuotiaissa: {htv1:.0f} vs {htv2:.0f} htv')
             print('Työllisyysastevaikutus {:.0f}-{:.0f}-vuotiailla noin {:.2f} prosenttia ({:.2f} vs {:.2f})'.format(s,e,(tyollaste1-tyollaste2)*100,tyollaste1*100,tyollaste2*100))
             print('- kokoaikaisiin {:.0f}-{:.0f}-vuotiailla noin {:.2f} prosenttia ({:.2f} vs {:.2f})'.format(s,e,(kokota1-kokota2)*100,kokota1*100,kokota2*100))
             print('- osa-aikaisiin {:.0f}-{:.0f}-vuotiailla noin {:.2f} prosenttia ({:.2f} vs {:.2f})'.format(s,e,(osata1-osata2)*100,osata1*100,osata2*100))
@@ -3189,17 +3209,17 @@ class PlotStats():
         delta=1.96*1.0/np.sqrt(self.episodestats.n_pop)
 
         if self.language=='English':
-            print('Työttömyysvaikutus {:.0f}-{:.0f}-vuotiaisiin noin {:.0f} htv'.format(s,e,unemp_htv1-unemp_htv2))
-            print('- ansiosidonnaiseen {:.0f}-{:.0f}-vuotiailla noin {:.0f} htv ({:.0f} vs {:.0f})'.format(s,e,(e_unemp_htv1-e_unemp_htv2),e_unemp_htv1,e_unemp_htv2))
-            print('- tm-tukeen {:.0f}-{:.0f}-vuotiailla noin {:.0f} työllistä ({:.0f} vs {:.0f})'.format(s,e,(tm_unemp_htv1-tm_unemp_htv2),tm_unemp_htv1,tm_unemp_htv2))
-            print('- putkeen {:.0f}-{:.0f}-vuotiailla noin {:.0f} työllistä ({:.0f} vs {:.0f})'.format(s,e,(f_unemp_htv1-f_unemp_htv2),f_unemp_htv1,f_unemp_htv2))
+            print('Työttömyysvaikutus noin {:.0f} htv'.format(unemp_htv1-unemp_htv2))
+            print('- ansiosidonnaiseen noin {:.0f} htv ({:.0f} vs {:.0f})'.format((e_unemp_htv1-e_unemp_htv2),e_unemp_htv1,e_unemp_htv2))
+            print('- tm-tukeen {:.0f} työllistä ({:.0f} vs {:.0f})'.format((tm_unemp_htv1-tm_unemp_htv2),tm_unemp_htv1,tm_unemp_htv2))
+            print('- putkeen {:.0f} työllistä ({:.0f} vs {:.0f})'.format((f_unemp_htv1-f_unemp_htv2),f_unemp_htv1,f_unemp_htv2))
             print('Uncertainty in employment rates {:.4f}, std {:.4f}'.format(delta,haj1))
         else:
-            print('Työttömyysvaikutus {:.0f}-{:.0f}-vuotiaisiin noin {:.0f} htv'.format(s,e,unemp_htv1-unemp_htv2))
-            print('- ansiosidonnaiseen {:.0f}-{:.0f}-vuotiailla noin {:.0f} htv ({:.0f} vs {:.0f})'.format(s,e,(e_unemp_htv1-e_unemp_htv2),e_unemp_htv1,e_unemp_htv2))
-            print('- tm-tukeen {:.0f}-{:.0f}-vuotiailla noin {:.0f} työllistä ({:.0f} vs {:.0f})'.format(s,e,(tm_unemp_htv1-tm_unemp_htv2),tm_unemp_htv1,tm_unemp_htv2))
-            print('- putkeen {:.0f}-{:.0f}-vuotiailla noin {:.0f} työllistä ({:.0f} vs {:.0f})'.format(s,e,(f_unemp_htv1-f_unemp_htv2),f_unemp_htv1,f_unemp_htv2))
-            print('epävarmuus työllisyysasteissa {:.4f}, hajonta {:.4f}'.format(delta,haj1))
+            print('Työttömyysvaikutus {:.0f} htv'.format(unemp_htv1-unemp_htv2))
+            print('- ansiosidonnaiseen {:.0f} htv ({:.0f} vs {:.0f})'.format((e_unemp_htv1-e_unemp_htv2),e_unemp_htv1,e_unemp_htv2))
+            print('- tm-tukeen {:.0f} työllistä ({:.0f} vs {:.0f})'.format((tm_unemp_htv1-tm_unemp_htv2),tm_unemp_htv1,tm_unemp_htv2))
+            print('- putkeen {:.0f} työllistä ({:.0f} vs {:.0f})'.format((f_unemp_htv1-f_unemp_htv2),f_unemp_htv1,f_unemp_htv2))
+            print('epävarmuus työllisyysasteissa {:.4f}%, hajonta {:.4f}%'.format(100*delta,haj1))
 
         if self.episodestats.include_pop_pension:
             unemp_distrib,emp_distrib,unemp_distrib_bu=self.episodestats.comp_empdistribs(ansiosid=True,tmtuki=True,putki=True,outsider=False)

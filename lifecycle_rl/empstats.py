@@ -10,7 +10,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 class Empstats():
-    def __init__(self,year=2018,max_age=70,n_groups=6,timestep=0.25,n_time=210,min_age=18):
+    def __init__(self,year=2018,max_age=70,n_groups=6,timestep=0.25,n_time=210,min_age=18,include_perustulo=False):
         self.year=year
         self.max_age=max_age
         self.n_groups=n_groups
@@ -18,6 +18,7 @@ class Empstats():
         self.n_time=n_time
         self.min_age=min_age
         self.inv_timestep=int(np.round(1/self.timestep)) # pitää olla kokonaisluku
+        self.include_perustulo = include_perustulo
 
     def emp_stats(self,g=0,tyossakayntitutkimus=True):
         if tyossakayntitutkimus:
@@ -789,19 +790,13 @@ class Empstats():
         htv=6*52
         htv_tt=21.5*12
         h_to_v=1.0 / 1860.0
- 
 
         q={}
         if self.year==2018:
-            aikuisia = np.sum(np.sum(demog2))*self.timestep
-            lapsia = 1_049_041  # v2019
-            q['yhteensä'] = aikuisia + lapsia
-            q['aikuisia'] = aikuisia
-            q['lapsia'] = lapsia
             q['työllisiä']= 4_132_662_000 * h_to_v # yritykset, statfin
             q['työssä ja eläkkeellä']=31_000 # ETK 2020
             q['työssä yli 63v']=86_000 # ETK 2020
-            q['palkansaajia']= 3_508_270_000 * h_to_v # yritykset, statfin
+            q['palkansaajia']= self.get_tyotulosumma(self.year)/3465/12.5 # 3_508_270_000 * h_to_v # yritykset, statfin
             q['ansiosidonnaisella']=(31_269_904+7_553_200)/htv_tt  # Kelan tilasto 31.12.2018
             q['tmtuella']=49_880_321/htv_tt   # Kelan tilasto 31.12.2018
             q['työkyvyttömyyseläke']=198_762
@@ -810,15 +805,10 @@ class Empstats():
             q['vanhempainvapaalla']=(4_964_669+7_590_429)/htv  # Kelan tilasto 2022, äideille
             q['pareja']=0
         elif self.year==2019:
-            aikuisia = np.sum(np.sum(demog2))*self.timestep
-            lapsia = 1_049_041
-            q['yhteensä']=np.sum(np.sum(demog2))*self.timestep
-            q['aikuisia'] = aikuisia
-            q['lapsia'] = lapsia
             q['työllisiä']= 4_141_593_000 * h_to_v # yritykset, statfin
             q['työssä ja eläkkeellä']=31_000 # ETK 2020
             q['työssä yli 63v']=86_000 # ETK 2020
-            q['palkansaajia']= 3_512_025_000 * h_to_v  # Kelan tilasto 31.12.2018
+            q['palkansaajia']= self.get_tyotulosumma(self.year)/3527/12.5 # 3_512_025_000 * h_to_v  # Kelan tilasto 31.12.2018
             q['ansiosidonnaisella']=(27_858_120+6_972_312)/htv_tt  # Kelan tilasto 31.12.2018
             q['tmtuella']=48_454_665/htv_tt   # Kelan tilasto 31.12.2019
             q['työkyvyttömyyseläke']=195_316
@@ -827,15 +817,10 @@ class Empstats():
             q['vanhempainvapaalla']=(4_727_809+7_070_436)/htv  # Kelan tilasto 2022, äideille
             q['pareja']=0
         elif self.year==2020:
-            aikuisia = np.sum(np.sum(demog2))*self.timestep
-            lapsia = 1_040_218 
-            q['yhteensä']=np.sum(np.sum(demog2))*self.timestep
-            q['aikuisia'] = aikuisia
-            q['lapsia'] = lapsia
             q['työllisiä']= 4_062_562_000 * h_to_v # yritykset, statfin
             q['työssä ja eläkkeellä']=31_000 # ETK 2020
             q['työssä yli 63v']=86_000 # ETK 2020
-            q['palkansaajia']= 3_459_030_000 * h_to_v #
+            q['palkansaajia']= self.get_tyotulosumma(self.year)/3653/12.5 # 3_459_030_000 * h_to_v #
             q['ansiosidonnaisella']=(40_448_224+12_425_099)/htv_tt  # Kelan tilasto 31.12.2018
             q['tmtuella']=52_449_825/htv_tt   # Kelan tilasto 31.12.2020
             q['työkyvyttömyyseläke']=191_597
@@ -844,15 +829,10 @@ class Empstats():
             q['vanhempainvapaalla']=(4_819_360+7_162_896)/htv  # Kelan tilasto 2022, äideille
             q['pareja']=0
         elif self.year==2021:
-            aikuisia = np.sum(np.sum(demog2))*self.timestep
-            lapsia = 1_030_131
-            q['yhteensä']=aikuisia + lapsia
-            q['aikuisia'] = aikuisia
-            q['lapsia'] = lapsia
             q['työllisiä']= 4_062_562_000 * h_to_v # yritykset, statfin
             q['työssä ja eläkkeellä']=31_000 # ETK 2020
             q['työssä yli 63v']=86_000 # ETK 2020
-            q['palkansaajia']= 3_459_030_000 * h_to_v #
+            q['palkansaajia']= self.get_tyotulosumma(self.year)/3738/12.5 # 3_459_030_000 * h_to_v #
             q['ansiosidonnaisella']=(37_549_237+7_553_200)/htv_tt  # Kelan tilasto 31.12.2018
             q['tmtuella']=49_613_125/htv_tt   # Kelan tilasto 31.12.2021
             q['työkyvyttömyyseläke']=185_991  
@@ -861,15 +841,10 @@ class Empstats():
             q['vanhempainvapaalla']=(5_084_479+7_311_157)/htv  # Kelan tilasto 2022, äideille
             q['pareja']=0
         elif self.year==2022:
-            aikuisia = np.sum(np.sum(demog2))*self.timestep
-            lapsia = 1_018_559
-            q['yhteensä']=aikuisia + lapsia
-            q['aikuisia'] = aikuisia
-            q['lapsia'] = lapsia
             q['työllisiä']= 4_062_562_000 * h_to_v # yritykset, statfin
             q['työssä ja eläkkeellä']=31_000 # ETK 2020
             q['työssä yli 63v']=86_000 # ETK 2020
-            q['palkansaajia']= 3_459_030_000 * h_to_v #
+            q['palkansaajia']= self.get_tyotulosumma(self.year)/3848/12.5 # 3_459_030_000 * h_to_v #
             q['ansiosidonnaisella']=(30_676_200+11_611_154)/htv_tt  # Kelan tilasto 31.12.2018
             q['tmtuella']=49_880_300/htv_tt   # Kelan tilasto 31.12.2018
             q['työkyvyttömyyseläke']=185_991  
@@ -878,15 +853,10 @@ class Empstats():
             q['vanhempainvapaalla']=12_571_400/htv  # Kelan tilasto 2018, äideille
             q['pareja']=0
         elif self.year==2023:
-            aikuisia = np.sum(np.sum(demog2))*self.timestep
-            lapsia = 1_018_559 # 2022
-            q['yhteensä']=aikuisia + lapsia
-            q['aikuisia'] = aikuisia
-            q['lapsia'] = lapsia
             q['työllisiä']= 4_062_562_000 * h_to_v # yritykset, statfin
             q['työssä ja eläkkeellä']=31_000 # ETK 2020
             q['työssä yli 63v']=86_000 # ETK 2020
-            q['palkansaajia']= 3_459_030_000 * h_to_v #
+            q['palkansaajia']= self.get_tyotulosumma(self.year)/(3848*1.03)/12.5 # 3_459_030_000 * h_to_v #
             q['ansiosidonnaisella']=(30_676_200+7_553_200)/htv_tt  # Kelan tilasto 31.12.2018
             q['tmtuella']=49_880_300/htv_tt   # Kelan tilasto 31.12.2018
             q['työkyvyttömyyseläke']=185_991  
@@ -895,15 +865,10 @@ class Empstats():
             q['vanhempainvapaalla']=12_571_400/htv  # Kelan tilasto 2018, äideille
             q['pareja']=0
         elif self.year==2024: # päivitä
-            aikuisia = np.sum(np.sum(demog2))*self.timestep
-            lapsia = 1_018_559 # 2021
-            q['yhteensä']=aikuisia + lapsia
-            q['aikuisia'] = aikuisia
-            q['lapsia'] = lapsia
             q['työllisiä']= 4_062_562_000 * h_to_v # yritykset, statfin
             q['työssä ja eläkkeellä']=31_000 # ETK 2020
             q['työssä yli 63v']=86_000 # ETK 2020
-            q['palkansaajia']= 3_459_030_000 * h_to_v #
+            q['palkansaajia']= self.get_tyotulosumma(self.year)/(3848*1.03*1.01)/12.5 # 3_459_030_000 * h_to_v #
             q['ansiosidonnaisella']=(30_676_200+7_553_200)/htv_tt  # Kelan tilasto 31.12.2018
             q['tmtuella']=49_880_300/htv_tt   # Kelan tilasto 31.12.2018
             q['työkyvyttömyyseläke']=185_991  
@@ -1051,11 +1016,26 @@ class Empstats():
         
         return q
         
+    def get_tyotulosumma(self,y: int):
+        if y==2018:
+            return 89_134_200_000
+        elif y==2019:
+            return 92_354_100_000
+        elif y==2020:
+            return 92_123_100_000
+        elif y==2021:
+            return 96_602_200_000
+        elif y==2022:
+            return 102_480_300_000
+        elif y==2023:
+            return 102_480_300_000*1.03
+        elif y==2024:
+            return 102_480_300_000*1.03*1.01
 
     def stat_budget(self,scale=False):
         q={}
         if self.year==2018:
-            q['tyotulosumma']=89_134_200_000 #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q['tyotulosumma']=self.get_tyotulosumma(self.year) #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
             q['tyotulosumma eielakkeella']=np.nan #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
             q['etuusmeno']=0
             q['verot+maksut']=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
@@ -1083,12 +1063,13 @@ class Empstats():
             q['kotihoidontuki']=277_643_734
             q['sairauspaivaraha']=835_761_522
             q['toimeentulotuki']=715_950_847
-            #q['perustulo']=0
+            if self.include_perustulo:
+                q['perustulo']=0
             q['pvhoitomaksu']=271_000_000
             q['alv']=18_020_000_000 # 21_364_000_000
             q['ta_maksut']=0.2057*q['tyotulosumma'] # karkea
         elif self.year==2019:
-            q['tyotulosumma']=92_354_100_000 #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q['tyotulosumma']=self.get_tyotulosumma(self.year) #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
             q['tyotulosumma eielakkeella']=np.nan #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
             q['etuusmeno']=0
             q['verot+maksut']=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
@@ -1115,12 +1096,13 @@ class Empstats():
             q['kotihoidontuki']=253_877_650
             q['sairauspaivaraha']=875_502_895
             q['toimeentulotuki']=698_430_807	
-            #q['perustulo']=0
+            if self.include_perustulo:
+                q['perustulo']=0
             q['pvhoitomaksu']=271_000_000
             q['alv']=18_786_000_000 # Lähde: ?
             q['ta_maksut']=0.2057*q['tyotulosumma'] # karkea
         elif self.year==2020:
-            q['tyotulosumma']=92_123_100_000 #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q['tyotulosumma']=self.get_tyotulosumma(self.year) #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
             q['tyotulosumma eielakkeella']=np.nan #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
             q['etuusmeno']=0
             q['verot+maksut']=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
@@ -1147,12 +1129,13 @@ class Empstats():
             q['kotihoidontuki']=237_024_837
             q['sairauspaivaraha']=818_657_072
             q['toimeentulotuki']=784_025_858	
-            #q['perustulo']=0
+            if self.include_perustulo:
+                q['perustulo']=0
             q['pvhoitomaksu']=271_000_000
             q['alv']=19_354_000_000 #21_775_000_000
             q['ta_maksut']=0.2057*q['tyotulosumma'] # karkea
         elif self.year==2021:
-            q['tyotulosumma']=96_602_200_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q['tyotulosumma']=self.get_tyotulosumma(self.year) # lähde: ETK, tyel + julkinen + yel + myel
             q['tyotulosumma eielakkeella']=np.nan #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
             q['etuusmeno']=0
             q['verot+maksut']=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
@@ -1179,12 +1162,13 @@ class Empstats():
             q['kotihoidontuki']=208_004_490
             q['sairauspaivaraha']=855_555_940	
             q['toimeentulotuki']=686_452_825	
-            #q['perustulo']=0
+            if self.include_perustulo:
+                q['perustulo']=0
             q['pvhoitomaksu']=271_000_000
             q['alv']=20_217_000_000 #21_775_000_000
             q['ta_maksut']=0.2057*q['tyotulosumma'] # karkea
         elif self.year==2022:
-            q['tyotulosumma']=102_480_300_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q['tyotulosumma']=self.get_tyotulosumma(self.year) # lähde: ETK, tyel + julkinen + yel + myel
             q['tyotulosumma eielakkeella']=np.nan #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
             q['etuusmeno']=0
             q['verot+maksut']=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
@@ -1211,13 +1195,14 @@ class Empstats():
             q['kotihoidontuki']=198_714_946
             q['sairauspaivaraha']=883_920_774
             q['toimeentulotuki']=678_391_090
-            #q['perustulo']=0
+            if self.include_perustulo:
+                q['perustulo']=0
             q['pvhoitomaksu']=271_000_000
             q['alv']=20_217_000_000 #21_775_000_000
             q['ta_maksut']=0.2057*q['tyotulosumma'] # karkea
         elif self.year==2023:
             kerroin=1.03
-            q['tyotulosumma']=102_480_300_000*kerroin #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q['tyotulosumma']=self.get_tyotulosumma(self.year) #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
             q['tyotulosumma eielakkeella']=np.nan #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
             q['etuusmeno']=0
             q['verot+maksut']=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
@@ -1244,13 +1229,14 @@ class Empstats():
             q['kotihoidontuki']=245_768_701*kerroin
             q['sairauspaivaraha']=1_039_110_731*kerroin
             q['toimeentulotuki']=715_950_847*kerroin
-            #q['perustulo']=0
+            if self.include_perustulo:
+                q['perustulo']=0
             q['pvhoitomaksu']=271_000_000*kerroin
             q['alv']=20_217_000_000*kerroin #21_775_000_000
             q['ta_maksut']=0.2057*q['tyotulosumma'] # karkea                        
         elif self.year==2024: # update
             kerroin=1.03*1.01
-            q['tyotulosumma']=102_480_300_000*kerroin #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q['tyotulosumma']=self.get_tyotulosumma(self.year) #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
             q['tyotulosumma eielakkeella']=np.nan #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
             q['etuusmeno']=0
             q['verot+maksut']=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
@@ -1277,7 +1263,8 @@ class Empstats():
             q['kotihoidontuki']=245_768_701*kerroin
             q['sairauspaivaraha']=1_039_110_731*kerroin
             q['toimeentulotuki']=715_950_847*kerroin
-            #q['perustulo']=0
+            if self.include_perustulo:
+                q['perustulo']=0
             q['pvhoitomaksu']=271_000_000*kerroin
             q['alv']=20_217_000_000*kerroin #21_775_000_000
             q['ta_maksut']=0.2057*q['tyotulosumma'] # karkea                                                   

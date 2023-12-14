@@ -168,10 +168,15 @@ class Lifecycle():
         if self.version in set([4,5,6,7,104]):
             self.min_retirementage=self.env.get_retirementage()
 
+        if self.version in set([7]):
+            parttime_actions = self.env.setup_parttime_actions()
+        else:
+            parttime_actions = None
+
         self.episodestats=SimStats(self.timestep,self.n_time,self.n_employment,1, 
                                    self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,
                                    version=self.version,params=self.gym_kwargs,year=self.year,gamma=self.gamma,
-                                   silent=self.silent)
+                                   silent=self.silent,parttime_actions=parttime_actions)
         
         self.plotstats=PlotStats(self.episodestats,self.timestep,self.n_time,self.n_employment,self.n_pop,
                                    self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,

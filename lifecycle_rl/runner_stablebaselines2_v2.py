@@ -86,6 +86,7 @@ class runner_stablebaselines2():
               'simfile': 'results_'+str(year),
               'minimal': minimal,
               'render': False,
+              'parttime_actions': self.env.setup_parttime_actions(),
               'state_shape': (self.env.observation_space.shape or self.env.observation_space.n)[0],
               'year': year}
 
@@ -577,7 +578,7 @@ class runner_stablebaselines2():
         episodestats = SimStats(args['timestep'],args['n_time'],args['n_employment'],n_pop_single,
                             epienv,args['minimal'],args['min_age'],args['max_age'],args['min_retirementage'],
                             version=args['version'],params=args['gym_kwargs'],year=args['year'],gamma=args['gamma'],
-                            silent=True)
+                            silent=True,parttime_actions=args['parttime_actions'])
         episodestats.init_variables()
 
         if rank==0:
