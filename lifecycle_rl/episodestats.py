@@ -24,7 +24,7 @@ import pandas as pd
 import scipy.optimize
 from tqdm import tqdm_notebook as tqdm
 from . empstats import Empstats
-from fin_benefits import Labels
+#from fin_benefits import Labels
 from scipy.stats import gaussian_kde
 from .utils import empirical_cdf,print_html,modify_offsettext,NpEncoder
 from datetime import datetime
@@ -34,20 +34,22 @@ from datetime import datetime
 
 class EpisodeStats():
     def __init__(self,timestep,n_time,n_emps,n_pop,env,minimal,min_age,max_age,min_retirementage,
-                year=2018,version=7,params=None,gamma=0.92,silent=False,rapid=False,include_pop=True,
+                year=2018,version=7,params=None,gamma=0.92,silent=False,rapid=False,include_pop=False,
                 include_perustulo=False,parttime_actions=None): # lang='English',
         self.version=version
         self.gamma=gamma
         self.params=params
         self.params['n_time'] = n_time
         self.params['n_emps'] = n_emps
-        self.lab=Labels()
+        #self.lab=Labels()
         self.silent=silent
         self.rapid=rapid
         self.n_states = 16
         self.include_pop_pension = include_pop
         self.include_perustulo = include_perustulo
         self.parttime_actions = parttime_actions
+
+        print('include_pop_pension',self.include_pop_pension)
 
         if self.parttime_actions is not None:
             self.fullhtv = True
@@ -104,7 +106,7 @@ class EpisodeStats():
         self.n_employment=n_emps
         self.n_time=n_time
         self.timestep=timestep # 0.25 = 3kk askel
-        self.inv_timestep=int(np.round(1/self.timestep)) # pitää olla kokonaisluku
+        self.inv_timestep=int(np.round(1/self.timestep)) # pitää olla ¸luku
         self.n_pop=n_pop
         self.year=year
         self.env=env
@@ -425,7 +427,7 @@ class EpisodeStats():
             self.infostats_pop_children_under3 = np.append(self.infostats_pop_children_under3[:,:self.n_pop],cc.infostats_pop_children_under3[:,:cc.n_pop],axis=1)
             self.infostats_pop_children_under7 = np.append(self.infostats_pop_children_under7[:,:self.n_pop],cc.infostats_pop_children_under7[:,:cc.n_pop],axis=1)
             self.infostats_pop_children_under18 = np.append(self.infostats_pop_children_under18[:,:self.n_pop],cc.infostats_pop_children_under18[:,:cc.n_pop],axis=1)
-            self.pop_actions = np.append(self.actions,cc.pop_actions[:,:cc.n_pop],axis=1)
+            self.pop_actions = np.append(self.pop_actions,cc.pop_actions[:,:cc.n_pop],axis=1)
             self.pop_predrew = np.append(self.pop_predrew[:,:self.n_pop],cc.pop_predrew[:,:cc.n_pop],axis=1)
             self.stat_pop_diswage5y = np.append(self.stat_pop_diswage5y[:self.n_pop],cc.stat_pop_diswage5y[:cc.n_pop],axis=0)
             self.infostats_pop_puoliso = np.append(self.infostats_pop_puoliso[:,:self.n_pop],cc.infostats_pop_puoliso[:,:cc.n_pop],axis=1)
@@ -751,6 +753,7 @@ class EpisodeStats():
                 self.popunemprightused[t,n] = bu
                 self.infostats_ove[t,newemp] += ove
                 self.infostats_ove_g[t,newemp,g] += ove
+                self.infostats_puoliso[t,n+1] = puoliso
                 if q is not None:
                     self.add_taxes(t,q,newemp,n,g,person='omat_')
                 
@@ -781,6 +784,7 @@ class EpisodeStats():
                 self.popunemprightused[t,n+1] = p_bu
                 self.infostats_ove[t,p_tila] += p_ove
                 self.infostats_ove_g[t,p_tila,p_g] += p_ove
+                self.infostats_puoliso[t,n] = puoliso
                 if q is not None:
                     self.add_taxes(t,q,p_tila,n+1,p_g,person='puoliso_')
                 
@@ -791,8 +795,6 @@ class EpisodeStats():
             self.poprewstate[t,n+1] = r
             
             # spouse is a first-class citizen
-            self.infostats_puoliso[t,n] = puoliso
-            self.infostats_puoliso[t,n+1] = puoliso
             self.popempstate[t,n] = newemp
             self.popempstate[t,n+1] = p_tila
             self.time_in_state[t,newemp] += tis
@@ -1187,6 +1189,7 @@ class EpisodeStats():
                 self.infostats_pt_act[t,newemp,g,pt_act] += 1
                 self.infostats_ove[t,newemp] += ove
                 self.infostats_ove_g[t,newemp,g] += ove
+                self.infostats_puoliso[t,newemp] += puoliso
 
                 if q is not None:
                     self.add_taxes(t,q,newemp,n,g,person='omat_')
@@ -1215,6 +1218,7 @@ class EpisodeStats():
                     self.infostats_pop_pt_act[t,n+1] = s_pt_act
                     self.infostats_pop_puoliso[t,n+1] = puoliso
                     self.infostats_lleft[t,n+1] = s_lleft
+
                 self.stat_pension[t,p_tila] += p_newpen
                 self.stat_paidpension[t,p_tila] += p_paidpens
                 self.stat_unemp_after_ra[t,p_tila] += p_unemp_after_ra
@@ -1223,6 +1227,7 @@ class EpisodeStats():
                 self.infostats_pt_act[t,p_tila,p_g,s_pt_act] += 1
                 self.infostats_ove[t,p_tila] += p_ove
                 self.infostats_ove_g[t,p_tila,p_g] += p_ove
+                self.infostats_puoliso[t,p_tila] += puoliso
                 if q is not None:
                     self.add_taxes(t,q,p_tila,n+1,p_g,person='puoliso_')
                 
@@ -1236,8 +1241,6 @@ class EpisodeStats():
             self.emp_htv[t,p_g,p_tila] += self.parttime_actions[p_tila,s_pt_act]
 
             # spouse is a first-class citizen
-            self.infostats_puoliso[t,newemp] += 1
-            self.infostats_puoliso[t,p_tila] += 1
             self.popempstate[t,n] = newemp
             self.popempstate[t,n+1] = p_tila
             self.time_in_state[t,newemp] += tis
@@ -1255,9 +1258,13 @@ class EpisodeStats():
                 self.infostats_pop_children_under7[t,[n,n+1]] = c7
                 self.infostats_pop_children_under18[t,[n,n+1]] = c18
 
-            self.infostats_children_under3[t,newemp] += c3
-            self.infostats_children_under7[t,newemp] += c7
-            self.infostats_children_under18[t,newemp] += c18
+            # for both parents
+            self.infostats_children_under3[t,newemp] += c3*0.5
+            self.infostats_children_under7[t,newemp] += c7*0.5
+            self.infostats_children_under18[t,newemp] += c18*0.5
+            self.infostats_children_under3[t,p_tila] += c3*0.5
+            self.infostats_children_under7[t,p_tila] += c7*0.5
+            self.infostats_children_under18[t,p_tila] += c18*0.5
 
             if aveV is not None:
                 self.aveV[t,n] = aveV
@@ -1547,6 +1554,8 @@ class EpisodeStats():
         _ = f.create_dataset('version', data=self.version, dtype = np.int64)
         dt = h5py.special_dtype(vlen=str)
         _ = f.create_dataset('date_time', data=self.date_time, dtype = dt)
+        _ = f.create_dataset('include_pop_pension', data=self.include_pop_pension, dtype = bool)
+        
         #_ = f.create_dataset('date', data=self.date, dtype=dtype.str)
         _ = f.create_dataset('n_pop', data=self.n_pop, dtype = np.int64)
         _ = f.create_dataset('empstate', data=self.empstate, dtype = np.int64,compression="gzip", compression_opts=9)
@@ -1646,9 +1655,9 @@ class EpisodeStats():
         _ = f.create_dataset('infostats_pvhoitomaksu', data=self.infostats_pvhoitomaksu, dtype=ftype,compression="gzip", compression_opts=9)
         _ = f.create_dataset('infostats_ylevero', data=self.infostats_ylevero, dtype=ftype)
         _ = f.create_dataset('infostats_ylevero_distrib', data=self.infostats_ylevero_distrib, dtype=ftype,compression="gzip", compression_opts=9)
-        _ = f.create_dataset('infostats_children_under3', data=self.infostats_children_under3, dtype = int,compression="gzip", compression_opts=9)
-        _ = f.create_dataset('infostats_children_under7', data=self.infostats_children_under7, dtype = int,compression="gzip", compression_opts=9)
-        _ = f.create_dataset('infostats_children_under18', data=self.infostats_children_under18, dtype = int,compression="gzip", compression_opts=9)
+        _ = f.create_dataset('infostats_children_under3', data=self.infostats_children_under3, dtype = ftype,compression="gzip", compression_opts=9)
+        _ = f.create_dataset('infostats_children_under7', data=self.infostats_children_under7, dtype = ftype,compression="gzip", compression_opts=9)
+        _ = f.create_dataset('infostats_children_under18', data=self.infostats_children_under18, dtype = ftype,compression="gzip", compression_opts=9)
         _ = f.create_dataset('infostats_toe', data=self.infostats_toe, dtype=ftype,compression="gzip", compression_opts=9)
         _ = f.create_dataset('infostats_ove', data=self.infostats_ove, dtype=ftype)
         _ = f.create_dataset('infostats_ove_g', data=self.infostats_ove_g, dtype=ftype)
@@ -1992,7 +2001,7 @@ class EpisodeStats():
 
         return rr
         
-    def comp_total_netincome(self,output=True):
+    def comp_total_netincome(self):
         if True:
             alivemask=(self.popempstate==self.env.get_mortstate())
             alive = np.sum(self.alive)
@@ -2007,21 +2016,12 @@ class EpisodeStats():
         else:
             rr = np.sum(self.infostats_tulot_netto)/(self.n_pop*(self.n_time*self.timestep+21.0)) # 21 years approximates the time in pension
             eq = np.sum(self.infostats_equivalent_income)/(self.n_pop*(self.n_time*self.timestep+21.0)) # 21 years approximates the time in pension
-        
-        #print(self.infostats_tulot_netto,self.infostats_tulot_netto.shape,self.n_pop,(self.n_time*self.timestep+21.0))
-        #print(self.infostats_equivalent_income,self.infostats_equivalent_income.shape,self.n_pop,(self.n_time*self.timestep+21.0))
-
-        if output:
-            print('Ave net income {:,.2f} Ave equivalent net income {:,.2f}'.format(rr,eq))
-
         return rr,eq
         
 
     def comp_budget(self,scale=True,debug=False):
         demog2=self.empstats.get_demog()
-
-        scalex=demog2/self.alive #self.n_pop
-        #scalex_orig=demog2/self.n_pop
+        scalex=demog2/self.alive
 
         q={}
         q['tyotulosumma'] = np.sum(self.infostats_palkkatulo*scalex)
@@ -2105,6 +2105,9 @@ class EpisodeStats():
 
     def comp_family_matrix(self):
         spouse_g = np.zeros((3,3))
+        if self.infostats_pop_puoliso.shape[1]<10:
+            print('infostats_pop_puoliso.shape',self.infostats_pop_puoliso.shape,'incorrect')
+            return
         for t in range(self.n_time):
             for k in range(0,self.n_pop,2):
                 if self.infostats_pop_puoliso[t,k]>0 and self.popempstate[t,k]!=15:
@@ -2269,7 +2272,7 @@ class EpisodeStats():
         max_cage=self.map_age(end)+1
 
         if grouped:
-            scalex=demog2/self.alive #self.n_pop
+            scalex=demog2/self.alive
             ps = np.zeros((self.n_time,6))
             ps_norw = np.zeros((self.n_time,6))
             a_ps = np.zeros(6)
@@ -2287,7 +2290,7 @@ class EpisodeStats():
                 a_ps[g] = np.sum(scalex[min_cage:max_cage,0]*ps[min_cage:max_cage,g])
                 a_ps_norw[g] = np.sum(scalex[min_cage:max_cage,0]*ps_norw[min_cage:max_cage,g])
         else:
-            scalex=demog2/self.alive #self.n_pop
+            scalex=demog2/self.alive
             ps = np.zeros((self.n_time,1))
             ps_norw = np.zeros((self.n_time,1))
 
@@ -2337,7 +2340,7 @@ class EpisodeStats():
             for g in range(self.n_states):
                 a_ps[g] = np.sum(scalex[min_cage:max_cage,0]*ps[min_cage:max_cage,g])
         else:
-            scalex=demog2/self.alive #self.n_pop
+            scalex=demog2/self.alive
             ps = np.zeros((self.n_time,1))
             ps_norw = np.zeros((self.n_time,1))
 
@@ -2408,7 +2411,7 @@ class EpisodeStats():
                     tk[t] += 1
 
         demog2=self.empstats.get_demog()
-        scalex=demog2/self.alive #self.n_pop
+        scalex=demog2/self.alive
 
         sum1 = np.sum(menetetty_palkka_reduced*scalex)
         sum2 = sum1*2.13 # työpanos
@@ -2433,8 +2436,9 @@ class EpisodeStats():
         for n in range(n_groups):
             l=low[n]
             h=high[n]
+            emp_htv2 = np.sum(self.episodestats.emp_htv,axis=1)
             htv,tyollvaikutus,tyollaste,tyotosuus,tyottomat,osatyollaste=\
-                self.comp_tyollisyys_stats(self.empstate,scale_time=True,start=l,end=h,agegroups=True)
+                self.comp_tyollisyys_stats(self.empstate,scale_time=True,start=l,end=h,agegroups=True,emp_htv=emp_htv2)
             ps,ps_norw=self.comp_palkkasumma(start=l,end=h)
 
             if doprint:
@@ -2474,7 +2478,7 @@ class EpisodeStats():
 
         return tyot_osuus
 
-    def comp_unemployed_aggregate(self,emp=None,start=20,end=63.5,scale_time=True,grouped=False,g=0):
+    def comp_unemployed_aggregate(self,emp=None,start=20,end=63.5,scale_time=True,grouped=False,g=0,per_pop=True):
         if emp is None:
             if grouped:
                 emp=self.gempstate[:,:,g]
@@ -2485,7 +2489,7 @@ class EpisodeStats():
             tyot_osuus=emp[:,0]/np.sum(emp,1)
         else:
             if per_pop:
-                nn = self.alive[:,0][:,None]
+                nn = self.alive[:,0]
             else:
                 nn = self.comp_workforce(emp)
 
@@ -2633,8 +2637,6 @@ class EpisodeStats():
         women = np.sum(np.sum(self.galive[min_cage:max_cage,3:6],axis=1,keepdims=True)*scalex)
         men = np.sum(np.sum(self.galive[min_cage:max_cage,0:3],axis=1,keepdims=True)*scalex)
 
-        print(women.shape,scalex.shape,self.galive[min_cage:max_cage,3:6].shape)
-        
         return women,men
 
     def comp_children(self,scale_time=True):
@@ -2663,6 +2665,17 @@ class EpisodeStats():
 
         return c3,c7,c18,c_vrt
 
+    def comp_children_hist(self):
+        start=self.min_age
+        end=self.max_age
+        min_cage=self.map_age(start)
+        max_cage=self.map_age(end)+2
+        
+        data = np.ravel(self.infostats_pop_children_under18[min_cage:max_cage,:])
+        h, edges = np.histogram(data)
+
+        return h, edges
+
     def comp_tyollisyys_stats(self,emp,scale_time=True,start=19,end=68,only_groups=False,agegroups=False,emp_htv=None):
         demog2=self.empstats.get_demog()
 
@@ -2671,36 +2684,39 @@ class EpisodeStats():
         else:
             scale=1.0
 
-        min_cage=max(1,self.map_age(start))
+        min_cage=max(0,self.map_age(start))
         max_cage=self.map_age(end)+1
 
         scalex=demog2[min_cage:max_cage]*scale
+        tyollosuus,htvosuus,tyot_osuus,kokotyo_osuus,osatyo_osuus=self.comp_employed_ratio(emp,emp_htv=emp_htv)
 
-        if only_groups:
-            tyollosuus,htvosuus,tyot_osuus,kokotyo_osuus,osatyo_osuus=self.comp_employed_ratio(emp,emp_htv=emp_htv)
-        else:
-            tyollosuus,htvosuus,tyot_osuus,kokotyo_osuus,osatyo_osuus=self.comp_employed_ratio(emp,emp_htv=emp_htv)
-
-        htv = np.sum(scalex*htvosuus[min_cage:max_cage])
-        #print('htvosuus',(htvosuus[min_cage:max_cage]*scalex).shape,htvosuus.shape)
-        tyollvaikutus = np.sum(scalex*tyollosuus[min_cage:max_cage])
-        tyottomat = np.sum(scalex*tyot_osuus[min_cage:max_cage])
-        osatyollvaikutus = np.sum(scalex*osatyo_osuus[min_cage:max_cage])
-        #print('osatyoosuus',osatyo_osuus[min_cage:max_cage].shape,scalex.shape)
-        kokotyollvaikutus = np.sum(scalex*kokotyo_osuus[min_cage:max_cage])
-        #print((osatyo_osuus[min_cage:max_cage]*scalex).shape)
+        htv_ika = scalex*htvosuus[min_cage:max_cage]
+        htv = np.sum(htv_ika)
+        tyolliset_ika = scalex*tyollosuus[min_cage:max_cage]
+        tyolliset = np.sum(tyolliset_ika)
+        tyottomat_ika = scalex*tyot_osuus[min_cage:max_cage]
+        #tyot_osuus=self.comp_unemployed_aggregate(start=start,end=end)
+        tyottomat_ika = scalex*tyot_osuus[min_cage:max_cage]
+        tyottomat = np.sum(tyottomat_ika)
+        osatyolliset_ika = scalex*osatyo_osuus[min_cage:max_cage]
+        osatyolliset = np.sum(osatyolliset_ika)
+        kokotyollvaikutus_ika = scalex*kokotyo_osuus[min_cage:max_cage]
+        kokotyollvaikutus = np.sum(kokotyollvaikutus_ika)
         haj = np.mean(np.std(tyollosuus[min_cage:max_cage]))
         elossa = np.sum(scalex)
 
-        tyollaste=tyollvaikutus/elossa
-        osatyollaste=osatyollvaikutus/elossa
+        tyollaste=tyolliset/elossa
+        osatyollaste=osatyolliset/elossa
         kokotyollaste=kokotyollvaikutus/elossa
+        tyoll_osuus = tyollosuus[min_cage:max_cage]
+        osatyoll_osuus = osatyo_osuus[min_cage:max_cage]
+        kokotyoll_osuus = kokotyo_osuus[min_cage:max_cage]
+        tyottomien_osuus = tyot_osuus[min_cage:max_cage]
 
         if agegroups:
-            tyot_osuus=self.comp_unemployed_aggregate(start=start,end=end)
-            return htv,tyollvaikutus,tyollaste,tyot_osuus,tyottomat,osatyollaste
+            return htv_ika,tyolliset_ika,tyottomat_ika,osatyolliset_ika,kokotyollvaikutus_ika,tyoll_osuus,osatyoll_osuus,kokotyoll_osuus,tyottomien_osuus
         else:
-            return htv,tyollvaikutus,haj,tyollaste,tyollosuus,osatyollvaikutus,kokotyollvaikutus,osatyollaste,kokotyollaste
+            return htv,tyolliset,tyottomat,osatyolliset,kokotyollvaikutus,tyollaste,osatyollaste,kokotyollaste
 
     def comp_employment_stats(self,scale_time=True,returns=False):
         demog2=self.empstats.get_demog()
@@ -2744,6 +2760,7 @@ class EpisodeStats():
 
         scalex = np.squeeze(demog2/self.alive*self.timestep)
         scalex_lkm = np.squeeze(demog2/self.alive*self.timestep)
+        scalex_lapset = np.squeeze(demog2/self.alive*self.timestep)
 
         q={}
         if self.version in set([1,2,3,4,5,6,104]):
@@ -2760,12 +2777,15 @@ class EpisodeStats():
 
             aikuisia = np.sum(np.sum(emp,axis=1)*scalex)
             työikäisiä = np.sum(np.sum(emp[self.map_age(18):self.map_age(63)+1,:],axis=1)*scalex[self.map_age(18):self.map_age(63)+1])
-            lapsia = np.sum(np.sum(self.infostats_children_under18,axis=1)*scalex)
+            eläkkeellä = np.sum(np.sum(emp[:,2],axis=1)*scalex)
+            # tässä scalex on timestep*aikuisten lkm. infostats_children_under18 sisältää lasten määrän per naiset ja miehet
+            lapsia = np.sum(np.sum(self.infostats_children_under18,axis=1)*scalex_lapset)
             if lkm:
                 q['yhteensä'] = aikuisia + lapsia
                 q['aikuisia'] = aikuisia
                 q['lapsia'] = lapsia
             q['työikäisiä'] = työikäisiä
+            q['eläkkeellä'] = eläkkeellä
             q['työssä ja eläkkeellä'] = osa_aika_kerroin*np.sum(osa_aika_kerroin*emp[:,8]*scalex_lkm)+np.sum(emp[:,9]*scalex_lkm)
             q['työssä yli 63v'] = np.sum(np.sum(emp[self.map_age(63):,[1,9]],axis=1)*scalex_lkm[self.map_age(63):])+osa_aika_kerroin*np.sum(np.sum(emp[self.map_age(63):,[8,10]],axis=1)*scalex_lkm[self.map_age(63):])
             if include_retwork:
@@ -3074,9 +3094,6 @@ class EpisodeStats():
         min_pension = np.min(self.infostats_pop_pension)
         print(f'min wage {min_wage} max wage {max_wage}')
         print(f'min pension {min_pension} max pension {max_pension}')
-
-    #def setup_labels(self):
-    #    self.labels=self.lab.get_labels(self.language)
 
     def map_age(self,age,start_zero=False):
         if start_zero:
@@ -3498,7 +3515,6 @@ class EpisodeStats():
         empset=set([1,10])
         unempset=set(unempset)
 
-        print(popunemprightleft.shape)
         for k in range(self.n_pop):
             prev_state=popempstate[0,k]
             prev_trans=0
@@ -3872,7 +3888,7 @@ class EpisodeStats():
         if debug:
             print('comp_verokiila')
         demog2=self.empstats.get_demog()
-        scalex=demog2/self.alive #self.n_pop
+        scalex=demog2/self.alive
 
         valtionvero_osuus = np.sum(self.infostats_valtionvero_distrib*scalex,0)
         kunnallisvero_osuus = np.sum(self.infostats_kunnallisvero_distrib*scalex,0)
@@ -3900,7 +3916,7 @@ class EpisodeStats():
 
     def comp_verokiila_kaikki_ansiot(self):
         demog2=self.empstats.get_demog()
-        scalex=demog2/self.alive #self.n_pop
+        scalex=demog2/self.alive
 
         valtionvero_osuus = np.sum(self.infostats_valtionvero_distrib*scalex,0)
         kunnallisvero_osuus = np.sum(self.infostats_kunnallisvero_distrib*scalex,0)

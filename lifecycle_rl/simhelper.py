@@ -3,6 +3,9 @@
     simhelper.py
 
     implements methods that help in interpreting multiple simulation results with a variety of parameters
+    - used in Laffer experiments
+    - different parameters for each model
+    - for a single model, use simstats
 
 '''
 
@@ -19,7 +22,7 @@ import pandas as pd
 #import smoothfit
 from tqdm import tqdm_notebook as tqdm
 from . lifecycle_v2 import Lifecycle
-from . episodestats import Labels,modify_offsettext
+from . episodestats import modify_offsettext
 
 class SimHelper():
     def __init__(self):

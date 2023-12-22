@@ -33,7 +33,7 @@ class SimStats(EpisodeStats):
         agg_rew=np.zeros(n)
         agg_discounted_rew=np.zeros(n)
         t_aste=np.zeros(self.n_time)
-        emps=np.zeros((n,self.n_time,self.n_employment))
+        emps=np.zeros((n,self.n_time,self.n_states))
         emp_tyolliset=np.zeros((n,self.n_time))
         emp_tyottomat=np.zeros((n,self.n_time))
         emp_tyolliset_osuus=np.zeros((n,self.n_time))
@@ -51,7 +51,7 @@ class SimStats(EpisodeStats):
         if singlefile:
             self.load_sim(results,print_pop=False)
         else:
-            self.load_sim(results+'_'+str(100+startn),print_pop=False)
+            self.load_sim(results+'_repeat_'+str(startn)+'_combined',print_pop=False)
 
         if grouped:
             base_empstate=self.gempstate[:,:,group]/self.alive #/self.n_pop
@@ -59,41 +59,39 @@ class SimStats(EpisodeStats):
             base_empstate=self.empstate/self.alive #self.n_pop
         
         emps[0,:,:]=base_empstate
-        htv_base,tyoll_base,haj_base,tyollaste_base,tyolliset_base=self.comp_tyollisyys_stats(base_empstate,scale_time=True)
-        reward=self.get_reward()
-        discounted_reward=self.get_reward(discounted=True)
-        net,equiv=self.comp_total_netincome(output=False)
-        agg_htv[0]=htv_base
-        agg_tyoll[0]=tyoll_base
-        agg_rew[0]=reward
-        agg_discounted_rew[0]=discounted_reward
-        agg_netincome[0]=net
-        agg_equivalent_netincome[0]=equiv
+        emp_htv2 = np.sum(self.emp_htv,axis=1)
+        htv_ika,tyolliset_ika,tyottomat_ika,osatyolliset_ika,kokotyollvaikutus_ika,tyoll_osuus,osatyoll_osuus,kokotyoll_osuus,tyottomien_osuus = self.comp_tyollisyys_stats(base_empstate,start=self.min_age,end=self.max_age,scale_time=True,emp_htv=emp_htv2,agegroups=True)
+        htv,tyolliset,tyottomat,osatyolliset,kokotyollvaikutus,tyollaste,osatyollaste,kokotyollaste = self.comp_tyollisyys_stats(base_empstate,start=self.min_age,end=self.max_age,scale_time=True,emp_htv=emp_htv2,agegroups=False)
+
+        agg_netincome[0],agg_equivalent_netincome[0]=self.comp_total_netincome()
+        agg_htv[0]=htv
+        agg_tyoll[0]=tyolliset
+        agg_rew[0]=self.get_reward()
+        agg_discounted_rew[0]=self.get_reward(discounted=True)
         
-        best_rew=reward
+        best_rew=agg_rew[0]
         best_emp=0
-        t_aste[0]=tyollaste_base
+        t_aste[0]=tyollaste
+
+        emp_tyolliset[0,:]=tyolliset_ika[:,0]
+        emp_tyottomat[0,:]=tyottomat_ika[:,0]
+        emp_tyolliset_osuus[0,:]=tyoll_osuus[:,0]
+        emp_tyottomat_osuus[0,:]=tyottomien_osuus[:,0]
+        emp_htv[0,:]=htv_ika[:,0]
         
-        tyolliset_ika,tyottomat,htv_ika,tyolliset_osuus,tyottomat_osuus=self.comp_tyollisyys_stats(base_empstate,tyot_stats=True,shapes=True)
+        unemp_distrib,emp_distrib,unemp_distrib_bu = self.comp_empdistribs(ansiosid=True,tmtuki=True,putki=True,outsider=False,max_age=max_age)
+        tyoll_distrib,tyoll_distrib_bu = self.comp_tyollistymisdistribs(ansiosid=True,tmtuki=True,putki=True,outsider=False,max_age=max_age)
 
-        emp_tyolliset[0,:]=tyolliset_ika[:]
-        emp_tyottomat[0,:]=tyottomat[:]
-        emp_tyolliset_osuus[0,:]=tyolliset_osuus[:]
-        emp_tyottomat_osuus[0,:]=tyottomat_osuus[:]
-        emp_htv[0,:]=htv_ika[:]
-        
-        unemp_distrib,emp_distrib,unemp_distrib_bu=self.comp_empdistribs(ansiosid=True,tmtuki=True,putki=True,outsider=False,max_age=max_age)
-        tyoll_distrib,tyoll_distrib_bu=self.comp_tyollistymisdistribs(ansiosid=True,tmtuki=True,putki=True,outsider=False,max_age=max_age)
+        if False:
+            # virrat työllisyyteen ja työttömyyteen
+            tyoll_virta0,tyot_virta0 = self.comp_virrat(ansiosid=True,tmtuki=True,putki=True,outsider=False)
+            tyoll_virta_ansiosid0,tyot_virta_ansiosid0 = self.comp_virrat(ansiosid=True,tmtuki=False,putki=True,outsider=False)
+            tyoll_virta_tm0,tyot_virta_tm0 = self.comp_virrat(ansiosid=False,tmtuki=True,putki=False,outsider=False)
 
-        # virrat työllisyyteen ja työttömyyteen
-        tyoll_virta0,tyot_virta0=self.comp_virrat(ansiosid=True,tmtuki=True,putki=True,outsider=False)
-        tyoll_virta_ansiosid0,tyot_virta_ansiosid0=self.comp_virrat(ansiosid=True,tmtuki=False,putki=True,outsider=False)
-        tyoll_virta_tm0,tyot_virta_tm0=self.comp_virrat(ansiosid=False,tmtuki=True,putki=False,outsider=False)
-
-        tyoll_virta[0,:]=tyoll_virta0[:,0]
-        tyot_virta[0,:]=tyot_virta0[:,0]
-        tyot_virta_ansiosid[0,:]=tyot_virta_ansiosid0[:,0]
-        tyot_virta_tm[0,:]=tyot_virta_tm0[:,0]
+            tyoll_virta[0,:]=tyoll_virta0[:,0]
+            tyot_virta[0,:]=tyot_virta0[:,0]
+            tyot_virta_ansiosid[0,:]=tyot_virta_ansiosid0[:,0]
+            tyot_virta_tm[0,:]=tyot_virta_tm0[:,0]
         
         unemp_dur0=self.comp_unemp_durations(return_q=False)
         unemp_lastdur0=self.comp_unemp_durations_v2(return_q=False)
@@ -102,16 +100,17 @@ class SimStats(EpisodeStats):
 
         if plot:
             fig,ax=plt.subplots()
-            ax.set_xlabel(self.labels['age'])
+            ax.set_xlabel('age')
             ax.set_ylabel('Työllisyysaste [%]')
             x=np.linspace(self.min_age,self.max_age,self.n_time)
-            ax.plot(x,100*tyolliset_base,alpha=0.9,lw=2.0)
+            #ax.plot(x,100*tyolliset_ika,alpha=0.9,lw=2.0)
+            ax.plot(100*tyolliset_ika,alpha=0.9,lw=2.0)
 
         if not singlefile:
-            tqdm_e = tqdm(range(int(n)), desc='Sim', leave=True, unit=" ")
+            tqdm_e = tqdm(range(int(n-1)), desc='Sim', leave=True, unit=" ")
 
             for i in range(startn+1,n): 
-                self.load_sim(results+'_'+str(100+i),print_pop=False)
+                self.load_sim(results+'_repeat_'+str(i)+'_combined',print_pop=False)
                 if grouped:
                     empstate=self.gempstate[:,:,group]/self.alive #self.n_pop
                 else:
@@ -121,33 +120,33 @@ class SimStats(EpisodeStats):
                 reward=self.get_reward()
                 discounted_reward=self.get_reward(discounted=True)
                 
-                net,equiv=self.comp_total_netincome(output=False)
+                net,equiv=self.comp_total_netincome()
                 if reward>best_rew:
                     best_rew=reward
                     best_emp=i
 
-                htv,tyollvaikutus,haj,tyollisyysaste,tyolliset=self.comp_tyollisyys_stats(empstate,scale_time=True)
+                emp_htv2 = np.sum(self.emp_htv,axis=1)
+                htv_ika,tyolliset_ika,tyottomat_ika,osatyolliset_ika,kokotyollvaikutus_ika,tyoll_osuus,osatyoll_osuus,kokotyoll_osuus,tyottomien_osuus = self.comp_tyollisyys_stats(base_empstate,start=self.min_age,end=self.max_age,scale_time=True,emp_htv=emp_htv2,agegroups=True)
+                htv,tyolliset,tyottomat,osatyolliset,kokotyollvaikutus,tyollaste,osatyollaste,kokotyollaste = self.comp_tyollisyys_stats(base_empstate,scale_time=True,start=self.min_age,end=self.max_age,emp_htv=emp_htv2,agegroups=False)
                 
                 if plot:
-                    ax.plot(x,100*tyolliset,alpha=0.5,lw=0.5)
+                    #ax.plot(x,100*tyolliset_ika,alpha=0.5,lw=0.5)
+                    ax.plot(100*tyolliset_ika,alpha=0.5,lw=0.5)
     
                 agg_htv[i]=htv
-                agg_tyoll[i]=tyollvaikutus
+                agg_tyoll[i]=tyolliset
                 agg_rew[i]=reward
                 agg_discounted_rew[i]=discounted_reward
 
                 agg_netincome[i]=net
                 agg_equivalent_netincome[i]=equiv
-                t_aste[i]=tyollisyysaste
+                t_aste[i]=tyollaste
 
-                #tyolliset_ika,tyottomat,htv_ika,tyolliset_osuus,tyottomat_osuus=self.comp_employed_number(empstate)
-                tyolliset_ika,tyottomat,htv_ika,tyolliset_osuus,tyottomat_osuus=self.comp_tyollisyys_stats(empstate,tyot_stats=True)
-            
-                emp_tyolliset[i,:]=tyolliset_ika[:]
-                emp_tyottomat[i,:]=tyottomat[:]
-                emp_tyolliset_osuus[i,:]=tyolliset_osuus[:]
-                emp_tyottomat_osuus[i,:]=tyottomat_osuus[:]
-                emp_htv[i,:]=htv_ika[:]
+                emp_tyolliset[i,:]=tyolliset_ika[:,0]
+                emp_tyottomat[i,:]=tyottomat_ika[:,0]
+                emp_tyolliset_osuus[i,:]=tyoll_osuus[:,0]
+                emp_tyottomat_osuus[i,:]=tyottomien_osuus[:,0]
+                emp_htv[i,:]=htv_ika[:,0]
 
                 unemp_distrib2,emp_distrib2,unemp_distrib_bu2=self.comp_empdistribs(ansiosid=True,tmtuki=True,putki=True,outsider=False,max_age=max_age)
                 tyoll_distrib2,tyoll_distrib_bu2=self.comp_tyollistymisdistribs(ansiosid=True,tmtuki=True,putki=True,outsider=False,max_age=max_age)
@@ -158,15 +157,16 @@ class SimStats(EpisodeStats):
                 tyoll_distrib.extend(tyoll_distrib2)
                 tyoll_distrib_bu.extend(tyoll_distrib_bu2)
             
-                # virrat työllisyyteen ja työttömyyteen
-                tyoll_virta0,tyot_virta0=self.comp_virrat(ansiosid=True,tmtuki=True,putki=True,outsider=False)
-                tyoll_virta_ansiosid0,tyot_virta_ansiosid0=self.comp_virrat(ansiosid=True,tmtuki=False,putki=True,outsider=False)
-                tyoll_virta_tm0,tyot_virta_tm0=self.comp_virrat(ansiosid=False,tmtuki=True,putki=False,outsider=False)
+                if False:
+                    # virrat työllisyyteen ja työttömyyteen
+                    tyoll_virta0,tyot_virta0=self.comp_virrat(ansiosid=True,tmtuki=True,putki=True,outsider=False)
+                    tyoll_virta_ansiosid0,tyot_virta_ansiosid0=self.comp_virrat(ansiosid=True,tmtuki=False,putki=True,outsider=False)
+                    tyoll_virta_tm0,tyot_virta_tm0=self.comp_virrat(ansiosid=False,tmtuki=True,putki=False,outsider=False)
 
-                tyoll_virta[i,:]=tyoll_virta0[:,0]
-                tyot_virta[i,:]=tyot_virta0[:,0]
-                tyot_virta_ansiosid[i,:]=tyot_virta_ansiosid0[:,0]
-                tyot_virta_tm[i,:]=tyot_virta_tm0[:,0]
+                    tyoll_virta[i,:]=tyoll_virta0[:,0]
+                    tyot_virta[i,:]=tyot_virta0[:,0]
+                    tyot_virta_ansiosid[i,:]=tyot_virta_ansiosid0[:,0]
+                    tyot_virta_tm[i,:]=tyot_virta_tm0[:,0]
 
                 unemp_dur0=self.comp_unemp_durations(return_q=False)
                 unemp_lastdur0=self.comp_unemp_durations_v2(return_q=False)

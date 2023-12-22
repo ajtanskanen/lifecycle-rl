@@ -207,8 +207,8 @@ class PlotStats():
 
         tyoll_osuus1,htv_osuus1,tyot_osuus1,kokotyo_osuus1,osatyo_osuus1 = \
             self.episodestats.comp_employed_ratio(self.episodestats.empstate,emp_htv=emp_htv2)
-        htv1,tyoll1,haj1,tyollaste1,tyolliset1,osatyolliset1,kokotyolliset1,osata1,kokota1 = \
-            self.episodestats.comp_tyollisyys_stats(self.episodestats.empstate,scale_time=True,start=20,end=64,emp_htv=emp_htv2)
+        htv1,tyolliset1,tyottomat1,osatyolliset1,kokotyolliset1,tyollaste1,osata1,kokota1 = \
+            self.episodestats.comp_tyollisyys_stats(self.episodestats.empstate,scale_time=True,start=20,end=64,emp_htv=emp_htv2,agegroups=False)
 
         tyollaste=tyollaste1*100
         tyotaste=self.episodestats.comp_unemp_stats_agg(per_pop=False)*100
@@ -1446,6 +1446,11 @@ class PlotStats():
                     ylabel='Lapsia (lkm)',
                     show_legend=True)
 
+        if self.episodestats.include_pop_pension:
+            h, edges = self.episodestats.comp_children_hist()
+            plt.bar(edges[:-1], h)
+            plt.title('Lapsia per kotitalous')
+
     def plot_emp_vs_workforce(self,figname=None):
         '''
         Plot employment as a proportion of workforce
@@ -1668,14 +1673,17 @@ class PlotStats():
             ylabel=self.labels['ratio'],y2=empstate_ratio[:,6],label2='isyysvapaa')
 
     def plot_spouse(self,figname=None,grayscale=False):
+        demog2=self.empstats.get_demog()
+        scalex=demog2/self.episodestats.alive
+        #min_cage=self.episodestats.map_age(start)
+        #max_cage=self.episodestats.map_age(end)+1
+
         x = np.linspace(self.min_age,self.max_age,self.n_time)
         puolisoita = np.sum(self.episodestats.infostats_puoliso,axis=1,keepdims=True)
-        print(x.shape,puolisoita.shape)
         women,men = self.episodestats.comp_genders()
-        spouseratio = puolisoita/self.episodestats.alive[:,0]
-        n_spouses = np.sum(puolisoita)
+        spouseratio = puolisoita/self.episodestats.alive
+        n_spouses = np.sum(spouseratio*scalex) 
         av_spouseratio = np.mean(spouseratio)
-        print(puolisoita.shape,women.shape,puolisoita.shape)
 
         print(f'Naisia {women:.0f} miehiä {men:.0f}')
         print(f'Puolisoita {n_spouses:.0f}, osuus kaikista {av_spouseratio:.2f}')
@@ -1862,9 +1870,7 @@ class PlotStats():
             ax.plot(x,osatyoaste,'{}'.format(pstyle),label='{} {}'.format(labeli2,leg))
 
 
-        o_x=np.array([20,30,40,50,60,70])
-        f_osatyo=np.array([55,21,16,12,18,71])
-        m_osatyo=np.array([32,8,5,4,9,65])
+        o_x,m_osatyo,f_osatyo = self.empstats.stats_parttimework()
         if grayscale:
             ax.plot(o_x,f_osatyo,ls='--',label=self.labels['havainto, naiset'])
             ax.plot(o_x,m_osatyo,ls='--',label=self.labels['havainto, miehet'])
@@ -3046,10 +3052,10 @@ class PlotStats():
             self.episodestats.comp_employed_ratio(self.episodestats.empstate,emp_htv=emp_htv2)
         tyoll_osuus2,htv_osuus2,tyot_osuus2,kokotyo_osuus2,osatyo_osuus2 = \
             cc2.episodestats.comp_employed_ratio(cc2.episodestats.empstate,emp_htv=emp_htv2)
-        htv1,tyoll1,haj1,tyollaste1,tyolliset1,osatyolliset1,kokotyolliset1,osata1,kokota1 =\
-            self.episodestats.comp_tyollisyys_stats(self.episodestats.empstate,scale_time=True,start=s,end=e,emp_htv=emp_htv2) # /self.episodestats.n_pop
-        htv2,tyoll2,haj2,tyollaste2,tyolliset2,osatyolliset2,kokotyolliset2,osata2,kokota2 =\
-            cc2.episodestats.comp_tyollisyys_stats(cc2.episodestats.empstate,scale_time=True,start=s,end=e,emp_htv=emp_htv2) # /cc2.episodestats.n_pop
+        htv1,tyolliset1,tyottomat1,osata1,kokota1,tyollaste1,osatyolaste1,kokotyolaste1,tyoos1 =\
+            self.episodestats.comp_tyollisyys_stats(self.episodestats.empstate,scale_time=True,start=s,end=e,emp_htv=emp_htv2,agegroups=True)
+        htv2,tyolliset2,tyottomat2,osata2,kokota2,tyollaste2,osatyolaste2,kokotyolaste2,tyoos2 =\
+            cc2.episodestats.comp_tyollisyys_stats(cc2.episodestats.empstate,scale_time=True,start=s,end=e,emp_htv=emp_htv2,agegroups=True)
 
         ansiosid_osuus1,tm_osuus1=self.episodestats.comp_unemployed_detailed(self.episodestats.empstate)
         ansiosid_osuus2,tm_osuus2=cc2.episodestats.comp_unemployed_detailed(cc2.episodestats.empstate)
