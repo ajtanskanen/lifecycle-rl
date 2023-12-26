@@ -447,17 +447,17 @@ class PlotStats():
         print(f'Palkkasumma {ps:,.2f} ja työpanoksen arvo {tpa:,.2f}')
         print(f'Menetetty palkkasumma {nops:,.2f} ja työpanoksen arvo {notpa:,.2f}')
         wplt[:,[1,8,9,10]]=0
-        self.plot_states(wplt,ylabel='Menetetty palkkasumma',stack=True,ymaxlim=np.max(np.sum(wplt,axis=1)))
+        self.plot_states(wplt,ylabel=self.labels['Menetetty palkkasumma'],stack=True,ymaxlim=np.max(np.sum(wplt,axis=1)))
         wplt=wplt/np.sum(wplt,axis=1,keepdims=True)*100
-        self.plot_states(wplt,ylabel='Menetetty palkkasumma [%]',stack=True)
+        self.plot_states(wplt,ylabel=self.labels['Menetetty palkkasumma %'],stack=True)
         wplt[:,[0,2,4,5,6,7,11,12,13,16]]=0
-        self.plot_states(wplt,ylabel='Menetetty palkkasumma [%]',stack=True,ymaxlim=np.max(np.nansum(wplt,axis=1)))
+        self.plot_states(wplt,ylabel=self.labels['Menetetty palkkasumma %'],stack=True,ymaxlim=np.max(np.nansum(wplt,axis=1)))
         wplt=wplt/np.sum(wplt,axis=1,keepdims=True)*100
-        self.plot_states(wplt,ylabel='Menetetty palkkasumma [%]',stack=True)
+        self.plot_states(wplt,ylabel=self.labels['Menetetty palkkasumma %'],stack=True)
         wplt2[:,[1,2,3,5,6,7,8,9,10,11,12,14,16]]=0
-        self.plot_states(wplt2,ylabel='Menetetty palkkasumma',stack=True,ymaxlim=np.max(np.nansum(wplt2,axis=1)))
+        self.plot_states(wplt2,ylabel=self.labels['Menetetty palkkasumma'],stack=True,ymaxlim=np.max(np.nansum(wplt2,axis=1)))
         wplt2=wplt2/np.sum(wplt2,axis=1,keepdims=True)*100
-        self.plot_states(wplt2,ylabel='Menetetty palkkasumma [%]',stack=True)
+        self.plot_states(wplt2,ylabel=self.labels['Menetetty palkkasumma %'],stack=True)
 
     def plot_all_pensions(self):
         #self.compare_takuu_kansanelake()
@@ -1895,7 +1895,7 @@ class PlotStats():
         empstate_ratio=100*self.episodestats.empstate/self.episodestats.alive
         self.plot_states(empstate_ratio,ylabel='Osuus tilassa [%]',onlyunemp=True,stack=True)
 
-    def plot_gender_emp(self,grayscale=False,figname=None):
+    def plot_gender_emp(self,grayscale=False,figname=None,cc=None,diff=None,label1='',label2=''):
         fig,ax=plt.subplots()
         if grayscale:
             lstyle='--'
@@ -1915,13 +1915,26 @@ class PlotStats():
             #tyollisyysaste,osatyoaste,tyottomyysaste,ka_tyottomyysaste=self.episodestats.comp_empratios(gempstate,alive)
             tyollisyysaste,osatyoaste,tyottomyysaste,ka_tyottomyysaste = self.episodestats.comp_empratios_gender(unempratio=True,gender=gender)
 
-            x=np.linspace(self.min_age,self.max_age,self.n_time)
-            ax.plot(x,tyollisyysaste,color=color,label='{} {}'.format(self.labels['tyollisyysaste %'],leg))
+            if diff and cc is not None:
+                x=np.linspace(self.min_age,self.max_age,self.n_time)
+                tyollisyysaste2,osatyoaste,tyottomyysaste,ka_tyottomyysaste = cc.episodestats.comp_empratios_gender(unempratio=True,gender=gender)
+                ax.plot(x,tyollisyysaste-tyollisyysaste2,color=color,label='{} {} {}'.format(self.labels['tyollisyysaste %'],leg,label1+' - '+label2))
+            else:
+                if cc is not None:
+                    x=np.linspace(self.min_age,self.max_age,self.n_time)
+                    ax.plot(x,tyollisyysaste,color=color,label='{} {} {}'.format(self.labels['tyollisyysaste %'],leg,label1))
+                    tyollisyysaste,osatyoaste,tyottomyysaste,ka_tyottomyysaste = cc.episodestats.comp_empratios_gender(unempratio=True,gender=gender)
+                    ax.plot(x,tyollisyysaste,color=color,ls='-.',label='{} {} {}'.format(self.labels['tyollisyysaste %'],leg,label2))
+                else:
+                    x=np.linspace(self.min_age,self.max_age,self.n_time)
+                    ax.plot(x,tyollisyysaste,color=color,label='{} {}'.format(self.labels['tyollisyysaste %'],leg))
 
-        emp_statsratio=100*self.empstats.emp_stats(g=2)
-        ax.plot(x,emp_statsratio,ls=lstyle,color='darkgray',label=self.labels['havainto, miehet'])
-        emp_statsratio=100*self.empstats.emp_stats(g=1)
-        ax.plot(x,emp_statsratio,ls=lstyle,color='black',label=self.labels['havainto, naiset'])
+        if not diff:
+            emp_statsratio=100*self.empstats.emp_stats(g=2)
+            ax.plot(x,emp_statsratio,ls=lstyle,color='darkgray',label=self.labels['havainto, miehet'])
+            emp_statsratio=100*self.empstats.emp_stats(g=1)
+            ax.plot(x,emp_statsratio,ls=lstyle,color='black',label=self.labels['havainto, naiset'])
+
         ax.set_xlabel(self.labels['age'])
         ax.set_ylabel(self.labels['ratio'])
         if False:
@@ -3046,16 +3059,24 @@ class PlotStats():
             s=21
             e=60 #63.5
 
+        emp_htv1 = np.sum(cc2.episodestats.emp_htv,axis=1)
         emp_htv2 = np.sum(self.episodestats.emp_htv,axis=1)
 
         tyoll_osuus1,htv_osuus1,tyot_osuus1,kokotyo_osuus1,osatyo_osuus1 = \
-            self.episodestats.comp_employed_ratio(self.episodestats.empstate,emp_htv=emp_htv2)
+            self.episodestats.comp_employed_ratio(self.episodestats.empstate,emp_htv=emp_htv1)
         tyoll_osuus2,htv_osuus2,tyot_osuus2,kokotyo_osuus2,osatyo_osuus2 = \
             cc2.episodestats.comp_employed_ratio(cc2.episodestats.empstate,emp_htv=emp_htv2)
-        htv1,tyolliset1,tyottomat1,osata1,kokota1,tyollaste1,osatyolaste1,kokotyolaste1,tyoos1 =\
-            self.episodestats.comp_tyollisyys_stats(self.episodestats.empstate,scale_time=True,start=s,end=e,emp_htv=emp_htv2,agegroups=True)
-        htv2,tyolliset2,tyottomat2,osata2,kokota2,tyollaste2,osatyolaste2,kokotyolaste2,tyoos2 =\
-            cc2.episodestats.comp_tyollisyys_stats(cc2.episodestats.empstate,scale_time=True,start=s,end=e,emp_htv=emp_htv2,agegroups=True)
+        htv1,tyolliset1,tyottomat1,osatyolliset1,kokotyolliset1,tyollaste1,osatyolaste1,kokotyolaste1 =\
+            self.episodestats.comp_tyollisyys_stats(self.episodestats.empstate,scale_time=True,start=s,end=e,emp_htv=emp_htv1,agegroups=False)
+        htv2,tyolliset2,tyottomat2,osatyolliset2,kokotyolliset2,tyollaste2,osatyolaste2,kokotyolaste2 =\
+            cc2.episodestats.comp_tyollisyys_stats(cc2.episodestats.empstate,scale_time=True,start=s,end=e,emp_htv=emp_htv2,agegroups=False)
+
+        htv1_full,tyolliset1_full,tyottomat1_full,osata1_full,kokota1_full,tyollaste1_full,osatyo_osuus1_full,kokotyo_osuus1_full,tyot_osuus1_full =\
+            self.episodestats.comp_tyollisyys_stats(self.episodestats.empstate,scale_time=True,start=18,end=75,emp_htv=emp_htv1,agegroups=True)
+        htv2_full,tyolliset2_full,tyottomat2_full,osata2_full,kokota2_full,tyollaste2_full,osatyo_osuus2_full,kokotyo_osuus2_full,tyot_osuus2_full =\
+            cc2.episodestats.comp_tyollisyys_stats(cc2.episodestats.empstate,scale_time=True,start=18,end=75,emp_htv=emp_htv2,agegroups=True)
+        haj1 = self.episodestats.comp_uncertainty(self.episodestats.empstate,emp_htv=emp_htv1)
+        haj2 = cc2.episodestats.comp_uncertainty(cc2.episodestats.empstate,emp_htv=emp_htv2)
 
         ansiosid_osuus1,tm_osuus1=self.episodestats.comp_unemployed_detailed(self.episodestats.empstate)
         ansiosid_osuus2,tm_osuus2=cc2.episodestats.comp_unemployed_detailed(cc2.episodestats.empstate)
@@ -3108,32 +3129,47 @@ class PlotStats():
         fig,ax=plt.subplots()
         ax.set_xlabel(self.labels['age'])
         ax.set_ylabel(self.labels['tyollisyysaste %'])
-        ax.plot(x,100*tyolliset1,label=label1)
-        ax.plot(x,100*tyolliset2,ls=ls,label=label2)
+        ax.plot(x,100*tyollaste1_full,label=label1)
+        ax.plot(x,100*tyollaste2_full,ls=ls,label=label2)
         ax.set_ylim([0,100])
         ax.legend()
         if figname is not None:
             plt.savefig(figname+'emp.'+self.figformat, format=self.figformat)
         plt.show()
 
+        self.plot_gender_emp(cc=cc2,diff=False,label1=label1,label2=label2)
+        self.plot_gender_emp(cc=cc2,diff=True,label1=label1,label2=label2)
+
         fig,ax=plt.subplots()
         ax.set_xlabel(self.labels['age'])
         ax.set_ylabel(self.labels['ero osuuksissa'])
         #print(tyot_osuus1.shape,tyot_osuus2.shape,kokotyo_osuus1.shape,kokotyo_osuus2.shape,osatyo_osuus1.shape,osatyo_osuus2.shape,tyolliset1.shape,tyolliset2.shape,htv_osuus1.shape,htv_osuus2.shape)
-        ax.plot(x,100*(tyot_osuus1-tyot_osuus2),label='unemployment')
-        ax.plot(x,100*(kokotyo_osuus1-kokotyo_osuus2),label='fulltime work')
+        ax.plot(x,100*(tyot_osuus1_full-tyot_osuus2_full),label='unemployment')
+        ax.plot(x,100*(kokotyo_osuus1_full-kokotyo_osuus2_full),label='fulltime work')
         if self.version in self.complex_models:
-            ax.plot(x,100*(osatyo_osuus1-osatyo_osuus2),label='osa-aikatyö')
-            ax.plot(x,100*(tyolliset1-tyolliset2),label='työ yhteensä')
-            ax.plot(x,100*(htv_osuus1-htv_osuus2),label='htv yhteensä')
+            ax.plot(x,100*(osatyo_osuus1_full-osatyo_osuus2_full),label='osa-aikatyö')
+            ax.plot(x,100*(tyollaste1_full-tyollaste2_full),label='työ yhteensä')
         ax.legend()
         plt.show()
 
         fig,ax=plt.subplots()
         ax.set_xlabel(self.labels['age'])
+        ax.set_ylabel(self.labels['ero määrissä'])
+        #print(tyot_osuus1.shape,tyot_osuus2.shape,kokotyo_osuus1.shape,kokotyo_osuus2.shape,osatyo_osuus1.shape,osatyo_osuus2.shape,tyolliset1.shape,tyolliset2.shape,htv_osuus1.shape,htv_osuus2.shape)
+        ax.plot(x,100*(tyottomat1_full-tyottomat2_full),label='unemployment')
+        ax.plot(x,100*(kokota1_full-kokota2_full),label='fulltime work')
+        if self.version in self.complex_models:
+            ax.plot(x,100*(osata1_full-osata2_full),label='osa-aikatyö')
+            ax.plot(x,100*(tyolliset1_full-tyolliset2_full),label='työ yhteensä')
+            ax.plot(x,100*(htv1_full-htv2_full),label='htv yhteensä')
+        ax.legend()
+        plt.show()        
+
+        fig,ax=plt.subplots()
+        ax.set_xlabel(self.labels['age'])
         ax.set_ylabel(self.labels['tyottomyysaste'])
-        ax.plot(x,100*tyot_osuus1,label=label1)
-        ax.plot(x,100*tyot_osuus2,ls=ls,label=label2)
+        ax.plot(x,100*tyot_osuus1_full,label=label1)
+        ax.plot(x,100*tyot_osuus2_full,ls=ls,label=label2)
         ax.legend()
         if figname is not None:
             plt.savefig(figname+'unemp.'+self.figformat, format=self.figformat)
@@ -3154,8 +3190,8 @@ class PlotStats():
         fig,ax=plt.subplots()
         ax.set_xlabel(self.labels['age'])
         ax.set_ylabel('Osatyö [%]')
-        ax.plot(x,100*osatyo_osuus1,label=label1)
-        ax.plot(x,100*osatyo_osuus2,ls=ls,label=label2)
+        ax.plot(x,100*osatyo_osuus1_full,label=label1)
+        ax.plot(x,100*osatyo_osuus2_full,ls=ls,label=label2)
         ax.set_ylim([0,100])
         ax.legend()
         if figname is not None:
@@ -3174,7 +3210,7 @@ class PlotStats():
         plt.show()
 
         if self.language=='English':
-            print('Influence on employment of {:.0f}-{:.0f} years old approx. {:.0f} man-years and {:.0f} employed'.format(s,e,htv1-htv2,tyoll1-tyoll2))
+            print('Influence on employment of {:.0f}-{:.0f} years old approx. {:.0f} man-years and {:.0f} employed'.format(s,e,htv1-htv2,tyolliset1-tyolliset2))
             print('- full-time {:.0f}-{:.0f} y olds {:.0f} employed ({:.0f} vs {:.0f})'.format(s,e,(kokotyolliset1-kokotyolliset2),kokotyolliset1,kokotyolliset2))
             print('- part-time {:.0f}-{:.0f} y olds {:.0f} employed ({:.0f} vs {:.0f})'.format(s,e,(osatyolliset1-osatyolliset2),osatyolliset1,osatyolliset2))
             print('Employed {:.0f} vs {:.0f} man-years'.format(htv1,htv2))
@@ -3182,13 +3218,13 @@ class PlotStats():
             print('- full-time {:.0f}-{:.0f} y olds {:.2f} % ({:.2f} vs {:.2f})'.format(s,e,(kokota1-kokota2)*100,kokota1*100,kokota2*100))
             print('- part-time {:.0f}-{:.0f} y olds {:.2f} % ({:.2f} vs {:.2f})'.format(s,e,(osata1-osata2)*100,osata1*100,osata2*100))
         else:
-            print('Työllisyysvaikutus {:.0f}-{:.0f}-vuotiaisiin noin {:.0f} htv ja {:.0f} työllistä'.format(s,e,htv1-htv2,tyoll1-tyoll2))
+            print('Työllisyysvaikutus {:.0f}-{:.0f}-vuotiaisiin noin {:.0f} htv ja {:.0f} työllistä'.format(s,e,htv1-htv2,tyolliset1-tyolliset2))
             print('- kokoaikaisiin {:.0f}-{:.0f}-vuotiailla noin {:.0f} työllistä ({:.0f} vs {:.0f})'.format(s,e,(kokotyolliset1-kokotyolliset2),kokotyolliset1,kokotyolliset2))
             print('- osa-aikaisiin {:.0f}-{:.0f}-vuotiailla noin {:.0f} työllistä ({:.0f} vs {:.0f})'.format(s,e,(osatyolliset1-osatyolliset2),osatyolliset1,osatyolliset2))
             print(f'Työllisiä {s:.0f}-{e:.0f} -vuotiaissa: {htv1:.0f} vs {htv2:.0f} htv')
             print('Työllisyysastevaikutus {:.0f}-{:.0f}-vuotiailla noin {:.2f} prosenttia ({:.2f} vs {:.2f})'.format(s,e,(tyollaste1-tyollaste2)*100,tyollaste1*100,tyollaste2*100))
-            print('- kokoaikaisiin {:.0f}-{:.0f}-vuotiailla noin {:.2f} prosenttia ({:.2f} vs {:.2f})'.format(s,e,(kokota1-kokota2)*100,kokota1*100,kokota2*100))
-            print('- osa-aikaisiin {:.0f}-{:.0f}-vuotiailla noin {:.2f} prosenttia ({:.2f} vs {:.2f})'.format(s,e,(osata1-osata2)*100,osata1*100,osata2*100))
+            print('- kokoaikaisiin {:.0f}-{:.0f}-vuotiailla noin {:.2f} prosenttia ({:.2f} vs {:.2f})'.format(s,e,(kokotyolaste1-kokotyolaste2)*100,kokotyolaste2*100,kokotyolaste2*100))
+            print('- osa-aikaisiin {:.0f}-{:.0f}-vuotiailla noin {:.2f} prosenttia ({:.2f} vs {:.2f})'.format(s,e,(osatyolaste1-osatyolaste2)*100,osatyolaste1*100,osatyolaste2*100))
 
         self.episodestats.comp_employment_stats()
         cc2.episodestats.comp_employment_stats()
