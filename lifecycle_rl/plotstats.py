@@ -170,7 +170,7 @@ class PlotStats():
 
         if grayscale:
             plt.style.use('grayscale')
-            plt.rcParams['figure.facecolor'] = 'white' # Or any suitable colour...
+            plt.rcParams['figure.facecolor'] = 'white' 
 
         print_html('<h1>Statistics</h1>')
         
@@ -324,8 +324,12 @@ class PlotStats():
         if self.episodestats.include_pop_pension:
             print_html('<h2>Eläkkeet</h2>')
             self.plot_all_pensions()
-            print_html('<h2>Työkyvyttömyyseläke</h2>')
-            self.plot_disab()
+            
+        print_html('<h2>Työkyvyttömyyseläke</h2>')
+        if self.episodestats.include_pop_pension:
+            self.plot_disab_lost()
+        
+        self.plot_disab()
 
         print_html('<h2>Kuolleet</h2>')
         self.plot_mort()
@@ -399,9 +403,11 @@ class PlotStats():
     def plot_unemp_after_ra(self):
         self.plot_states(self.episodestats.stat_unemp_after_ra,ylabel='Unemp after ret.age',stack=False,start_from=60,end_at=70)
 
-    def plot_disab(self):
+    def plot_disab_lost(self):
         w1,w2,n_tk=self.episodestats.comp_tkstats()
         print(f'Työkyvyttömyyseläkkeisiin menetetty palkkasumma {w1:,.2f} ja työpanoksen arvo {w2:,.2f}')
+
+    def plot_disab(self):
         self.plot_group_disab()
         self.plot_group_disab(xstart=60,xend=67)
 
