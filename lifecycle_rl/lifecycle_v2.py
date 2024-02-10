@@ -114,6 +114,7 @@ class Lifecycle():
                 'include_putki': self.include_putki, 
                 'use_sigma_reduction': self.use_sigma_reduction,
                 'plotdebug': self.plotdebug, 
+                'save_pop': self.save_pop,
                 'include_preferencenoise': self.include_preferencenoise,
                 'preferencenoise_level': self.preferencenoise_level,
                 'perustulomalli': self.perustulomalli, 
@@ -165,10 +166,10 @@ class Lifecycle():
         self.n_age = self.max_age-self.min_age+1
         self.n_time = int(np.round((self.n_age-1)*self.inv_timestep))+1
 
-        if self.version in set([4,5,6,7,104]):
+        if self.version in set([4,5,6,7,8,104]):
             self.min_retirementage=self.env.get_retirementage()
 
-        if self.version in set([7]):
+        if self.version in set([7,8]):
             parttime_actions = self.env.setup_parttime_actions()
         else:
             parttime_actions = None
@@ -176,7 +177,7 @@ class Lifecycle():
         self.episodestats=SimStats(self.timestep,self.n_time,self.n_employment,1, 
                                    self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,
                                    version=self.version,params=self.gym_kwargs,year=self.year,gamma=self.gamma,
-                                   silent=self.silent,parttime_actions=parttime_actions)
+                                   silent=self.silent,parttime_actions=parttime_actions,save_pop=self.save_pop)
         
         self.plotstats=PlotStats(self.episodestats,self.timestep,self.n_time,self.n_employment,self.n_pop,
                                    self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,
@@ -302,6 +303,7 @@ class Lifecycle():
         self.use_utility=0 # log; 1 CRRA
 
         self.ben=None
+        self.save_pop=False
         
     def setup_parameters(self,**kwargs):
         if 'kwargs' in kwargs:
@@ -313,14 +315,17 @@ class Lifecycle():
             if key=='profile':
                 if value is not None:
                     self.profile=value
-            if key=='processes':
+            elif key=='processes':
                 if value is not None:
                     self.processes=value
                     print('processes',self.processes)
-            if key=='universalcredit':
+            elif key=='save_pop':
+                if value is not None:
+                    self.save_pop=value
+            elif key=='universalcredit':
                 if value is not None:
                     self.universalcredit=value
-            if key=='callback_minsteps':
+            elif key=='callback_minsteps':
                 if value is not None:
                     self.callback_minsteps=value
             elif key=='random_returns':

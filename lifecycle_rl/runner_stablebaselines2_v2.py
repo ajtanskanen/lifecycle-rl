@@ -57,6 +57,7 @@ class runner_stablebaselines2():
         self.n_employment,self.n_acts=self.env.get_n_states()
         self.state_shape = self.env.observation_space.shape or self.env.observation_space.n
         self.action_shape = self.env.action_space.shape or self.env.action_space.n
+        self.save_pop = gym_kwargs['save_pop']
 
         self.version = self.env.get_lc_version()
 
@@ -87,6 +88,7 @@ class runner_stablebaselines2():
               'minimal': minimal,
               'render': False,
               'parttime_actions': self.env.setup_parttime_actions(),
+              'save_pop': self.save_pop,
               'state_shape': (self.env.observation_space.shape or self.env.observation_space.n)[0],
               'year': year}
 
@@ -526,7 +528,7 @@ class runner_stablebaselines2():
 
         print('sim_single',rank)
 
-        if args['version'] in set([4,5,6,7,104]):  # increase by 2
+        if args['version'] in set([4,5,6,7,8,104]):  # increase by 2
             n_add=2
         else:  # increase by 1
             n_add=1
@@ -578,7 +580,7 @@ class runner_stablebaselines2():
         episodestats = SimStats(args['timestep'],args['n_time'],args['n_employment'],n_pop_single,
                             epienv,args['minimal'],args['min_age'],args['max_age'],args['min_retirementage'],
                             version=args['version'],params=args['gym_kwargs'],year=args['year'],gamma=args['gamma'],
-                            silent=True,parttime_actions=args['parttime_actions'])
+                            silent=True,parttime_actions=args['parttime_actions'],save_pop=args['save_pop'])
         episodestats.init_variables()
 
         if rank==0:
@@ -624,15 +626,17 @@ class runner_stablebaselines2():
         base=SimStats(args['timestep'],args['n_time'],args['n_employment'],args['n_pop'],
                             self.env,args['minimal'],args['min_age'],args['max_age'],args['min_retirementage'],
                             version=args['version'],params=args['gym_kwargs'],year=args['year'],gamma=args['gamma'],
-                            silent=True)
+                            silent=True,save_pop=args['save_pop'])
         base.load_sim(save+'0')
         eps=SimStats(args['timestep'],args['n_time'],args['n_employment'],args['n_pop'],
                             self.env,args['minimal'],args['min_age'],args['max_age'],args['min_retirementage'],
                             version=args['version'],params=args['gym_kwargs'],year=args['year'],gamma=args['gamma'],
-                            silent=True)
+                            silent=True,save_pop=args['save_pop'])
         for k in range(1,self.args['processes']):
             eps.load_sim(save+str(k))
             base.append_episodestat(eps)
+
+        base.rescale_sim_with_procs(self.args['processes'])
 
         if results is None:
             base.save_sim(args['simfile']+'_combined')

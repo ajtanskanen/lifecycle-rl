@@ -620,7 +620,7 @@ class Empstats():
         
         return ratio # ei mapata, on jo tehty!
             
-    def get_demog(self):
+    def get_demog(self,scale=None):
         # vuosi 2019
         if self.year==2019:
             demog=np.array([58939,59711,
@@ -699,6 +699,8 @@ class Empstats():
             k2+=1
             
         demog2[-2:]=demog2[-3]
+        if scale is not None:
+            demog2 /= scale
 
         return demog2
 
@@ -739,9 +741,9 @@ class Empstats():
         '''
         demog2=self.get_demog()
 
-        htv=6*52
-        htv_tt=21.5*12
-        h_to_v=1.0 / 1860.0
+        htv = 6*52
+        htv_tt = 21.5*12
+        h_to_v = 1.0 / 1860.0
 
         q={}
         if self.year==2018:
@@ -755,7 +757,7 @@ class Empstats():
             q['isyysvapaalla']=(1_268_710+155_307)/htv # Kelan tilasto 2018
             q['kotihoidontuella']=42_042  # saajia Kelan tilasto 2018
             q['vanhempainvapaalla']=(4_964_669+7_590_429)/htv  # Kelan tilasto 2022, äideille
-            q['pareja']=0
+            #q['pareja']=0
         elif self.year==2019:
             q['työllisiä']= 4_141_593_000 * h_to_v # yritykset, statfin
             q['työssä ja eläkkeellä']=31_000 # ETK 2020
@@ -767,7 +769,7 @@ class Empstats():
             q['isyysvapaalla']=(1_271_141+156_927)/htv # Kelan tilasto 2022
             q['kotihoidontuella']=42_042  # saajia Kelan tilasto 2018
             q['vanhempainvapaalla']=(4_727_809+7_070_436)/htv  # Kelan tilasto 2022, äideille
-            q['pareja']=0
+            #q['pareja']=0
         elif self.year==2020:
             q['työllisiä']= 4_062_562_000 * h_to_v # yritykset, statfin
             q['työssä ja eläkkeellä']=31_000 # ETK 2020
@@ -779,7 +781,7 @@ class Empstats():
             q['isyysvapaalla']=(1_287_660+170_034)/htv # Kelan tilasto 2022
             q['kotihoidontuella']=42_042  # saajia Kelan tilasto 2018
             q['vanhempainvapaalla']=(4_819_360+7_162_896)/htv  # Kelan tilasto 2022, äideille
-            q['pareja']=0
+            #q['pareja']=0
         elif self.year==2021:
             q['työllisiä']= 4_062_562_000 * h_to_v # yritykset, statfin
             q['työssä ja eläkkeellä']=31_000 # ETK 2020
@@ -803,7 +805,7 @@ class Empstats():
             q['isyysvapaalla']=1_424_000/htv # Kelan tilasto 2018
             q['kotihoidontuella']=42_042  # saajia Kelan tilasto 2018
             q['vanhempainvapaalla']=12_571_400/htv  # Kelan tilasto 2018, äideille
-            q['pareja']=0
+            #q['pareja']=0
         elif self.year==2023:
             q['työllisiä']= 4_062_562_000 * h_to_v # yritykset, statfin
             q['työssä ja eläkkeellä']=31_000 # ETK 2020
@@ -815,7 +817,7 @@ class Empstats():
             q['isyysvapaalla']=1_424_000/htv # Kelan tilasto 2018
             q['kotihoidontuella']=42_042  # saajia Kelan tilasto 2018
             q['vanhempainvapaalla']=12_571_400/htv  # Kelan tilasto 2018, äideille
-            q['pareja']=0
+            #q['pareja']=0
         elif self.year==2024: # päivitä
             q['työllisiä']= 4_062_562_000 * h_to_v # yritykset, statfin
             q['työssä ja eläkkeellä']=31_000 # ETK 2020
@@ -827,7 +829,7 @@ class Empstats():
             q['isyysvapaalla']=1_424_000/htv # Kelan tilasto 2018
             q['kotihoidontuella']=42_042  # saajia Kelan tilasto 2018
             q['vanhempainvapaalla']=12_571_400/htv  # Kelan tilasto 2018, äideille
-            q['pareja']=0
+            #q['pareja']=0
 
         return q    
 
@@ -858,6 +860,8 @@ class Empstats():
             q['vanhempainvapaalla']=84_387 # Kelan tilasto 2018
             q['opiskelijoita']=109076+111441
             q['ovella']=39_000
+            q['pareja']=1_280_698
+            q['lapsiperheitä']=561965
         elif self.year==2019:
             aikuisia = np.sum(np.sum(demog2))*self.timestep
             lapsia = 1_049_041  # v2019
@@ -875,6 +879,8 @@ class Empstats():
             q['vanhempainvapaalla']=84_387 # Kelan tilasto 2018
             q['opiskelijoita']=114433+109652
             q['ovella']=39_000
+            q['pareja']=1278825
+            q['lapsiperheitä']=558302
         elif self.year==2020:
             aikuisia = np.sum(np.sum(demog2))*self.timestep
             lapsia = 1_049_041  # v2019
@@ -893,6 +899,8 @@ class Empstats():
             q['vanhempainvapaalla']=84_387 # Kelan tilasto 2018
             q['opiskelijoita']=126153+118325
             q['ovella']=39_000
+            q['pareja']=1279182
+            q['lapsiperheitä']=556052
         elif self.year==2021:
             aikuisia = np.sum(np.sum(demog2))*self.timestep
             lapsia = 1_049_041  # v2019
@@ -911,6 +919,8 @@ class Empstats():
             q['vanhempainvapaalla']=84_387 # Kelan tilasto 2018
             q['opiskelijoita']=126153+118325
             q['ovella']=39_000
+            q['pareja']=1278528
+            q['lapsiperheitä']=553613
         elif self.year==2022:
             aikuisia = np.sum(np.sum(demog2))*self.timestep
             lapsia = 1_049_041  # v2019
@@ -929,6 +939,8 @@ class Empstats():
             q['vanhempainvapaalla']=84_387 # Kelan tilasto 2018
             q['opiskelijoita']=126153+118325
             q['ovella']=39_000
+            q['pareja']=1276202
+            q['lapsiperheitä']=552034
         elif self.year==2023:
             aikuisia = np.sum(np.sum(demog2))*self.timestep
             lapsia = 1_049_041  # v2019
@@ -947,6 +959,8 @@ class Empstats():
             q['vanhempainvapaalla']=84_387 # Kelan tilasto 2018
             q['opiskelijoita']=126153+118325
             q['ovella']=39_000
+            q['pareja']=1276202
+            q['lapsiperheitä']=552034
         elif self.year==2024: # päivitä
             aikuisia = np.sum(np.sum(demog2))*self.timestep
             lapsia = 1_049_041  # v2019
@@ -965,6 +979,8 @@ class Empstats():
             q['vanhempainvapaalla']=84_387 # Kelan tilasto 2018
             q['opiskelijoita']=126153+118325
             q['ovella']=39_000
+            q['pareja']=1276202
+            q['lapsiperheitä']=552034
         
         return q
         
@@ -1304,6 +1320,123 @@ class Empstats():
             print('Empstats, unknown year',self.year)
 
         return self.map_ratios(emp_ratio)
+
+    def get_tyollisyysaste_tyossakayntitutkimus(self,year,g=0):
+        '''
+        Joulukuun tiedot TK:n työssäkäyntitutkimuksesta
+        '''
+        if self.year==2018: # 
+            if g==0: # yhteensä
+                emp_ratio=75.8
+            elif g==1: # naiset
+                emp_ratio=np.nan
+            else: # miehet
+                emp_ratio=np.nan
+        elif self.year==2019: 
+            if g==0: # yhteensä
+                emp_ratio=76.6
+            elif g==1: # naiset
+                emp_ratio=np.nan
+            else: # miehet
+                emp_ratio=np.nan
+        elif self.year==2020: 
+            if g==0: # yhteensä
+                emp_ratio=74.9
+            elif g==1: # naiset
+                emp_ratio=np.nan
+            else: # miehet
+                emp_ratio=np.nan
+        elif self.year==2021: 
+            if g==0: # yhteensä
+                emp_ratio=77.7
+            elif g==1: # naiset
+                emp_ratio=np.nan
+            else: # miehet
+                emp_ratio=np.nan
+        elif self.year==2022: 
+            if g==0: # yhteensä
+                emp_ratio=78.4
+            elif g==1: # naiset
+                emp_ratio=np.nan
+            else: # miehet
+                emp_ratio=np.nan
+        elif self.year==2023: # 2022, päivitä
+            if g==0: # yhteensä
+                emp_ratio=77.6
+            elif g==1: # naiset
+                emp_ratio=np.nan
+            else: # miehet
+                emp_ratio=np.nan
+        elif self.year==2024: # 2022, päivitä
+            if g==0: # yhteensä
+                emp_ratio=np.nan
+            elif g==1: # naiset
+                emp_ratio=np.nan
+            else: # miehet
+                emp_ratio=np.nan
+        else:
+            print('Empstats, unknown year',self.year)
+
+        return emp_ratio
+
+    def get_tyottomyyssaste_tyossakayntitutkimus(self,year,g=0):
+        '''
+        Joulukuun tiedot TK:n työssäkäyntitutkimuksesta
+        20-64 vuotiaat
+        '''
+        if self.year==2018: # 
+            if g==0: # yhteensä
+                emp_ratio=6.6
+            elif g==1: # naiset
+                emp_ratio=np.nan
+            else: # miehet
+                emp_ratio=np.nan
+        elif self.year==2019: 
+            if g==0: # yhteensä
+                emp_ratio=6.7
+            elif g==1: # naiset
+                emp_ratio=np.nan
+            else: # miehet
+                emp_ratio=np.nan
+        elif self.year==2020: 
+            if g==0: # kaikki
+                emp_ratio=8.1
+            elif g==1: # naiset
+                emp_ratio=np.nan
+            else: # miehet
+                emp_ratio=np.nan
+        elif self.year==2021: 
+            if g==0: # kaikki
+                emp_ratio=6.9
+            elif g==1: # naiset
+                emp_ratio=np.nan
+            else: # miehet
+                emp_ratio=np.nan
+        elif self.year==2022: 
+            if g==0: # kaikki
+                emp_ratio=6.9
+            elif g==1: # naiset
+                emp_ratio=np.nan
+            else: # miehet
+                emp_ratio=np.nan
+        elif self.year==2023: # 2022, päivitä
+            if g==0: # kaikki
+                emp_ratio=7.6
+            elif g==1: # naiset
+                emp_ratio=np.nan
+            else: # miehet
+                emp_ratio=np.nan
+        elif self.year==2024: # 2022, päivitä
+            if g==0: # kaikki
+                emp_ratio=np.nan
+            elif g==1: # naiset
+                emp_ratio=np.nan
+            else: # miehet
+                emp_ratio=np.nan
+        else:
+            print('Empstats, unknown year',self.year)
+
+        return emp_ratio        
 
     def get_tyollisyysaste_tyovoimatutkimus(self,year,g=0):
         if self.year==2018: # 

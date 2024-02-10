@@ -7,6 +7,7 @@ import numpy as np
 from gym import spaces, logger, utils, error
 from gym.utils import seeding
 from IPython.core.display import display,HTML
+import matplotlib.pyplot as plt 
 import json
 #from stable_baselines.common import set_global_seeds
 
@@ -37,48 +38,6 @@ def setup_EK_fonts():
     linecolors = {'color':'red'}
     
     return csfont,pal
-    
-def get_style_EK():
-    axes={'axes.facecolor': 'white',
-     'axes.edgecolor': 'black',
-     'axes.grid': False,
-     'axes.axisbelow': 'line',
-     'axes.labelcolor': 'black',
-     'figure.facecolor': 'white',
-     'grid.color': '#b0b0b0',
-     'grid.linestyle': '-',
-     'text.color': 'black',
-     'xtick.color': 'black',
-     'ytick.color': 'black',
-     'xtick.direction': 'out',
-     'ytick.direction': 'out',
-     'lines.solid_capstyle': 'projecting',
-     'patch.edgecolor': 'black',
-     'patch.force_edgecolor': False,
-     'image.cmap': 'viridis',
-     'font.family': ['sans-serif'],
-     'font.sans-serif': ['IBM Plex Sans',
-      'DejaVu Sans',
-      'Bitstream Vera Sans',
-      'Computer Modern Sans Serif',
-      'Lucida Grande',
-      'Verdana',
-      'Geneva',
-      'Lucid',
-      'Arial',
-      'Helvetica',
-      'Avant Garde',
-      'sans-serif'],
-     'xtick.bottom': True,
-     'xtick.top': False,
-     'ytick.left': True,
-     'ytick.right': False,
-     'axes.spines.left': False,
-     'axes.spines.bottom': True,
-     'axes.spines.right': False,
-     'axes.spines.top': False}
-     
-    return axes
 
 def make_env(env_id, rank, kwargs, seed=None):
     """
@@ -167,4 +126,93 @@ class NpEncoder(json.JSONEncoder):
         return super(NpEncoder, self).default(obj)
 
 
+
+def get_palette_EK():
+    colors1=['#003326','#05283d','#ff9d6a','#599956']
+    colors2=['#295247','#2c495a','#fdaf89','#7cae79']
+    colors3=['#88b2eb','#ffcb21','#e85c03']
+    
+    colors=['#295247','#7cae79','#ffcb21','#e85c03','#88b2eb','#2c495a','#fdaf89']
+    
+    return sns.color_palette(colors)
+    
+def get_style_EK():
+    axes={'axes.facecolor': 'white',
+     'axes.edgecolor': 'black',
+     'axes.grid': False,
+     'axes.axisbelow': 'line',
+     'axes.labelcolor': 'black',
+     'figure.facecolor': 'white',
+     'grid.color': '#b0b0b0',
+     'grid.linestyle': '-',
+     'text.color': 'black',
+     'xtick.color': 'black',
+     'ytick.color': 'black',
+     'xtick.direction': 'out',
+     'ytick.direction': 'out',
+     'lines.solid_capstyle': 'projecting',
+     'patch.edgecolor': 'black',
+     'patch.force_edgecolor': False,
+     'image.cmap': 'viridis',
+     'font.family': ['sans-serif'],
+     'font.sans-serif': ['IBM Plex Sans',
+      'DejaVu Sans',
+      'Bitstream Vera Sans',
+      'Computer Modern Sans Serif',
+      'Lucida Grande',
+      'Verdana',
+      'Geneva',
+      'Lucid',
+      'Arial',
+      'Helvetica',
+      'Avant Garde',
+      'sans-serif'],
+     'xtick.bottom': True,
+     'xtick.top': False,
+     'ytick.left': True,
+     'ytick.right': False,
+     'axes.spines.left': False,
+     'axes.spines.bottom': True,
+     'axes.spines.right': False,
+     'axes.spines.top': False}
+     
+    return axes
         
+def lineplot(x,y,y2=None,y3=None,y4=None,y5=None,y6=None,
+                label=None,label2=None,label3=None,label4=None,label5=None,label6=None,
+                xlabel='',ylabel='',selite=False,source=None,xlim=None,ylim=None,figname=None,show=True):
+    csfont,pal=setup_EK_fonts()
+
+    linestyle={'linewidth': 3}
+    legendstyle={'frameon': False}
+
+    fig, axs = plt.subplots()
+    axs.plot(x,y,label=label,**linestyle)
+    if y2 is not None:
+        axs.plot(x,y2,label=label2,**linestyle)
+    if y3 is not None:
+        axs.plot(x,y3,label=label3,**linestyle)
+    if y4 is not None:
+        axs.plot(x,y4,label=label4,**linestyle)
+    if y5 is not None:
+        axs.plot(x,y5,label=label5,**linestyle)
+    if y6 is not None:
+        axs.plot(x,y6,label=label6,**linestyle)
+
+    if selite:
+        axs.legend(loc='upper right',**legendstyle)
+
+    axs.set_xlabel(xlabel,**csfont)
+    axs.set_ylabel(ylabel,**csfont)
+    axs.grid(True,color='black',fillstyle='top',lw=0.5,axis='y',alpha=1.0)
+    if xlim is not None:
+        axs.set_xlim(xlim[0], xlim[1])
+    if ylim is not None:
+        axs.set_ylim(ylim[0], ylim[1])
+    if source is not None:
+        add_source(source,**csfont)
+    if figname is not None:
+        plt.savefig(figname+'.png', format='png')
+
+    if show:
+        plt.show()
