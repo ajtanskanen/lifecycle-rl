@@ -9,7 +9,7 @@
 import numpy as np
 from scipy.interpolate import interp1d
 
-class Empstats():
+class Empstats(): 
     def __init__(self,year=2018,max_age=70,n_groups=6,timestep=0.25,n_time=210,min_age=18,include_perustulo=False):
         self.year=year
         self.max_age=max_age
@@ -621,6 +621,9 @@ class Empstats():
         return ratio # ei mapata, on jo tehty!
             
     def get_demog(self,scale=None):
+        '''
+        Returns the demographic distribution of the population
+        '''
         # vuosi 2019
         if self.year==2019:
             demog=np.array([58939,59711,
@@ -1585,3 +1588,43 @@ class Empstats():
             print('Empstats, unknown year',self.year)
 
         return o_x,m_osatyo,f_osatyo
+
+    def children_ages(self):
+        return np.array([[1.80000e+01, 1.51000e+02],
+            [1.90000e+01, 2.81510e+02],
+            [2.00000e+01, 4.85510e+02],
+            [2.10000e+01, 6.64000e+02],
+            [2.20000e+01, 8.78490e+02],
+            [2.30000e+01, 1.10750e+03],
+            [2.40000e+01, 1.43500e+03],
+            [2.50000e+01, 1.88702e+03],
+            [2.60000e+01, 2.27851e+03],
+            [2.70000e+01, 2.70902e+03],
+            [2.80000e+01, 3.24054e+03],
+            [2.90000e+01, 3.56402e+03],
+            [3.00000e+01, 3.78851e+03],
+            [3.10000e+01, 3.96502e+03],
+            [3.20000e+01, 3.73450e+03],
+            [3.30000e+01, 3.38901e+03],
+            [3.40000e+01, 3.07551e+03],
+            [3.50000e+01, 2.77948e+03],
+            [3.60000e+01, 2.42900e+03],
+            [3.70000e+01, 1.99845e+03],
+            [3.80000e+01, 1.72200e+03],
+            [3.90000e+01, 1.23900e+03],
+            [4.00000e+01, 1.00646e+03],
+            [4.10000e+01, 6.76990e+02],
+            [4.20000e+01, 4.00450e+02],
+            [4.30000e+01, 2.67000e+02],
+            [4.40000e+01, 1.47000e+02],
+            [4.50000e+01, 7.70000e+01],
+            [4.60000e+01, 4.50000e+01],
+            [4.70000e+01, 2.50000e+01],
+            [4.80000e+01, 7.00000e+00],
+            [4.90000e+01, 7.00000e+00],
+            [5.00000e+01, 2.00000e+00],
+            [5.10000e+01, 1.00000e+00],
+            [5.20000e+01, 0.00000e+00],
+            [5.30000e+01, 0.00000e+00],
+            [5.40000e+01, 2.00000e+00]])
+

@@ -614,6 +614,26 @@ class runner_stablebaselines2():
 
         return 1
 
+    def check_cstate(self):
+        main_empstate,g,spouse_g,main_pension,main_old_paid_wage,age,time_in_state,main_paid_pension,pinkslip,toe,\
+            toekesto,tyoura,used_unemp_benefit,main_wage_reduction,unemp_after_ra,unempwage,\
+            unempwage_basis,prefnoise,children_under3,children_under7,children_under18,\
+            unemp_left,alkanut_ansiosidonnainen,toe58,ove_paid,jasen,\
+            puoliso,spouse_empstate,spouse_old_paid_wage,spouse_pension,spouse_wage_reduction,\
+            puoliso_paid_pension,puoliso_next_wage,puoliso_used_unemp_benefit,\
+            puoliso_unemp_benefit_left,puoliso_unemp_after_ra,puoliso_unempwage,\
+            puoliso_unempwage_basis,puoliso_alkanut_ansiosidonnainen,puoliso_toe58,\
+            puoliso_toe,puoliso_toekesto,puoliso_tyoura,spouse_time_in_state,puoliso_pinkslip,\
+            puoliso_ove_paid,kansanelake,spouse_kansanelake,tyoelake_maksussa,\
+            spouse_tyoelake_maksussa,main_next_wage,\
+            main_paid_wage,spouse_paid_wage,\
+            pt_act,sp_pt_act,main_basis_wage,spouse_basis_wage,\
+            main_life_left,spouse_life_left,main_until_disab,spouse_until_disab,\
+            time_to_marriage,time_to_divorce,until_birth,\
+            main_until_student,spouse_until_student,main_until_outsider,spouse_until_outsider\
+                 = self.states.state_decode(self.state)
+        print(f'2.0: c3 {children_under3} c7 {children_under7} c18 {children_under18}')
+
     def combine_results(self,results=None):
         self.combine_episodestats(self.args,results=results)
 

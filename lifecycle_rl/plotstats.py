@@ -861,7 +861,10 @@ class PlotStats():
             plt.legend()
             plt.show()
 
-    
+        if not self.save_pop:
+            print('test_salaries: not enough data (save_pop=False)')
+            return
+
         n=self.episodestats.n_pop
         
         # 2018
@@ -1284,9 +1287,9 @@ class PlotStats():
 
     def plot_pinkslip(self):
         pink=100*self.episodestats.infostats_pinkslip/np.maximum(1,self.episodestats.empstate)
-        self.plot_states(pink,'Karenssittomien osuus tilassa [%]',stack=False,unemp=True)
+        self.plot_states(pink,'Karenssittomien osuus tilassa [%]',stack=False,unemp=True,add_student=False)
 
-        print([np.max((self.episodestats.infostats_pinkslip/np.maximum(1,self.episodestats.empstate))[:,k]) for k in range(16)])
+        print([np.max((self.episodestats.infostats_pinkslip/np.maximum(1,self.episodestats.empstate))[:,k]) for k in range(self.n_groups)])
 
     def plot_student(self):
         x=np.linspace(self.min_age,self.max_age,self.n_time)
@@ -1482,6 +1485,16 @@ class PlotStats():
                     y3=c18,label3='Alle 18v lapset',
                     ylabel='Lapsia (lkm)',
                     show_legend=True)
+
+        x,c3,c7,c18,c_vrt=self.episodestats.comp_children_ages()
+        vrt_c18=self.empstats.children_ages()
+        fig,ax=plt.subplots()
+        plt.title('lasten lkm vrt havainto')
+        ax.plot(x,c3,label='alle 3v lapset')
+        ax.plot(x,c_vrt,label='vrt syntyneet')
+        ax.plot(vrt_c18[:,0],vrt_c18[:,1],label='syntyneet, havainto')
+        ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+        plt.show()
 
         if self.episodestats.save_pop:
             h, edges = self.episodestats.comp_children_hist()
@@ -1746,7 +1759,7 @@ class PlotStats():
 
     def plot_spouse(self,figname=None,grayscale=False):
         demog2=self.empstats.get_demog()
-        scalex=demog2/self.episodestats.alive
+        scalex=demog2/self.episodestats.alive*self.timestep
         #min_cage=self.episodestats.map_age(start)
         #max_cage=self.episodestats.map_age(end)+1
 
@@ -1754,11 +1767,11 @@ class PlotStats():
         puolisoita = np.sum(self.episodestats.infostats_puoliso,axis=1,keepdims=True)
         women,men = self.episodestats.comp_genders()
         spouseratio = puolisoita/self.episodestats.alive
-        n_spouses = np.sum(spouseratio*scalex) 
+        n_spouses = np.sum(puolisoita*scalex)*0.5
         av_spouseratio = np.mean(spouseratio)
 
         print(f'Naisia {women:.0f} miehiä {men:.0f}')
-        print(f'Puolisoita {n_spouses:.0f}, osuus kaikista {av_spouseratio:.2f}')
+        print(f'Aviopareja {n_spouses:.0f}, osuus kaikista {av_spouseratio:.2f}')
             
         if figname is not None:
             fname=figname+'spouses.'+self.figformat
@@ -2064,9 +2077,10 @@ class PlotStats():
             self.plot_states(self.episodestats.stat_tyoura,ylabel='Työuran pituus [v]',stack=False)
 
     def plot_ratiostates(self,statistic,ylabel='',ylimit=None, show_legend=True, parent=False,work60=False,\
-                         unemp=False,stack=False,no_ve=False,figname=None,emp=False,oa_unemp=False,start_from=None,end_at=None):
+                         unemp=False,stack=False,no_ve=False,figname=None,emp=False,oa_unemp=False,\
+                         add_student=True,start_from=None,end_at=None):
         self.plot_states(statistic/self.episodestats.empstate[:statistic.shape[0],:statistic.shape[1]],ylabel=ylabel,ylimit=ylimit,no_ve=no_ve,\
-                        show_legend=show_legend,parent=parent,unemp=unemp,\
+                        show_legend=show_legend,parent=parent,unemp=unemp,add_student=add_student,\
                         stack=stack,figname=figname,emp=emp,oa_unemp=oa_unemp,work60=work60,start_from=start_from,end_at=end_at)
 
     def count_putki(self,emps=None):
@@ -2210,7 +2224,7 @@ class PlotStats():
     def plot_states(self,statistic,ylabel='',ylimit=None,show_legend=True,parent=False,unemp=False,no_ve=False,
                     start_from=None,end_at=None,stack=True,figname=None,yminlim=None,ymaxlim=None,work60=False,
                     onlyunemp=False,reverse=False,grayscale=False,emp=False,oa_emp=False,oa_unemp=False,
-                    all_emp=False,sv=False,normalize=False):
+                    all_emp=False,sv=False,normalize=False,add_student=True):
         if start_from is None:
             x=np.linspace(self.min_age,self.max_age,self.n_time)
             x=x[:statistic.shape[0]]
@@ -2235,7 +2249,10 @@ class PlotStats():
             ura_veosatyo=statistic[:,8]
             ura_osatyo=statistic[:,10]
             ura_outsider=statistic[:,11]
-            ura_student=statistic[:,12]+statistic[:,16]
+            if add_student:
+                ura_student=statistic[:,12]+statistic[:,16]
+            else:
+                ura_student=statistic[:,12]
             ura_tyomarkkinatuki=statistic[:,13]
             ura_svpaiva=statistic[:,14]
         else:
@@ -2480,7 +2497,7 @@ class PlotStats():
         self.plot_y(self.episodestats.time_in_state[:,0],ylabel='Ka kesto työttömänä')
 
     def plot_ove(self):
-        self.plot_ratiostates(self.episodestats.infostats_ove,ylabel='Ove',stack=False,start_from=60)
+        self.plot_ratiostates(self.episodestats.infostats_ove,ylabel='Ove',stack=False,start_from=60,add_student=False)
         #self.plot_ratiostates(np.sum(self.episodestats.infostats_ove,axis=1),ylabel='Ove',stack=False)
         self.plot_y(np.sum(self.episodestats.infostats_ove,axis=1)/self.episodestats.alive[:,0],ylabel='Oven ottaneet',start_from=60,end_at=70)
         self.plot_y((self.episodestats.infostats_ove[:,1]+self.episodestats.infostats_ove[:,10])/(self.episodestats.empstate[:,1]+self.episodestats.empstate[:,10]),label='Kaikista työllisistä',
@@ -2594,6 +2611,10 @@ class PlotStats():
         Tuloksiin lisättävä inflaatio+palkkojen reaalikasvu = palkkojen nimellinen kasvu
         '''
         
+        if not self.save_pop:
+            print('test_salaries: not enough data (save_pop=False)')
+            return
+
         if gender is None:
             gendername='Kaikki'
         else:
