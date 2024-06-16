@@ -89,9 +89,9 @@ class EpisodeStats():
         self.reset(timestep,n_time,n_emps,n_pop,env,minimal,min_age,max_age,min_retirementage,year,params=params) #,lang=lang)
 
     def sum_q_to_a(self,myarray,axis=0):
-        x = int(1/self.timestep)
+        x = round(1/self.timestep)
         M = myarray.shape[axis]
-        L = int(M/x)+1
+        L = round(M/x)+1
         r = np.zeros(L)
         for k in range(L):
             r[k] = sum(myarray[x*k:min(M,x*k+x)])
@@ -121,7 +121,7 @@ class EpisodeStats():
         self.n_employment=n_emps
         self.n_time=n_time
         self.timestep=timestep # 0.25 = 3kk askel
-        self.inv_timestep=int(np.round(1/self.timestep)) # pitää olla ¸luku
+        self.inv_timestep=round(1/self.timestep) 
         self.n_pop=n_pop
         self.year=year
         self.env=env
@@ -334,7 +334,6 @@ class EpisodeStats():
 
             
         self.infostats_tyelpremium[t] += q[person+'tyel_kokomaksu']*scale
-        #print('työeläkemaksu',q[person+'tyel_kokomaksu']*scale)
         self.infostats_sairausvakuutus[t] += q[person+'sairausvakuutusmaksu']*scale
         self.infostats_ylevero[t] += q[person+'ylevero']*scale
         self.infostats_ylevero_distrib[t,newemp] = q[person+'ylevero']*scale
@@ -488,7 +487,7 @@ class EpisodeStats():
         jasen=0
         puoliso=0
 
-        t=int(np.round((a2-self.min_age)*self.inv_timestep))#-1
+        t=round((a2-self.min_age)*self.inv_timestep)#-1
         if a2>a and newemp>=0: # new state is not reset (age2>age)
             self.empstate[t,newemp] += 1
             self.alive[t] += 1
@@ -528,7 +527,7 @@ class EpisodeStats():
         jasen=0
         puoliso=0
 
-        t=int(np.round((a2-self.min_age)*self.inv_timestep))#-1
+        t=round((a2-self.min_age)*self.inv_timestep)#-1
         if a2>a and newemp>=0: # new state is not reset (age2>age)
             if a2>self.min_retirementage and newemp==3:
                 newemp=2
@@ -596,7 +595,7 @@ class EpisodeStats():
         jasen=0
         puoliso=0
 
-        t=int(np.round((a2-self.min_age)*self.inv_timestep))#-1
+        t=round((a2-self.min_age)*self.inv_timestep)#-1
         if a2>a and newemp>=0: # new state is not reset (age2>age)
             if a2>self.min_retirementage and newemp==3:
                 newemp=2
@@ -662,7 +661,7 @@ class EpisodeStats():
             c3,c7,c18,unemp_left,aa,toe58,ove,jasen=self.env.state_decode(newstate)
         puoliso=0
 
-        t=int(np.round((a2-self.min_age)*self.inv_timestep))#-1
+        t=round((a2-self.min_age)*self.inv_timestep)#-1
         if a2>a and newemp>=0: # new state is not reset (age2>age)
             if a2>self.min_retirementage and newemp==3:
                 newemp=2
@@ -734,7 +733,7 @@ class EpisodeStats():
             kansanelake,p_kansanelake,te_maksussa,p_te_maksussa,nw\
             =self.env.state_decode(newstate)
 
-        t=int(np.round((a2-self.min_age)*self.inv_timestep))#-1
+        t=np.round((a2-self.min_age)*self.inv_timestep)#-1
         if a2>a and newemp>=0: # new state is not reset (age2>age) # FIXME: tässä newemp>0
             if a2>self.min_retirementage:
                 if newemp==3:
@@ -870,7 +869,7 @@ class EpisodeStats():
             nw,old_pw,s_old_pw,pt_act,s_pt_act,wbasis,s_wbasis\
             =self.env.states.state_decode(newstate)
 
-        t=int(np.round((a2-self.min_age)*self.inv_timestep))#-1
+        t=round((a2-self.min_age)*self.inv_timestep)#-1
         if a2>a and newemp>=0: # new state is not reset (age2>age) # FIXME: tässä newemp>0
             if a2>self.min_retirementage:
                 if newemp==3:
@@ -1012,7 +1011,7 @@ class EpisodeStats():
             nw,old_pw,s_old_pw,pt_act,s_pt_act,wbasis,s_wbasis,m_lleft,s_lleft\
             =self.env.states.state_decode(newstate)
 
-        t=int(np.round((a2-self.min_age)*self.inv_timestep))#-1
+        t=round((a2-self.min_age)*self.inv_timestep)#-1
         if a2>a and newemp>=0: # new state is not reset (age2>age) # FIXME: tässä newemp>0
             if a2>self.min_retirementage:
                 if newemp==3:
@@ -1159,7 +1158,7 @@ class EpisodeStats():
             main_until_student,spouse_until_student,main_until_outsider,spouse_until_outsider\
             =self.env.states.state_decode(newstate)
 
-        t=int(np.round((a2-self.min_age)*self.inv_timestep))#-1
+        t=round((a2-self.min_age)*self.inv_timestep)#-1
         if a2>a and newemp>=0: # new state is not reset (age2>age) 
             if a2>self.min_retirementage:
                 if newemp==3:
@@ -1324,7 +1323,7 @@ class EpisodeStats():
             main_until_student,spouse_until_student,main_until_outsider,spouse_until_outsider\
             =self.env.states.state_decode(newstate)
 
-        t=int(np.round((a2-self.min_age)*self.inv_timestep))#-1
+        t=round((a2-self.min_age)*self.inv_timestep)#-1
         if a2>a and newemp>=0: # new state is not reset (age2>age) 
             if a2>self.min_retirementage:
                 if newemp==3:
@@ -1483,7 +1482,7 @@ class EpisodeStats():
         else:
             mod_sav_action=a[1]
 
-        t=int(np.round((a2-self.min_age)*self.inv_timestep))
+        t=round((a2-self.min_age)*self.inv_timestep)
         if a2>a and newemp>=0: # new state is not reset (age2>age)
             self.empstate[t,newemp] += 1
             self.alive[t] += 1
@@ -1532,7 +1531,7 @@ class EpisodeStats():
             nw,savings,p_savings\
             =self.env.state_decode(newstate)
 
-        t=int(np.round((a2-self.min_age)*self.inv_timestep))#-1
+        t=round((a2-self.min_age)*self.inv_timestep)#-1
         if a2>a and newemp>=0: # new state is not reset (age2>age) # FIXME: tässä newemp>0
             if a2>self.min_retirementage:
                 if newemp==3:
@@ -3404,9 +3403,9 @@ class EpisodeStats():
 
     def map_age(self,age,start_zero=False):
         if start_zero:
-            return int((age)*self.inv_timestep)
+            return round((age)*self.inv_timestep)
         else:
-            return int((age-self.min_age)*self.inv_timestep)
+            return round((age-self.min_age)*self.inv_timestep)
 
     def map_t_to_age(self,t):
         return self.min_age+t/self.inv_timestep
@@ -4278,8 +4277,6 @@ class EpisodeStats():
         qq['tI'] = taxes[0]/q['tyotulosumma']
         qq['tC'] = tC/q['tyotulosumma']
         qq['tP'] = q['ta_maksut']/q['tyotulosumma']
-
-        #print(qq)
 
         return kiila,qq
 

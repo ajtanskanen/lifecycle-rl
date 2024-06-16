@@ -1001,7 +1001,11 @@ class Empstats():
         elif y==2023:
             return 102_480_300_000*1.03
         elif y==2024:
-            return 102_480_300_000*1.03*1.01
+            return 102_480_300_000*1.03*1.031
+        elif y==2025:
+            return 102_480_300_000*1.03*1.031*1.02
+        elif y==2026:
+            return 102_480_300_000*1.03*1.031*1.02*1.02
 
     def stat_budget(self,scale=False):
         q={}
