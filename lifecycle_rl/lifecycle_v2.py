@@ -177,7 +177,7 @@ class Lifecycle():
         self.episodestats=SimStats(self.timestep,self.n_time,self.n_employment,1, 
                                    self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,
                                    version=self.version,params=self.gym_kwargs,year=self.year,gamma=self.gamma,
-                                   silent=self.silent,parttime_actions=parttime_actions,save_pop=self.save_pop)
+                                   silent=self.silent,parttime_actions=parttime_actions,save_pop=self.save_pop,lang=self.lang)
         
         self.plotstats=PlotStats(self.episodestats,self.timestep,self.n_time,self.n_employment,self.n_pop,
                                    self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,
@@ -538,7 +538,14 @@ class Lifecycle():
         else:
             self.plotstats.render(figname=figname,grayscale=grayscale)
             #self.episodestats.render(figname=figname,grayscale=grayscale)
-   
+
+    def render_dist(self,load=None,figname=None,grayscale=False):
+        if load is not None:
+            self.episodestats.load_sim(load)
+            self.plotstats.render_dist(figname=figname,grayscale=grayscale)
+        else:
+            self.plotstats.render_dist(figname=figname,grayscale=grayscale)
+
     def render_reward(self,load=None,figname=None):
         if load is not None:
             self.episodestats.load_sim(load)
