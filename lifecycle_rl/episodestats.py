@@ -131,6 +131,7 @@ class EpisodeStats():
         self.palkkakerroin=(0.8*1+0.2*1.0/(1+self.reaalinen_palkkojenkasvu))**self.timestep
         self.elakeindeksi=(0.2*1+0.8*1.0/(1+self.reaalinen_palkkojenkasvu))**self.timestep
         self.dynprog=dynprog
+        self.gini_coef = None
 
         if self.version in set([0,101]):
             self.n_groups=1
@@ -266,7 +267,8 @@ class EpisodeStats():
         self.infostats_equivalent_income = np.zeros((self.n_time,1))
         self.infostats_alv = np.zeros((self.n_time,1))
         self.initial_reward=0
-        self.average_discounted_reward=0
+        self.average_discounted_reward=None
+        self.average_undiscounted_reward=None
         self.rewards_computed=False
         if self.version in set([101,102,104]):
             self.infostats_savings = np.zeros((self.n_time,self.n_pop),dtype=float)
@@ -1704,38 +1706,37 @@ class EpisodeStats():
         self.stat_wage_reduction_g=self.stat_wage_reduction_g/np.maximum(1,procs)
         self.infostats_ove_g=self.infostats_ove_g/np.maximum(1,procs)
 
-        #self.update_reward_stats()        
+        self.gini_coef = self.comp_gini()
+        self.update_reward_stats()
 
     def update_reward_stats(self):
         r=self.comp_presentvalue()
         self.initial_reward = np.mean(r[0,:])
-        self.average_discounted_reward=self.comp_realoptimrew()
-        self.rewards_computed=True
+        self.average_discounted_reward = self.comp_total_reward(discounted=True)
+        self.average_undiscounted_reward = self.comp_total_reward(discounted=False)
+        #print('disco reward: {} undiscounted reward: {}'.format(self.average_discounted_reward,self.average_undiscounted_reward))
+        self.rewards_computed = True
 
-    def get_initial_reward_old(self,startage=None):
-        real=self.comp_presentvalue()
-        if startage is None:
-            startage=self.min_age
-        age=max(1,startage-self.min_age)
-        realage=max(self.min_age+1,startage)
-        print('Initial discounted reward at age {}: {}'.format(realage,np.mean(real[age,:])))
-        return np.mean(real[age,:])
+    # def get_initial_reward_old(self,startage=None):
+    #     real=self.comp_presentvalue()
+    #     if startage is None:
+    #         startage=self.min_age
+    #     age=max(1,startage-self.min_age)
+    #     realage=max(self.min_age+1,startage)
+    #     print('Initial discounted reward at age {}: {}'.format(realage,np.mean(real[age,:])))
+    #     return np.mean(real[age,:])
         
-    def get_reward(self,discounted=False):
-        return self.get_average_discounted_reward()
-        #return self.comp_total_reward(output=False,discounted=discounted) #np.sum(self.rewstate)/self.n_pop
-
     def get_initial_reward(self,recomp=False):
         if recomp or not self.rewards_computed:
             self.update_reward_stats()
 
         return self.initial_reward
 
-    def get_average_discounted_reward(self,recomp=False):
-        if recomp or not self.rewards_computed:
+    def get_reward(self,recomp=False):
+        if recomp or not self.rewards_computed or self.average_discounted_reward is None or self.average_undiscounted_reward is None:
             self.update_reward_stats()
 
-        return self.average_discounted_reward
+        return self.average_discounted_reward,self.average_undiscounted_reward
 
     def get_reward_trajectory(self):
         '''
@@ -1886,7 +1887,9 @@ class EpisodeStats():
         
         _ = f.create_dataset('initial_reward', data=self.initial_reward,  dtype=ftype)
         _ = f.create_dataset('average_discounted_reward', data=self.average_discounted_reward,  dtype=ftype)
+        _ = f.create_dataset('average_undiscounted_reward', data=self.average_undiscounted_reward,  dtype=ftype)
         _ = f.create_dataset('rewards_computed', data=self.rewards_computed,  dtype=ftype)
+        _ = f.create_dataset('gini_coef', data=self.gini_coef,  dtype=ftype)
 
         _ = f.create_dataset('params', data=json.dumps(self.params,cls = NpEncoder))
 
@@ -2170,8 +2173,18 @@ class EpisodeStats():
             self.average_discounted_reward=f['average_discounted_reward'][()]
             self.rewards_computed=f['rewards_computed'][()]
 
+        if 'average_undiscounted_reward' in f.keys():
+            self.average_undiscounted_reward=f['average_undiscounted_reward'][()]
+        else:
+            self.average_undiscounted_reward=None
+
         if 'stat_pop_diswage5y' in f.keys():
             self.stat_pop_diswage5y=f['stat_pop_diswage5y'][()]
+
+        if 'gini_coef' in f.keys():
+            self.gini_coef=f['gini_coef'][()]
+        else:
+            gini_coef=None
 
         if n_pop is not None:
             self.n_pop=n_pop
@@ -2193,24 +2206,12 @@ class EpisodeStats():
     def scale_error(self,x,target=None,averaged=False):
         return (target-self.comp_scaled_consumption(x,averaged=averaged))
 
-    def comp_total_reward(self,output=False,discounted=True,discountfactor=None):
+    def comp_total_reward(self,discounted=True,discountfactor=None):
         if not discounted:
             total_reward = np.sum(self.rewstate)
             rr=total_reward/self.n_pop
-            disco='undiscounted'
         else:
-            #discount=discountfactor**np.arange(0,self.n_time*self.timestep,self.timestep)[:,None]
-            #total_reward = np.sum(self.poprewstate*discount)
-
             rr=self.comp_realoptimrew(discountfactor) #total_reward/self.n_pop
-            disco='discounted'
-
-        #print('total rew1 {} rew2 {}'.format(total_reward,np.sum(self.poprewstate)))
-        #print('ave rew1 {} rew2 {}'.format(rr,np.mean(np.sum(self.poprewstate,axis=0))))
-        #print('shape rew2 {} pop {} alive {}'.format(self.poprewstate.shape,self.n_pop,self.alive[0]))
-
-        if output:
-            print(f'Ave {disco} reward {rr}')
 
         return rr
         
@@ -2246,7 +2247,7 @@ class EpisodeStats():
 
         q[self.labels['etuusmeno']] = np.sum(self.infostats_etuustulo*scalex)
         #q[self.labels['etuusmeno_v2']] = 0
-        q[self.labels['verot+maksut']] = np.sum(self.infostats_taxes*scalex)
+        q[self.labels['verot+maksut']] = np.sum(self.infostats_taxes*scalex) # sisältää verot ja sosiaalivakuutusmaksut
         #q[self.labels['verot+maksut_v2']] = 0
         #q[self.labels['verot+maksut+alv']] = 0
         q[self.labels['palkkaverot+maksut']] = np.sum(self.infostats_wagetaxes*scalex)
@@ -2292,17 +2293,17 @@ class EpisodeStats():
             q[self.labels['verotettava etuusmeno']] = q[self.labels['kokoelakemeno']]+q[self.labels['tyottomyyspvraha']]+q[self.labels['aitiyspaivaraha']]+q[self.labels['isyyspaivaraha']]+q[self.labels['sairauspaivaraha']]+q[self.labels['kotihoidontuki']]+q[self.labels['opintotuki']]
         q[self.labels['alv']] = np.sum(self.infostats_alv*scalex)
         q[self.labels['verot+maksut+alv']] = q[self.labels['verot+maksut']]+q[self.labels['alv']]
-        q[self.labels['muut tulot']] = q[self.labels['etuusmeno']]-q[self.labels['verot+maksut+alv']]
-        q[self.labels['muut tulot v2']] = q[self.labels['verot+maksut+alv']] - (q[self.labels['etuusmeno']] - q[self.labels['tyoelakemeno']] + q[self.labels['tyoelakemaksu']]) + q[self.labels['ta_maksut_muut']]
+        q[self.labels['verot+maksut+alv+ta']] = q[self.labels['verot+maksut+alv']]+q[self.labels['ta_maksut_elake']] + q[self.labels['ta_maksut_muut']]
+        q[self.labels['julkinen talous, netto']] = q[self.labels['verot+maksut+alv+ta']] - q[self.labels['etuusmeno']]
 
         q[self.labels['nettotulot']] = np.sum(self.infostats_tulot_netto*scalex)
         if debug:
             q[self.labels['tulot_netto_v2']] = q[self.labels['tyotulosumma']]+q[self.labels['etuusmeno']]-q[self.labels['verot+maksut+alv']]-q[self.labels['pvhoitomaksu']]
             q[self.labels['etuusmeno_v2']] = q[self.labels['tyottomyyspvraha']]+q[self.labels['kansanelakemeno']]+q[self.labels['takuuelakemeno']]+q[self.labels['opintotuki']]+q[self.labels['isyyspaivaraha']]+\
                 q[self.labels['aitiyspaivaraha']]+q[self.labels['sairauspaivaraha']]+q[self.labels['toimeentulotuki']]+\
-                q[self.labels['asumistuki']]+q[self.labels['kotihoidontuki']]+q[self.labels['elatustuki']]+q[self.labels['lapsilisa']]
+                q[self.labels['asumistuki']]+q[self.labels['kotihoidontuki']]+q[self.labels['elatustuki']]+q[self.labels['lapsilisa']] + q[self.labels['kokoelakemeno']]
             q[self.labels['verot+maksut_v2']] = q[self.labels['valtionvero']]+q[self.labels['kunnallisvero']]+q[self.labels['tyottomyysvakuutusmaksu']]+\
-                q[self.labels['ylevero']]+q[self.labels['sairausvakuutusmaksu']]
+                q[self.labels['ylevero']]+q[self.labels['sairausvakuutusmaksu']]+q[self.labels['ptel']]
         
         return q
 
@@ -2310,19 +2311,6 @@ class EpisodeStats():
         #print(self.salaries_emp[:,1]+self.salaries_emp[:,10])
         return self.salaries_emp[:,1]+self.salaries_emp[:,10]
         
-    def comp_gini_old(self):
-        '''
-        Laske Gini-kerroin summatuloille, ei populaatiolle
-        '''
-        income = np.sort(self.infostats_tulot_netto,axis=None)
-        
-        n=len(income)
-        L=ma.arange(n,0,-1)
-        A=ma.sum(L*income)/ma.sum(income)
-        G=(n+1-2*A)/2
-
-        return G
-
     def comp_family_matrix(self):
         spouse_g = np.zeros((3,3))
         if self.infostats_pop_puoliso.shape[1]<10:
@@ -2720,7 +2708,7 @@ class EpisodeStats():
             h=high[n]
             emp_htv2 = np.sum(self.episodestats.emp_htv,axis=1)
             htv,tyollvaikutus,tyollaste,tyotosuus,tyottomat,osatyollaste=\
-                self.comp_tyollisyys_stats(self.empstate,scale_time=True,start=l,end=h,agegroups=True,emp_htv=emp_htv2)
+                self.comp_unemp_simstats_agegroups(self.empstate,scale_time=True,start=l,end=h,agegroups=True,emp_htv=emp_htv2)
             ps,ps_norw=self.comp_palkkasumma(start=l,end=h)
 
             if doprint:
@@ -2756,7 +2744,7 @@ class EpisodeStats():
             else:
                 nn = self.comp_workforce(emp)
 
-            tyot_osuus=(emp[:,0]+emp[:,4]+emp[:,13])[:,None]/nn
+            tyot_osuus=(emp[:,0]+emp[:,4]+emp[:,13])[:,None]/np.maximum(1,nn)
 
         return tyot_osuus
 
@@ -2775,16 +2763,19 @@ class EpisodeStats():
             else:
                 nn = self.comp_workforce(emp)
 
-            tyot_osuus=(emp[:,0]+emp[:,4]+emp[:,13])/nn
+            if len(nn.shape)>1:
+                tyot_osuus=(emp[:,0]+emp[:,4]+emp[:,13])/nn[:,0]
+            else:
+                tyot_osuus=(emp[:,0]+emp[:,4]+emp[:,13])/nn
 
         unemp=self.comp_state_stats(tyot_osuus,start=start,end=end)
 
         return unemp
 
     def comp_employed_ratio(self,emp,emp_htv=None):
-        tyoll_osuus,htv_osuus=self.comp_employed_ratio_by_age(emp,emp_htv=emp_htv)
-        tyot_osuus=self.comp_unemployed_ratio_by_age(emp)
-        kokotyo_osuus,osatyo_osuus=self.comp_parttime_ratio_by_age(emp)
+        tyoll_osuus,htv_osuus = self.comp_employed_ratio_by_age(emp,emp_htv=emp_htv)
+        tyot_osuus = self.comp_unemployed_ratio_by_age(emp)
+        kokotyo_osuus,osatyo_osuus = self.comp_parttime_ratio_by_age(emp)
 
         return tyoll_osuus,htv_osuus,tyot_osuus,kokotyo_osuus,osatyo_osuus
 
@@ -2798,7 +2789,7 @@ class EpisodeStats():
             if per_pop:
                 nn = self.alive[:,0][:,None]
             else:
-                nn = self.comp_workforce(emp)[:,None]
+                nn = self.comp_workforce(emp)
 
             ansiosid_osuus=(emp[:,0]+emp[:,4])[:,None]/nn
             tm_osuus=(emp[:,13])[:,None]/nn
@@ -2975,46 +2966,71 @@ class EpisodeStats():
         return h*scalex, edges
 
     def comp_tyollisyys_stats(self,emp,scale_time=True,start=19,end=68,only_groups=False,agegroups=False,emp_htv=None):
-        demog2=self.empstats.get_demog()
+        if agegroups:
+            return self.comp_unemp_simstats_agegroups(emp,scale_time=scale_time,start=start,end=end,only_groups=only_groups,emp_htv=emp_htv)
+        else:
+            return self.comp_unemp_simstats_aggregate(emp,scale_time=scale_time,start=start,end=end,only_groups=only_groups,emp_htv=emp_htv)
+
+    def comp_unemp_simstats_agegroups(self,emp,scale_time=True,start=19,end=68,only_groups=False,emp_htv=None):
+        demog2 = self.empstats.get_demog()
 
         if scale_time:
-            scale=self.timestep
+            scale = self.timestep
         else:
-            scale=1.0
+            scale = 1.0
 
-        min_cage=max(0,self.map_age(start))
-        max_cage=self.map_age(end)+1
+        min_cage = max(0,self.map_age(start))
+        max_cage = self.map_age(end)+1
 
-        scalex=demog2[min_cage:max_cage]*scale
-        tyollosuus,htvosuus,tyot_osuus,kokotyo_osuus,osatyo_osuus=self.comp_employed_ratio(emp,emp_htv=emp_htv)
+        scalex = demog2[min_cage:max_cage]*scale
+        tyollosuus,htvosuus,tyott_osuus,kokotyo_osuus,osatyo_osuus = self.comp_employed_ratio(emp,emp_htv=emp_htv)
 
         htv_ika = scalex*htvosuus[min_cage:max_cage]
-        htv = np.sum(htv_ika)
         tyolliset_ika = scalex*tyollosuus[min_cage:max_cage]
-        tyolliset = np.sum(tyolliset_ika)
-        tyottomat_ika = scalex*tyot_osuus[min_cage:max_cage]
-        #tyot_osuus=self.comp_unemployed_aggregate(start=start,end=end)
-        tyottomat_ika = scalex*tyot_osuus[min_cage:max_cage]
-        tyottomat = np.sum(tyottomat_ika)
+        tyottomat_ika = scalex*tyott_osuus[min_cage:max_cage]
+        tyot_osuus = self.comp_unemployed_aggregate(emp,start=start,end=end,per_pop=True)
+        tyot_aste = self.comp_unemployed_aggregate(emp,start=start,end=end,per_pop=False)
         osatyolliset_ika = scalex*osatyo_osuus[min_cage:max_cage]
-        osatyolliset = np.sum(osatyolliset_ika)
         kokotyollvaikutus_ika = scalex*kokotyo_osuus[min_cage:max_cage]
-        kokotyollvaikutus = np.sum(kokotyollvaikutus_ika)
         haj = np.mean(np.std(tyollosuus[min_cage:max_cage]))
-        elossa = np.sum(scalex)
-
-        tyollaste=tyolliset/elossa
-        osatyollaste=osatyolliset/elossa
-        kokotyollaste=kokotyollvaikutus/elossa
         tyoll_osuus = tyollosuus[min_cage:max_cage]
         osatyoll_osuus = osatyo_osuus[min_cage:max_cage]
         kokotyoll_osuus = kokotyo_osuus[min_cage:max_cage]
-        tyottomien_osuus = tyot_osuus[min_cage:max_cage]
+        tyottomien_osuus = tyott_osuus[min_cage:max_cage]
+        tyot_aste_age = self.comp_unemployed_ratio_by_age(emp,per_pop=False)
+        tyottomyys_aste = tyot_aste_age[min_cage:max_cage]
 
-        if agegroups:
-            return htv_ika,tyolliset_ika,tyottomat_ika,osatyolliset_ika,kokotyollvaikutus_ika,tyoll_osuus,osatyoll_osuus,kokotyoll_osuus,tyottomien_osuus
+        return htv_ika,tyolliset_ika,tyottomat_ika,osatyolliset_ika,kokotyollvaikutus_ika,tyoll_osuus,osatyoll_osuus,kokotyoll_osuus,tyottomien_osuus,tyottomyys_aste
+
+    def comp_unemp_simstats_aggregate(self,emp,scale_time=True,start=19,end=68,only_groups=False,emp_htv=None):
+        demog2=self.empstats.get_demog()
+
+        if scale_time:
+            scale = self.timestep
         else:
-            return htv,tyolliset,tyottomat,osatyolliset,kokotyollvaikutus,tyollaste,osatyollaste,kokotyollaste
+            scale = 1.0
+
+        min_cage = max(0,self.map_age(start))
+        max_cage = self.map_age(end)+1
+
+        scalex = demog2[min_cage:max_cage]*scale
+        tyollosuus,htvosuus,tyot_osuus,kokotyo_osuus,osatyo_osuus = self.comp_employed_ratio(emp,emp_htv=emp_htv)
+
+        htv = np.sum(scalex*htvosuus[min_cage:max_cage])
+        tyolliset = np.sum(scalex*tyollosuus[min_cage:max_cage])
+        tyottomat = np.sum(scalex*tyot_osuus[min_cage:max_cage])
+        osatyolliset = np.sum(scalex*osatyo_osuus[min_cage:max_cage])
+        kokotyollvaikutus = np.sum(scalex*kokotyo_osuus[min_cage:max_cage])
+        tyot_aste = self.comp_unemployed_aggregate(emp,start=start,end=end,per_pop=False)
+        haj = np.mean(np.std(tyollosuus[min_cage:max_cage]))
+        elossa = np.sum(scalex)
+
+        tyollaste = tyolliset/elossa
+        osatyollaste = osatyolliset/elossa
+        kokotyollaste = kokotyollvaikutus/elossa
+        tyot_aste = tyottomat/(tyottomat+tyolliset)
+
+        return htv,tyolliset,tyottomat,osatyolliset,kokotyollvaikutus,tyollaste,osatyollaste,kokotyollaste,tyot_aste
 
     def comp_uncertainty(self,emp,emp_htv=None,start=19,end=68):
         min_cage=max(0,self.map_age(start))
@@ -3956,18 +3972,22 @@ class EpisodeStats():
 
         return ratio
 
-    def comp_empratios_gender(self,unempratio=True,gender='men'):
+    def comp_empratios_gender(self,gempstate=None,galive=None,unempratio=True,gender='men'):
+        if gempstate is None:
+            gempstate = self.gempstate
+        if galive is None:
+            galive = self.galive
         if gender=='men': # men
-            gempstate = np.sum(self.gempstate[:,:,0:3],axis=2)
-            alive = np.zeros((self.galive.shape[0],1))
-            alive[:,0] = np.sum(self.galive[:,0:3],1)
+            gempstate2 = np.sum(gempstate[:,:,0:3],axis=2)
+            alive = np.zeros((galive.shape[0],1))
+            alive[:,0] = np.sum(galive[:,0:3],1)
         else: # women
-            gempstate = np.sum(self.gempstate[:,:,3:6],axis=2)
-            alive = np.zeros((self.galive.shape[0],1))
-            alive[:,0] = np.sum(self.galive[:,3:6],1)
+            gempstate2 = np.sum(gempstate[:,:,3:6],axis=2)
+            alive = np.zeros((galive.shape[0],1))
+            alive[:,0] = np.sum(galive[:,3:6],1)
 
         tyollisyysaste,osatyoaste,tyottomyysaste,ka_tyottomyysaste = \
-            self.comp_empratios(gempstate,alive,unempratio=unempratio)
+            self.comp_empratios(gempstate2,alive,unempratio=unempratio)
 
         return tyollisyysaste,osatyoaste,tyottomyysaste,ka_tyottomyysaste
 
@@ -4080,7 +4100,7 @@ class EpisodeStats():
         if not by_age:
             workforce=np.sum(workforce,1)
 
-        return workforce
+        return workforce[:,None]
 
     def comp_empratios(self,emp,alive,unempratio=True):
 
@@ -4130,8 +4150,6 @@ class EpisodeStats():
                 tyottomyysaste=100*(unemployed)/alive[:,0]
                 ka_tyottomyysaste=100*np.sum(unemployed)/np.sum(alive[:,0])
 
-        #print('comp_empratios',tyollisyysaste.shape,osatyoaste.shape,tyottomyysaste.shape,ka_tyottomyysaste.shape)
-
         return tyollisyysaste,osatyoaste,tyottomyysaste,ka_tyottomyysaste
 
     def comp_decisionratios(self,emp,alive):
@@ -4167,57 +4185,34 @@ class EpisodeStats():
     def comp_ptproportions(self):
         ptsuhde = np.empty((self.n_groups,self.n_time,3))
         ftsuhde = np.empty((self.n_groups,self.n_time,3))
+        combisuhde = np.empty((self.n_groups,self.n_time,6))
         veptsuhde = np.empty((self.n_groups,self.n_time,3))
         veftsuhde = np.empty((self.n_time,self.n_time,3))
         agg_ptsuhde = np.empty((3,3))
         agg_ftsuhde = np.empty((3,3))
+        agg_combisuhde = np.empty((3,6))
 
-        if False and self.save_pop:
-            #men_mask=(self.episodestats.infostats_group<4).T
-            men_mask = self.get_gendermask(1).T
-            women_mask=~men_mask
-            mask=ma.mask_or(mask_osaaika,men_mask) # miehet pois
-            arr=ma.ravel(ma.array(self.episodestats.infostats_pop_pt_act,mask=mask)).compressed()
-            mask=ma.mask_or(mask_osaaika,women_mask) # naiset pois
-            arr=ma.ravel(ma.array(self.episodestats.infostats_pop_pt_act,mask=mask)).compressed()
+        for g in range(3):
+            if g==0:
+                gset=[0,1,2,3,4,5]
+            elif g==1:
+                gset=[0,1,2]
+            else:
+                gset=[3,4,5]
+            agg_ptsuhde[g,:] = np.sum(self.infostats_pt_act[:,10,gset,:],axis=(0,1)) / np.sum(self.infostats_pt_act[:,10,gset,:],axis=(0,1,2))
+            agg_ftsuhde[g,:] = np.sum(self.infostats_pt_act[:,1,gset,:],axis=(0,1)) / np.sum(self.infostats_pt_act[:,1,gset,:],axis=(0,1,2))
+            s_pt = np.sum(self.infostats_pt_act[:,10,gset,:],axis=1)
+            s_ft = np.sum(self.infostats_pt_act[:,1,gset,:],axis=1)
+            agg_combisuhde[g,0:3] = np.sum(s_pt,axis=0) / (np.sum(self.infostats_pt_act[:,1,gset,:],axis=(0,1,2))+np.sum(self.infostats_pt_act[:,1,gset,:],axis=(0,1,2)))
+            agg_combisuhde[g,3:6] = np.sum(s_ft,axis=0) / (np.sum(self.infostats_pt_act[:,1,gset,:],axis=(0,1,2))+np.sum(self.infostats_pt_act[:,1,gset,:],axis=(0,1,2)))
+            ptsuhde[g,:,:] = s_pt / np.sum(self.infostats_pt_act[:,10,gset,:],axis=(1,2))[:,None]
+            ftsuhde[g,:,:] = s_ft / np.sum(self.infostats_pt_act[:,1,gset,:],axis=(1,2))[:,None]
+            combisuhde[g,:,0:3] = s_pt/np.sum(s_pt+s_ft)
+            combisuhde[g,:,3:6] = s_ft/np.sum(s_pt+s_ft)
+            veptsuhde[g,:,:] = np.sum(self.infostats_pt_act[:,8,gset,:],axis=1) / np.sum(self.infostats_pt_act[:,8,gset,:],axis=(1,2))[:,None]
+            veftsuhde[g,:,:] = np.sum(self.infostats_pt_act[:,9,gset,:],axis=1) / np.sum(self.infostats_pt_act[:,9,gset,:],axis=(1,2))[:,None]
 
-            mask_osaaika = self.get_empstatemask(10) # (self.popempstate!=10) # osa-aika # 
-            mask_ft = self.get_empstatemask(1) #=(self.popempstate!=1) # osa-aika
-            mask_veft = self.get_empstatemask(9) #=(self.popempstate!=9) # osa-aika
-            mask_vept = self.get_empstatemask(8) #=(self.popempstate!=8) # osa-aika
-
-            agg_ptsuhde[:,:] = np.sum(self.infostats_pt_act[:,10,:,:],axis=0) / np.sum(self.infostats_pt_act[:,10,:,:])
-            agg_ftsuhde[:,:] = np.sum(self.infostats_pt_act[:,1,:,:],axis=0) / np.sum(self.infostats_pt_act[:,1,:,:])
-
-            for t in range(self.n_time):
-                arr=ma.ravel(ma.array(self.infostats_pop_pt_act[t,:],mask=mask_osaaika[t,:])).compressed()
-                s,_ = np.histogram(arr,bins=3,density=False)
-                ptsuhde[t,:] = s/np.sum(s)
-                arr=ma.ravel(ma.array(self.infostats_pop_pt_act[t,:],mask=mask_ft[t,:])).compressed()
-                s,_ = np.histogram(arr,bins=3,density=True)
-                ftsuhde[t,:] = s/np.sum(s)
-                arr=ma.ravel(ma.array(self.infostats_pop_pt_act[t,:],mask=mask_vept[t,:])).compressed()
-                s,_ = np.histogram(arr,bins=3,density=True)
-                veptsuhde[t,:] = s/np.sum(s)
-                arr=ma.ravel(ma.array(self.infostats_pop_pt_act[t,:],mask=mask_veft[t,:])).compressed()
-                s,_ = np.histogram(arr,bins=3,density=True)
-                veftsuhde[t,:] = s/np.sum(s)
-        else:
-            for g in range(3):
-                if g==0:
-                    gset=[0,1,2,3,4,5]
-                elif g==1:
-                    gset=[0,1,2]
-                else:
-                    gset=[3,4,5]
-                agg_ptsuhde[g,:] = np.sum(self.infostats_pt_act[:,10,gset,:],axis=(0,1)) / np.sum(self.infostats_pt_act[:,10,gset,:],axis=(0,1,2))
-                agg_ftsuhde[g,:] = np.sum(self.infostats_pt_act[:,1,gset,:],axis=(0,1)) / np.sum(self.infostats_pt_act[:,1,gset,:],axis=(0,1,2))
-                ptsuhde[g,:,:] = np.sum(self.infostats_pt_act[:,10,gset,:],axis=1) / np.sum(self.infostats_pt_act[:,10,gset,:],axis=(1,2))[:,None]
-                ftsuhde[g,:,:] = np.sum(self.infostats_pt_act[:,1,gset,:],axis=1) / np.sum(self.infostats_pt_act[:,1,gset,:],axis=(1,2))[:,None]
-                veptsuhde[g,:,:] = np.sum(self.infostats_pt_act[:,8,gset,:],axis=1) / np.sum(self.infostats_pt_act[:,8,gset,:],axis=(1,2))[:,None]
-                veftsuhde[g,:,:] = np.sum(self.infostats_pt_act[:,9,gset,:],axis=1) / np.sum(self.infostats_pt_act[:,9,gset,:],axis=(1,2))[:,None]
-
-        return agg_ptsuhde,agg_ftsuhde,ptsuhde,ftsuhde,veptsuhde,veftsuhde
+        return agg_ptsuhde,agg_ftsuhde,ptsuhde,ftsuhde,veptsuhde,veftsuhde,combisuhde,agg_combisuhde
         
     def comp_taxratios(self,grouped=False):
         valtionvero_osuus=100*np.sum(self.infostats_valtionvero_distrib,0)/np.sum(self.infostats_valtionvero_distrib)

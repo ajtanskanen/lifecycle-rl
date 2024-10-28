@@ -30,12 +30,15 @@ class SimStats(EpisodeStats):
         e_rate=np.zeros((n,self.n_time))
         agg_htv=np.zeros(n)
         agg_tyoll=np.zeros(n)
+        agg_tyottomyysaste=np.zeros(n)
         agg_rew=np.zeros(n)
         agg_discounted_rew=np.zeros(n)
         t_aste=np.zeros(self.n_time)
         emps=np.zeros((n,self.n_time,self.n_states))
+        gemps=np.zeros((n,self.n_time,self.n_states,self.n_groups))
         emp_tyolliset=np.zeros((n,self.n_time))
         emp_tyottomat=np.zeros((n,self.n_time))
+        emp_tyottomyysaste=np.zeros((n,self.n_time))
         emp_tyolliset_osuus=np.zeros((n,self.n_time))
         emp_tyottomat_osuus=np.zeros((n,self.n_time))
         emp_htv=np.zeros((n,self.n_time))
@@ -48,8 +51,13 @@ class SimStats(EpisodeStats):
         agg_netincome=np.zeros(n)
         agg_equivalent_netincome=np.zeros(n)
         alives=np.zeros((n,self.n_time),dtype = np.int64)
+        galives=np.zeros((n,self.n_time,self.n_groups),dtype = np.int64)
         agg_alives = np.zeros((self.n_time,1),dtype = np.float64)
-        agg_empstate=np.zeros((self.n_time,self.n_states),dtype = np.float64)
+        agg_empstate = np.zeros((self.n_time,self.n_states),dtype = np.float64)
+        agg_galives = np.zeros((self.n_time,self.n_groups),dtype = np.float64)
+        agg_gempstate = np.zeros((self.n_time,self.n_states,self.n_groups),dtype = np.float64)
+        pt_agg = np.zeros((n,6),dtype = np.float64)
+        pt_agegroup = np.zeros((n,self.n_time,6),dtype = np.float64)
 
         if singlefile:
             self.load_sim(results,print_pop=False)
@@ -64,13 +72,16 @@ class SimStats(EpisodeStats):
             base_empstate=empstate/self.alive #self.n_pop
         
         emps[0,:,:] = self.empstate
+        gemps[0,:,:] = self.gempstate
         agg_empstate = self.empstate
+        agg_gempstate = self.gempstate
         alives[0,:] = self.alive[:,0]
+        galives[0,:,:] = self.galive[:,:]
         emp_htv2 = np.sum(self.emp_htv,axis=1)
-        htv_ika,tyolliset_ika,tyottomat_ika,osatyolliset_ika,kokotyollvaikutus_ika,tyoll_osuus,osatyoll_osuus,kokotyoll_osuus,tyottomien_osuus \
-            = self.comp_tyollisyys_stats(empstate,start=self.min_age,end=self.max_age,scale_time=True,emp_htv=emp_htv2,agegroups=True)
-        htv,tyolliset,tyottomat,osatyolliset,kokotyollvaikutus,tyollaste,osatyollaste,kokotyollaste \
-            = self.comp_tyollisyys_stats(empstate,start=self.min_age,end=self.max_age,scale_time=True,emp_htv=emp_htv2,agegroups=False)
+        htv_ika,tyolliset_ika,tyottomat_ika,osatyolliset_ika,kokotyollvaikutus_ika,tyoll_osuus,osatyoll_osuus,kokotyoll_osuus,tyottomien_osuus,tyottomyys_aste \
+            = self.comp_unemp_simstats_agegroups(empstate,start=self.min_age,end=self.max_age,scale_time=True,emp_htv=emp_htv2)
+        htv,tyolliset,tyottomat,osatyolliset,kokotyollvaikutus,tyollaste,osatyollaste,kokotyollaste,kokotyottomyysaste \
+            = self.comp_unemp_simstats_aggregate(empstate,start=self.min_age,end=self.max_age,scale_time=True,emp_htv=emp_htv2)
 
         q=self.comp_budget(scale=True)
         budget = pd.DataFrame.from_dict(q,orient='index',columns=['e/v'])
@@ -86,15 +97,17 @@ class SimStats(EpisodeStats):
 
         agg_htv[0]=htv
         agg_tyoll[0]=tyolliset
-        agg_rew[0]=self.get_reward()
-        agg_discounted_rew[0]=self.get_reward(discounted=True)
-        
+        agg_tyottomyysaste[0]=kokotyottomyysaste
+        agg_discounted_rew[0],agg_rew[0]=self.get_reward()
+        print(agg_rew[0])
+
         best_rew=agg_rew[0]
         best_emp=0
         t_aste[0]=tyollaste
 
         emp_tyolliset[0,:]=tyolliset_ika[:,0]
         emp_tyottomat[0,:]=tyottomat_ika[:,0]
+        emp_tyottomyysaste[0,:] = tyottomyys_aste[:,0]
         emp_tyolliset_osuus[0,:]=tyoll_osuus[:,0]
         emp_tyottomat_osuus[0,:]=tyottomien_osuus[:,0]
         emp_htv[0,:]=htv_ika[:,0]
@@ -123,13 +136,9 @@ class SimStats(EpisodeStats):
             unemp_dur[0,:,:]=unemp_dur0[:,:]
             unemp_lastdur[0,:,:]=unemp_lastdur0[:,:]
 
-        #if plot:
-        #    fig,ax=plt.subplots()
-        #    ax.set_xlabel('age')
-        #    ax.set_ylabel('Työllisyysaste [%]')
-        #    x=np.linspace(self.min_age,self.max_age,self.n_time)
-        #    #ax.plot(x,100*tyolliset_ika,alpha=0.9,lw=2.0)
-        #    ax.plot(100*tyolliset_ika,alpha=0.9,lw=2.0)
+        _,_,_,_,_,_,combisuhde,agg_combisuhde = self.comp_ptproportions()
+        pt_agg[0,:] = agg_combisuhde[0,:]
+        pt_agegroup[0,:,:] = combisuhde[0,:,:]
 
         if not singlefile:
             tqdm_e = tqdm(range(int(n-1)), desc='Sim', leave=True, unit=" ")
@@ -153,33 +162,33 @@ class SimStats(EpisodeStats):
                     empstate=self.empstate#/self.alive #self.n_pop
                 
                 emps[i,:,:] = self.empstate
+                gemps[i,:,:,:] = self.gempstate
                 agg_empstate += self.empstate
+                agg_gempstate += self.gempstate
                 alives[i,:] = self.alive[:,0]
-                reward = self.get_reward()
-                discounted_reward = self.get_reward(discounted=True)
+                galives[i,:] = self.galive[:,:]
+                agg_discounted_rew[i],agg_rew[i] = self.get_reward()
+                print(agg_rew[i])
                 
                 if include_distrib:
-                    net,equiv=self.comp_total_netincome()
+                    net,equiv = self.comp_total_netincome()
                 else:
-                    net,equiv=0,0
+                    net,equiv = 0,0
 
-                if reward>best_rew:
-                    best_rew=reward
-                    best_emp=i
+                if agg_rew[i]>best_rew:
+                    best_rew = agg_rew[i]
+                    best_emp = i
 
                 emp_htv2 = np.sum(self.emp_htv,axis=1)
 
-                htv_ika,tyolliset_ika,tyottomat_ika,osatyolliset_ika,kokotyollvaikutus_ika,tyoll_osuus,osatyoll_osuus,kokotyoll_osuus,tyottomien_osuus = self.comp_tyollisyys_stats(empstate,start=self.min_age,end=self.max_age,scale_time=True,emp_htv=emp_htv2,agegroups=True)
-                htv,tyolliset,tyottomat,osatyolliset,kokotyollvaikutus,tyollaste,osatyollaste,kokotyollaste = self.comp_tyollisyys_stats(empstate,scale_time=True,start=self.min_age,end=self.max_age,emp_htv=emp_htv2,agegroups=False)
-                
-                #if plot:
-                #    #ax.plot(x,100*tyolliset_ika,alpha=0.5,lw=0.5)
-                #    ax.plot(100*tyolliset_ika,alpha=0.5,lw=0.5)
+                htv_ika,tyolliset_ika,tyottomat_ika,osatyolliset_ika,kokotyollvaikutus_ika,tyoll_osuus,osatyoll_osuus,\
+                    kokotyoll_osuus,tyottomien_osuus,tyottomyys_aste = self.comp_unemp_simstats_agegroups(empstate,start=self.min_age,end=self.max_age,scale_time=True,emp_htv=emp_htv2)
+                htv,tyolliset,tyottomat,osatyolliset,kokotyollvaikutus,tyollaste,osatyollaste,\
+                    kokotyollaste,kokotyottomyysaste = self.comp_unemp_simstats_aggregate(empstate,scale_time=True,start=self.min_age,end=self.max_age,emp_htv=emp_htv2)
     
                 agg_htv[i]=htv
                 agg_tyoll[i]=tyolliset
-                agg_rew[i]=reward
-                agg_discounted_rew[i]=discounted_reward
+                agg_tyottomyysaste[i]=kokotyottomyysaste
 
                 agg_netincome[i]=net
                 agg_equivalent_netincome[i]=equiv
@@ -187,14 +196,10 @@ class SimStats(EpisodeStats):
 
                 emp_tyolliset[i,:] = tyolliset_ika[:,0]
                 emp_tyottomat[i,:] = tyottomat_ika[:,0]
+                emp_tyottomyysaste[i,:] = tyottomyys_aste[:,0]
                 emp_tyolliset_osuus[i,:] = tyoll_osuus[:,0]
                 emp_tyottomat_osuus[i,:] = tyottomien_osuus[:,0]
                 emp_htv[i,:] = htv_ika[:,0]
-
-                #if plot:
-                #    x=np.linspace(self.min_age,self.max_age,self.n_time)
-                #    #ax.plot(x,100*tyolliset_ika,alpha=0.9,lw=2.0)
-                #    ax.plot(100*tyolliset_ika,alpha=0.9,lw=2.0)
 
                 if include_distrib:
                     unemp_distrib2,emp_distrib2,unemp_distrib_bu2 = self.comp_empdistribs(ansiosid=True,tmtuki=True,putki=True,outsider=False,max_age=max_age)
@@ -226,13 +231,17 @@ class SimStats(EpisodeStats):
                 tqdm_e.update(1)
                 tqdm_e.set_description("Pop " + str(n))
 
+                _,_,_,_,_,_,combisuhde,agg_combisuhde = self.comp_ptproportions()
+                pt_agg[i,:] = agg_combisuhde[0,:]
+                pt_agegroup[i,:,:] = combisuhde[0,:,:]
+
             budget /= n
             participants /= n
             htv_budget /= n
             agg_empstate = agg_empstate / n
+            agg_gempstate = agg_gempstate / n
             agg_alives[:,0] = (np.sum(alives,axis=0)/n)
-
-        display('budget',budget)
+            agg_galives[:,:] = (np.sum(galives,axis=0)/n)
 
         self.save_simstats(save,agg_htv,agg_tyoll,agg_rew,agg_discounted_rew,\
                             emp_tyolliset,emp_tyolliset_osuus,\
@@ -244,7 +253,8 @@ class SimStats(EpisodeStats):
                             tyoll_virta,tyot_virta,tyot_virta_ansiosid,tyot_virta_tm,\
                             unemp_dur,unemp_lastdur,agg_netincome,agg_equivalent_netincome,\
                             budget,participants,htv_budget,\
-                            alives,agg_empstate,agg_alives)
+                            alives,agg_empstate,agg_alives,agg_tyottomyysaste,emp_tyottomyysaste,\
+                            pt_agg,pt_agegroup,galives,agg_galives,gemps,agg_gempstate)
                     
         #if not singlefile:
         #    # save the best
@@ -287,7 +297,8 @@ class SimStats(EpisodeStats):
     def get_simstats(self,filename1,use_mean=True):
         agg_htv,agg_tyoll,agg_rew,agg_discounted_rew,emp_tyolliset,emp_tyolliset_osuus,\
             emp_tyottomat,emp_tyottomat_osuus,emp_htv,emps,best_rew,\
-            best_emp,emps,agg_netincome,agg_equivalent_netincome,budget,participants,htv_budget,alives,agg_empstate,agg_alives\
+            best_emp,emps,agg_netincome,agg_equivalent_netincome,budget,participants,htv_budget,alives,agg_empstate,agg_alives,\
+            agg_tyottomyysaste,emp_tyottomyysaste,pt_agg,pt_agegroup,galives,agg_galives,gempstate,agg_gempstate\
                 =self.load_simstats(filename1)
 
         mean_htv=np.mean(agg_htv)
@@ -315,21 +326,16 @@ class SimStats(EpisodeStats):
         h_std=np.std(emp_htv,axis=0)
         h_best=emp_htv[best_emp,:]
 
-        #if self.minimal>0:
         median_tyott = np.median(emp_tyottomat_osuus,axis=0)
         mean_tyott_osuus = np.mean(emp_tyottomat_osuus,axis=0)
         mean_tyolliset_osuus = np.mean(emp_tyolliset_osuus,axis=0)
-
-        #else:
-        #    u_tmtuki=np.median(emps[:,:,13],axis=0)
-        #    u_ansiosid=np.median(emps[:,:,0]+emps[:,:,4],axis=0)
-        #    median_tyott = 0
-        #    mean_tyott = 0
+        mean_unempratio = np.mean(emp_tyottomyysaste,axis=0)
+        median_unempratio = np.median(emp_tyottomyysaste,axis=0)
     
         if use_mean:
-            return mean_htv,mean_tyoll,h_mean,m_mean,diff_htv,mean_rew,mean_tyott_osuus,mean_tyolliset_osuus,std_htv,h_std
+            return mean_htv,mean_tyoll,h_mean,m_mean,diff_htv,mean_rew,mean_tyott_osuus,mean_tyolliset_osuus,std_htv,h_std,mean_unempratio
         else:
-            return median_htv,median_tyoll,h_median,m_median,median_rew,median_tyott,std_tyoll,s_tyoll
+            return median_htv,median_tyoll,h_median,m_median,median_rew,median_tyott,std_tyoll,s_tyoll,median_unempratio
             
     def put_df5(self,f,htv,nimi):
         dt = h5py.special_dtype(vlen=str)
@@ -343,7 +349,8 @@ class SimStats(EpisodeStats):
                         tyoll_distrib,tyoll_distrib_bu,\
                         tyoll_virta,tyot_virta,tyot_virta_ansiosid,tyot_virta_tm,\
                         unemp_dur,unemp_lastdur,agg_netincome,agg_equivalent_netincome,budget,participants,htv_budget,\
-                        alives,agg_empstate,agg_alives):
+                        alives,agg_empstate,agg_alives,agg_tyottomyysaste,emp_tyottomyysaste,pt_agg,pt_agegroup,\
+                        galives,agg_galives,gempstate,agg_gempstate):
         f = h5py.File(filename, 'w')
         dset = f.create_dataset('agg_discounted_rew', data=agg_discounted_rew, dtype='float64')
         dset = f.create_dataset('agg_htv', data=agg_htv, dtype='float64')
@@ -355,6 +362,7 @@ class SimStats(EpisodeStats):
         dset = f.create_dataset('emp_tyottomat_osuus', data=emp_tyottomat_osuus, dtype='float64')
         dset = f.create_dataset('emp_htv', data=emp_htv, dtype='float64')
         dset = f.create_dataset('emps', data=emps, dtype='int64')
+        dset = f.create_dataset('gemps', data=gempstate, dtype='int64')
         dset = f.create_dataset('best_rew', data=best_rew, dtype='float64')
         dset = f.create_dataset('best_emp', data=best_emp, dtype='float64')
         dset = f.create_dataset('unemp_distrib', data=unemp_distrib, dtype='float64')
@@ -371,8 +379,15 @@ class SimStats(EpisodeStats):
         dset = f.create_dataset('agg_netincome', data=agg_netincome, dtype='float64')
         dset = f.create_dataset('agg_equivalent_netincome', data=agg_equivalent_netincome, dtype='float64')
         dset = f.create_dataset('alives', data=alives, dtype='int64')
+        dset = f.create_dataset('galives', data=galives, dtype='int64')
         dset = f.create_dataset('agg_empstate', data=agg_empstate, dtype='float64')
+        dset = f.create_dataset('agg_gempstate', data=agg_gempstate, dtype='float64')
         dset = f.create_dataset('agg_alives', data=agg_alives, dtype='float64')
+        dset = f.create_dataset('agg_galives', data=agg_galives, dtype='float64')        
+        dset = f.create_dataset('agg_tyottomyysaste', data=agg_tyottomyysaste, dtype='float64')
+        dset = f.create_dataset('emp_tyottomyysaste', data=emp_tyottomyysaste, dtype='float64')
+        dset = f.create_dataset('pt_agg', data=pt_agg, dtype='float64')
+        dset = f.create_dataset('pt_agegroup', data=pt_agegroup, dtype='float64')
         store = pd.HDFStore(filename+"_df.h5", 'w')  
         store.put('participants', participants, format='table')  
         store.put('budget', budget, format='table')  
@@ -411,7 +426,15 @@ class SimStats(EpisodeStats):
         agg_equivalent_netincome = f['agg_equivalent_netincome'][()]
         agg_empstate = f['agg_empstate'][()]
         alives = f['alives'][()]
+        galives = f['galives'][()]
         agg_alives = f['agg_alives'][()]
+        agg_galives = f['agg_galives'][()]
+        agg_tyottomyysaste = f['agg_tyottomyysaste'][()]
+        emp_tyottomyysaste = f['emp_tyottomyysaste'][()]
+        pt_agg = f['pt_agg'][()]
+        pt_agegroup = f['pt_agegroup'][()]
+        gempstate = f['gemps'][()]
+        agg_gempstate = f['agg_gempstate'][()]
 
         store = pd.HDFStore(filename+"_df.h5", 'r')  
         budget = store.get('budget')  
@@ -427,56 +450,57 @@ class SimStats(EpisodeStats):
 
         return agg_htv,agg_tyoll,agg_rew,agg_discounted_rew,emp_tyolliset,emp_tyolliset_osuus,\
                emp_tyottomat,emp_tyottomat_osuus,emp_htv,emps,best_rew,best_emp,emps,\
-               agg_netincome,agg_equivalent_netincome,budget,participants,htv_budget,alives,agg_empstate,agg_alives
+               agg_netincome,agg_equivalent_netincome,budget,participants,htv_budget,alives,agg_empstate,agg_alives,\
+               agg_tyottomyysaste,emp_tyottomyysaste,pt_agg,pt_agegroup,galives,agg_galives,gempstate,agg_gempstate
 
     def load_simdistribs(self,filename):
         f = h5py.File(filename, 'r')
         if 'tyoll_virta' in f:
-            unemp_distrib = f['unemp_distrib'][()] #f.get('unemp_distrib').value
+            unemp_distrib = f['unemp_distrib'][()] 
         else:
             unemp_distrib=np.zeros((self.n_time,self.n_pop))
         
         if 'tyoll_virta' in f:
-            emp_distrib = f['emp_distrib'][()] #f.get('emp_distrib').value
+            emp_distrib = f['emp_distrib'][()] 
         else:
             emp_distrib=np.zeros((self.n_time,self.n_pop))
         if 'tyoll_virta' in f:
-            unemp_distrib_bu = f['unemp_distrib_bu'][()] #f.get('unemp_distrib_bu').value
+            unemp_distrib_bu = f['unemp_distrib_bu'][()] 
         else:
             unemp_distrib_bu=np.zeros((self.n_time,self.n_pop))
         if 'tyoll_virta' in f:
-            tyoll_distrib =f['tyoll_distrib'][()] # f.get('tyoll_distrib').value
+            tyoll_distrib =f['tyoll_distrib'][()] 
         else:
             tyoll_distrib=np.zeros((self.n_time,self.n_pop))
         if 'tyoll_virta' in f:
-            tyoll_distrib_bu = f['tyoll_distrib_bu'][()] #f.get('tyoll_distrib_bu').value
+            tyoll_distrib_bu = f['tyoll_distrib_bu'][()] 
         else:
             tyoll_distrib_bu=np.zeros((self.n_time,self.n_pop))
         if 'tyoll_virta' in f:
-            tyoll_virta = f['tyoll_virta'][()] #f.get('tyoll_virta').value
+            tyoll_virta = f['tyoll_virta'][()] 
         else:
             tyoll_virta=np.zeros((self.n_time,self.n_pop))
         if 'tyot_virta' in f:
-            tyot_virta = f['tyot_virta'][()] #f.get('tyot_virta').value
+            tyot_virta = f['tyot_virta'][()] 
         else:
             tyot_virta=np.zeros((self.n_time,self.n_pop))
         if 'tyot_virta_ansiosid' in f:
-            tyot_virta_ansiosid = f['tyot_virta_ansiosid'][()] #f.get('tyot_virta_ansiosid').value
+            tyot_virta_ansiosid = f['tyot_virta_ansiosid'][()] 
         else:
             tyot_virta_ansiosid=np.zeros((self.n_time,self.n_pop))
         if 'tyot_virta_tm' in f:
-            tyot_virta_tm = f['tyot_virta_tm'][()] #f.get('tyot_virta_tm').value
+            tyot_virta_tm = f['tyot_virta_tm'][()] 
         else:
             tyot_virta_tm=np.zeros((self.n_time,self.n_pop))
         if 'unemp_dur' in f:
-            unemp_dur = f['unemp_dur'][()] #f.get('unemp_dur').value
+            unemp_dur = f['unemp_dur'][()]
         else:
             unemp_dur=np.zeros((1,5,5))
         if 'unemp_lastdur' in f:
-            unemp_lastdur = f['unemp_lastdur'][()] #f.get('unemp_lastdur').value
+            unemp_lastdur = f['unemp_lastdur'][()]
         else:
             unemp_lastdur=np.zeros((1,5,5))
-        
+
         f.close()
 
         return unemp_distrib,emp_distrib,unemp_distrib_bu,\

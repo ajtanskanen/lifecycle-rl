@@ -1028,7 +1028,7 @@ class Empstats():
         q={}
         if self.year==2018:
             q[self.labels['tyotulosumma']]=self.get_tyotulosumma(self.year) #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
-            q[self.labels['tyotulosumma ei-elakkeella']]=np.nan #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q[self.labels['tyotulosumma eielakkeella']]=np.nan #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
             q[self.labels['etuusmeno']]=0
             q[self.labels['verot+maksut']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
             q[self.labels['verot+maksut+alv']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero

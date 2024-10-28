@@ -550,8 +550,11 @@ class Lifecycle():
         if load is not None:
             self.episodestats.load_sim(load)
             
-        return self.episodestats.get_average_discounted_reward(),self.episodestats.get_initial_reward()
-        #return self.episodestats.comp_total_reward(),self.episodestats.comp_initial_npv()
+        dr,ndr = self.episodestats.get_reward(self,recomp=False)
+        print('average_discounted_reward',dr)
+        print('average_undiscounted_reward',ndr)
+
+        return dr,ndr
 
     def render_reward_trajectory(self,load=None,figname=None):
         if load is not None:
