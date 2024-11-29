@@ -299,7 +299,7 @@ class EpisodeStats():
         self.infostats_ptel[t] += q[person+'ptel']*scale
         self.infostats_tyotvakmaksu[t] += q[person+'tyotvakmaksu']*scale
         self.infostats_kokoelake[t] += q[person+'kokoelake']*scale
-        self.infostats_lapsilisa[t] += q[person+'lapsilisa']*scale
+        self.infostats_lapsilisa[t] += q[person+'lapsilisa']*scale # tämä taidetaan skaalata väärin FIXME
         self.infostats_elatustuki[t] += q[person+'elatustuki']*scale
         self.infostats_opintotuki[t] += q[person+'opintotuki']*scale
         self.infostats_isyyspaivaraha[t] += q[person+'isyyspaivaraha']*scale

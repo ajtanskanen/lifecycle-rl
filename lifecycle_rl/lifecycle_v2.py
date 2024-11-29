@@ -25,7 +25,6 @@ import gym
 from gym import spaces, logger, utils, error
 from gym.utils import seeding
 import numpy as np
-#from fin_benefits import Benefits
 import matplotlib.pyplot as plt
 from matplotlib import ticker
 import gym_unemployment

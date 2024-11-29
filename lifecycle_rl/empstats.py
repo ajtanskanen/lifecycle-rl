@@ -1016,13 +1016,13 @@ class Empstats():
         elif y==2022:
             return 102_480_300_000
         elif y==2023:
-            return 107_206_000_000
+            return 107_206_000_000 # vs 108 000 000 000
         elif y==2024:
-            return 107_206_000_000*1.031
+            return 107_206_000_000*1.031  # vs 111 000 000 000
         elif y==2025:
-            return 107_206_000_000*1.031*1.02
+            return 107_206_000_000*1.031*1.02  # vs 115 000 000 000
         elif y==2026:
-            return 107_206_000_000*1.031*1.02*1.02
+            return 107_206_000_000*1.031*1.02*1.02 # vs 119 400 000 000
 
     def stat_budget(self,scale=False):
         q={}
@@ -1130,7 +1130,7 @@ class Empstats():
             q[self.labels['verot+maksut']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
             q[self.labels['verot+maksut+alv']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
             q[self.labels['valtionvero']]=6_006_507_551 # vai 7_700_000_000
-            q[self.labels['kunnallisvero']]=21_017_113_723
+            q[self.labels['kunnallisvero']]=21_017_113_723 # 20 997
             q[self.labels['ptel']]=6_816_800_000
             q[self.labels['tyoelakemaksu']]=22_824_700_000+1_247_100_000 # palkansaajista+yrittäjistä, kokomaksu 29_030_800_000 # Lähde: ETK
             q[self.labels['tyottomyysvakuutusmaksu']]=0.019*q[self.labels['tyotulosumma']]
@@ -1162,7 +1162,7 @@ class Empstats():
             q[self.labels['verot+maksut']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
             q[self.labels['verot+maksut+alv']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
             q[self.labels['valtionvero']]=6_292_590_406 # vai 7_700_000_000
-            q[self.labels['kunnallisvero']]=21_851_297_140 # 32 632 - 21 851 = 10 781 ?
+            q[self.labels['kunnallisvero']]=21_851_297_140 # 32 632 - 21 851 = 10 781 ? # 21 800
             q[self.labels['ptel']]=7_259_300_000 
             q[self.labels['tyoelakemaksu']]=24_406_000_000+1_282_100_000 # palkansaajista+yrittäjistä, kokomaksu 30_439_600_000 # Lähde: ETK
             q[self.labels['tyottomyysvakuutusmaksu']]=0.019*q[self.labels['tyotulosumma']]
@@ -1195,7 +1195,7 @@ class Empstats():
             q[self.labels['verot+maksut']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
             q[self.labels['verot+maksut+alv']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
             q[self.labels['valtionvero']]=20_375_000_000 # budjetti 2023, 14_600_000_000 + 6_292_590_406 ? 
-            q[self.labels['kunnallisvero']]=21_851_297_140 - 14_900_000_000 # ok? 
+            q[self.labels['kunnallisvero']]=9_070_000_000 #21_851_297_140 - 14_900_000_000 # ok?  # 9 100
             q[self.labels['ptel']]=7_601_900_000 # lähde ETK
             q[self.labels['tyoelakemaksu']]=25_544_000_000+1_326_600_000 # palkansaajista+yrittäjistä, kokomaksu 31_958_700_000 # Lähde: ETK
             q[self.labels['tyottomyysvakuutusmaksu']]=0.015*q[self.labels['tyotulosumma']]
@@ -1228,7 +1228,7 @@ class Empstats():
             q[self.labels['verot+maksut']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
             q[self.labels['verot+maksut+alv']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
             q[self.labels['valtionvero']]=22_236_000_000 # budjetti 2024
-            q[self.labels['kunnallisvero']]=8_000_000_000 # ok?
+            q[self.labels['kunnallisvero']]=9_610_000_000 #8_000_000_000 # ok? 9 620
             q[self.labels['ptel']]=6_816_800_000
             q[self.labels['tyoelakemaksu']]=30_439_600_000*kerroin # Lähde: ETK
             q[self.labels['tyottomyysvakuutusmaksu']]=0.019*q[self.labels['tyotulosumma']]
@@ -1252,7 +1252,40 @@ class Empstats():
                 q[self.labels['perustulo']]=0
             q[self.labels['pvhoitomaksu']]=271_000_000*kerroin
             q[self.labels['alv']]=20_217_000_000*kerroin #21_775_000_000
-            q[self.labels['ta_maksut']]=0.2057*q[self.labels['tyotulosumma']] # karkea                                                   
+            q[self.labels['ta_maksut']]=0.2057*q[self.labels['tyotulosumma']] # karkea      
+        elif self.year==2025: # update
+            kerroin=1.03*1.01
+            q[self.labels['tyotulosumma']]=self.get_tyotulosumma(self.year) #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q[self.labels['tyotulosumma eielakkeella']]=np.nan #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q[self.labels['etuusmeno']]=0
+            q[self.labels['verot+maksut']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
+            q[self.labels['verot+maksut+alv']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
+            q[self.labels['valtionvero']]=22_236_000_000 # budjetti 2024
+            q[self.labels['kunnallisvero']]=10_135_000_000
+            q[self.labels['ptel']]=6_816_800_000
+            q[self.labels['tyoelakemaksu']]=30_439_600_000*kerroin # Lähde: ETK
+            q[self.labels['tyottomyysvakuutusmaksu']]=0.019*q[self.labels['tyotulosumma']]
+            q[self.labels['sairausvakuutusmaksu']]=(1_335_000_000+407_000_000)*kerroin
+            q[self.labels['ylevero']]=497_000_000*kerroin
+            q[self.labels['ansiopvraha']]=1_840_034_600*kerroin # 1_930_846_464+1_964_486_581 # ansioturva + perusturva = 3 895 333 045
+            q[self.labels['peruspvraha']]=1_843_804_553*kerroin # Kelasto
+            q[self.labels['asumistuki']]=(1_565_008_002 + 650_228_976)*kerroin # yleinen plus eläkkeensaajan
+            q[self.labels['tyoelakemeno']]=31_449_600_000*kerroin
+            q[self.labels['kansanelakemeno']]=2_167_992_823*kerroin
+            q[self.labels['takuuelakemeno']]=273_173_956*kerroin
+            q[self.labels['elatustuki']]=210_137_558*kerroin
+            q[self.labels['lapsilisa']]=1_460_295_266*kerroin
+            q[self.labels['opintotuki']]=(417_404_073+54_057)*kerroin
+            q[self.labels['isyyspaivaraha']]=149_559_776*kerroin
+            q[self.labels['aitiyspaivaraha']]=850_374_956*kerroin
+            q[self.labels['kotihoidontuki']]=245_768_701*kerroin
+            q[self.labels['sairauspaivaraha']]=1_039_110_731*kerroin
+            q[self.labels['toimeentulotuki']]=715_950_847*kerroin
+            if self.include_perustulo:
+                q[self.labels['perustulo']]=0
+            q[self.labels['pvhoitomaksu']]=271_000_000*kerroin
+            q[self.labels['alv']]=20_217_000_000*kerroin #21_775_000_000
+            q[self.labels['ta_maksut']]=0.2057*q[self.labels['tyotulosumma']] # karkea                  
 
         q[self.labels['tyottomyyspvraha']]=q[self.labels['ansiopvraha']]+q[self.labels['peruspvraha']]
         q[self.labels['kokoelakemeno']]=q[self.labels['tyoelakemeno']]+q[self.labels['kansanelakemeno']]+q[self.labels['takuuelakemeno']]

@@ -3921,7 +3921,7 @@ class PlotStats():
         elif subset==1:
             list_ben=['tyotulosumma','etuusmeno','valtionvero','kunnallisvero','ptel','tyottomyysvakuutusmaksu','tyoelakemaksu','sairausvakuutusmaksu','pvhoitomaksu','ylevero','ta_maksut','verot+maksut','verotettava etuusmeno','alv','verot+maksut+alv','muut tulot']
         elif subset==2:
-            list_ben=['tyotulosumma','nettotulot','tyotulosumma osa-aika','tyotulosumma kokoaika','kunnallisvero','ptel','tyottomyysvakuutusmaksu','tyoelakemaksu','sairausvakuutusmaksu','pvhoitomaksu','ylevero','ta_maksut','verot+maksut','verotettava etuusmeno','alv','verot+maksut+alv','muut tulot']
+            list_ben=['tyotulosumma','nettotulot','tyotulosumma osa-aika','tyotulosumma kokoaika','valtionvero','kunnallisvero','ptel','tyottomyysvakuutusmaksu','tyoelakemaksu','sairausvakuutusmaksu','pvhoitomaksu','ylevero','ta_maksut','verot+maksut','verotettava etuusmeno','alv','verot+maksut+alv','muut tulot']
         elif subset==3:
             list_ben=['työssä 63+','työssä ja eläkkeellä','työikäisiä 18-62','työllisiä','ovella','osaaikatyössä','kokoaikatyössä']
         elif subset==4:
@@ -3989,6 +3989,7 @@ class PlotStats():
         print(self.sel_subset(df_budget,2).to_latex())
         print(self.sel_subset(df_lkm,4).to_latex())
         print(self.sel_subset(df_htv,3).to_latex())
+        print(df_budget)
 
 
     def plot_simstats(self,filename,grayscale = False,figname = None,cc2 = None):
