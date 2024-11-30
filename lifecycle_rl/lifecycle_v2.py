@@ -549,7 +549,7 @@ class Lifecycle():
         if load is not None:
             self.episodestats.load_sim(load)
             
-        dr,ndr = self.episodestats.get_reward(self,recomp=False)
+        dr,ndr = self.episodestats.get_reward(recomp=False)
         print('average_discounted_reward',dr)
         print('average_undiscounted_reward',ndr)
 

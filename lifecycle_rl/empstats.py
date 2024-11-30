@@ -1436,7 +1436,7 @@ class Empstats():
 
         return emp_ratio
 
-    def get_tyottomyyssaste_tyossakayntitutkimus(self,year,g=0):
+    def get_tyottomyysaste_tyossakayntitutkimus(self,year,g=0):
         '''
         Joulukuun tiedot TK:n työssäkäyntitutkimuksesta
         20-64 vuotiaat

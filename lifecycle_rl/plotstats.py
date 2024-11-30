@@ -33,7 +33,7 @@ import timeit
 #locale.setlocale(locale.LC_ALL, 'fi_FI')
 
 class PlotStats():
-    def __init__(self,stats,timestep,n_time,n_emps,n_pop,env,minimal,min_age,max_age,min_retirementage,year = 2018,version = 7,
+    def __init__(self,stats,timestep,n_time,n_emps,n_pop,env,minimal,min_age,max_age,min_retirementage,year = 2018,version = 9,
         params = None,gamma = 0.92,lang = 'English'):
         self.version = version
         self.gamma = gamma
@@ -42,7 +42,8 @@ class PlotStats():
         self.params['n_emps'] = n_emps
         self.episodestats = stats
 
-        self.complex_models = {1,2,3,4,5,6,7,8,104}
+        self.complex_models = {1,2,3,4,5,6,7,8,9,104}
+        self.recent_models = set([5,6,7,8,9])
         self.no_groups_models = {0,101}
         self.savings_models = {101,104}
 
@@ -301,7 +302,9 @@ class PlotStats():
 
         print_html('<h2>Sovite</h2>')
 
-        discounted_reward,undiscounted_reward = self.episodestats.get_average_reward(recomp=False)
+        #discounted_reward,undiscounted_reward = self.episodestats.get_average_reward(recomp=False)
+        discounted_reward,undiscounted_reward = self.episodestats.get_reward(recomp=False)
+        
 
         print('Real discounted reward {}'.format(discounted_reward))
         print('Initial discounted reward {}'.format(self.episodestats.get_initial_reward()))
@@ -318,7 +321,7 @@ class PlotStats():
                 self.plot_tekematon_tyo()
 
         print_html('<h2>Osa-aika</h2>')
-        if self.version in set([5,6,7,8]):
+        if self.version in self.recent_models:
             self.plot_pt_act()
             
         if self.version in self.complex_models:
@@ -345,7 +348,7 @@ class PlotStats():
             self.plot_savings()
 
         print_html('<h2>Tulot</h2>')
-        if self.version in set([3,4,5,6,7,8,104]):
+        if self.version in self.recent_models:
             self.plot_tulot()
             
         self.plot_sal()
@@ -3236,7 +3239,7 @@ class PlotStats():
         initial1 = np.mean(real1[1,:])
         initial2 = np.mean(real2[1,:])
 
-        self.plot_wage_reduction_compare(cc2)
+        self.plot_wage_reduction_compare(cc2,label1=label1,label2=label2)
 
         if self.episodestats.save_pop:
             rew1 = self.episodestats.comp_total_reward(output = False,discounted = True)
@@ -3265,9 +3268,9 @@ class PlotStats():
             self.episodestats.comp_employed_ratio(self.episodestats.empstate,emp_htv = emp_htv1)
         tyoll_osuus2,htv_osuus2,tyot_osuus2,kokotyo_osuus2,osatyo_osuus2 = \
             cc2.episodestats.comp_employed_ratio(cc2.episodestats.empstate,emp_htv = emp_htv2)
-        htv1,tyolliset1,tyottomat1,osatyolliset1,kokotyolliset1,tyollaste1,osatyolaste1,kokotyolaste1 = \
+        htv1,tyolliset1,tyottomat1,osatyolliset1,kokotyolliset1,tyollaste1,osatyolaste1,kokotyolaste1,tyottomyys_aste1 = \
             self.episodestats.comp_tyollisyys_stats(self.episodestats.empstate,scale_time = True,start = s,end = e,emp_htv = emp_htv1,agegroups = False)
-        htv2,tyolliset2,tyottomat2,osatyolliset2,kokotyolliset2,tyollaste2,osatyolaste2,kokotyolaste2 = \
+        htv2,tyolliset2,tyottomat2,osatyolliset2,kokotyolliset2,tyollaste2,osatyolaste2,kokotyolaste2,tyottomyys_aste2 = \
             cc2.episodestats.comp_tyollisyys_stats(cc2.episodestats.empstate,scale_time = True,start = s,end = e,emp_htv = emp_htv2,agegroups = False)
 
         tyollaste1 = tyollaste1*100
@@ -3285,9 +3288,9 @@ class PlotStats():
         print(f'Työttömyysaste2 {s}-{e}: {tyotaste2:.2f}% (työvoimatutkimus {tyovoimatutk_tytaste:.2f}%)')
 
 
-        htv1_full,tyolliset1_full,tyottomat1_full,osata1_full,kokota1_full,tyollaste1_full,osatyo_osuus1_full,kokotyo_osuus1_full,tyot_osuus1_full = \
+        htv1_full,tyolliset1_full,tyottomat1_full,osata1_full,kokota1_full,tyollaste1_full,osatyo_osuus1_full,kokotyo_osuus1_full,tyot_osuus1_full,tyot_aste1 = \
             self.episodestats.comp_tyollisyys_stats(self.episodestats.empstate,scale_time = True,start = 18,end = 75,emp_htv = emp_htv1,agegroups = True)
-        htv2_full,tyolliset2_full,tyottomat2_full,osata2_full,kokota2_full,tyollaste2_full,osatyo_osuus2_full,kokotyo_osuus2_full,tyot_osuus2_full = \
+        htv2_full,tyolliset2_full,tyottomat2_full,osata2_full,kokota2_full,tyollaste2_full,osatyo_osuus2_full,kokotyo_osuus2_full,tyot_osuus2_full,tyot_aste2 = \
             cc2.episodestats.comp_tyollisyys_stats(cc2.episodestats.empstate,scale_time = True,start = 18,end = 75,emp_htv = emp_htv2,agegroups = True)
         haj1 = self.episodestats.comp_uncertainty(self.episodestats.empstate,emp_htv = emp_htv1)
         haj2 = cc2.episodestats.comp_uncertainty(cc2.episodestats.empstate,emp_htv = emp_htv2)
@@ -3359,7 +3362,7 @@ class PlotStats():
 
         fig,ax = plt.subplots()
         ax.set_xlabel(self.labels['age'])
-        ax.set_ylabel(self.labels['diff osuuksissa'])
+        ax.set_ylabel(self.labels['diff osuus'])
         #print(tyot_osuus1.shape,tyot_osuus2.shape,kokotyo_osuus1.shape,kokotyo_osuus2.shape,osatyo_osuus1.shape,osatyo_osuus2.shape,tyolliset1.shape,tyolliset2.shape,htv_osuus1.shape,htv_osuus2.shape)
         ax.plot(x,100*(tyot_osuus1_full-tyot_osuus2_full),label = 'unemployment')
         ax.plot(x,100*(kokotyo_osuus1_full-kokotyo_osuus2_full),label = 'fulltime work')
@@ -3417,7 +3420,7 @@ class PlotStats():
 
         fig,ax = plt.subplots()
         ax.set_xlabel(self.labels['age'])
-        ax.set_ylabel(self.labels['diff osuuksissa'])
+        ax.set_ylabel(self.labels['diff osuus'])
         ax.plot(x,100*ansiosid_osuus2,ls = ls,label = 'ansiosid. työttömyys, '+label2)
         ax.plot(x,100*ansiosid_osuus1,label = 'ansiosid. työttömyys, '+label1)
         ax.plot(x,100*tm_osuus2,ls = ls,label = 'tm-tuki, '+label2)
@@ -3991,7 +3994,6 @@ class PlotStats():
         print(self.sel_subset(df_htv,3).to_latex())
         print(df_budget)
 
-
     def plot_simstats(self,filename,grayscale = False,figname = None,cc2 = None):
         agg_htv,agg_tyoll,agg_rew,agg_discounted_rew,emp_tyolliset,emp_tyolliset_osuus,\
             emp_tyottomat,emp_tyottomat_osuus,emp_htv,emps,best_rew,\
@@ -4251,7 +4253,6 @@ class PlotStats():
         print(self.sel_subset(dif_budget,2).to_latex())
         print(self.sel_subset(dif_participants,4).to_latex())
         print(self.sel_subset(dif_htv_budget,3).to_latex())
-
 
         if self.minimal:
             print('Työllisyyden keskiarvo {:.0f} htv mediaani {:.0f} htv std {:.0f} htv'.format(mean_htv1,median_htv1,std_htv1))
