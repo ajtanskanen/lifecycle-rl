@@ -52,6 +52,7 @@ class EpisodeStats():
         self.labels = self.lab.get_output_labels(lang)
 
         self.complexmodels = set([4,5,6,7,8,9,104])
+        self.recentmodels = set([6,7,8,9])
 
         print('save_pop',self.save_pop)
         #print('episodestats, lang',lang)
@@ -123,25 +124,25 @@ class EpisodeStats():
 
         self.figformat='pdf'
 
-        self.n_employment=n_emps
-        self.n_time=n_time
-        self.timestep=timestep # 0.25 = 3kk askel
-        self.inv_timestep=round(1/self.timestep) 
-        self.n_pop=n_pop
-        self.year=year
-        self.env=env
-        self.reaalinen_palkkojenkasvu=0.016
-        self.palkkakerroin=(0.8*1+0.2*1.0/(1+self.reaalinen_palkkojenkasvu))**self.timestep
-        self.elakeindeksi=(0.2*1+0.8*1.0/(1+self.reaalinen_palkkojenkasvu))**self.timestep
-        self.dynprog=dynprog
+        self.n_employment = n_emps
+        self.n_time = n_time
+        self.timestep = timestep # 0.25 = 3kk askel
+        self.inv_timestep = round(1/self.timestep) 
+        self.n_pop = n_pop
+        self.year = year
+        self.env = env
+        self.reaalinen_palkkojenkasvu = 0.016
+        self.palkkakerroin = (0.8*1+0.2*1.0/(1+self.reaalinen_palkkojenkasvu))**self.timestep
+        self.elakeindeksi = (0.2*1+0.8*1.0/(1+self.reaalinen_palkkojenkasvu))**self.timestep
+        self.dynprog = dynprog
         self.gini_coef = None
 
         if self.version in set([0,101]):
-            self.n_groups=1
+            self.n_groups = 1
         else:
-            self.n_groups=6
+            self.n_groups = 6
             
-        self.empstats=Empstats(year=self.year,max_age=self.max_age,n_groups=self.n_groups,timestep=self.timestep,n_time=self.n_time,
+        self.empstats = Empstats(year=self.year,max_age=self.max_age,n_groups=self.n_groups,timestep=self.timestep,n_time=self.n_time,
                                 min_age=self.min_age)
         self.init_variables()
         self.set_datetime()
@@ -455,7 +456,7 @@ class EpisodeStats():
             self.pop_predrew = np.append(self.pop_predrew[:,:self.n_pop],cc.pop_predrew[:,:cc.n_pop],axis=1)
             self.stat_pop_diswage5y = np.append(self.stat_pop_diswage5y[:self.n_pop],cc.stat_pop_diswage5y[:cc.n_pop],axis=0)
             self.infostats_pop_puoliso = np.append(self.infostats_pop_puoliso[:,:self.n_pop],cc.infostats_pop_puoliso[:,:cc.n_pop],axis=1)
-            if self.version in set([6,7,8]):
+            if self.version in self.recentmodels:
                 self.infostats_lleft = np.append(self.infostats_lleft[:,:self.n_pop],cc.infostats_lleft[:,:cc.n_pop],axis=1)
 
         self.infostats_poptulot_netto = np.append(self.infostats_poptulot_netto[:,:self.n_pop],cc.infostats_poptulot_netto[:,:cc.n_pop],axis=1)
@@ -2024,7 +2025,7 @@ class EpisodeStats():
             _ = f.create_dataset('infostats_pop_pt_act', data=self.infostats_pop_pt_act,  dtype=ftype,compression="gzip", compression_opts=9)
             _ = f.create_dataset('pop_actions', data=self.pop_actions, dtype = np.int8,compression="gzip", compression_opts=9)
             _ = f.create_dataset('stat_pop_diswage5y', data=self.stat_pop_diswage5y,  dtype=ftype,compression="gzip", compression_opts=9)
-            if self.version in set([6,7,8]):
+            if self.version in self.recentmodels:
                 _ = f.create_dataset('infostats_lleft', data=self.infostats_lleft,  dtype=ftype,compression="gzip", compression_opts=9)
             _ = f.create_dataset('infostats_npv0', data=self.infostats_npv0, dtype=ftype,compression="gzip", compression_opts=9)
             _ = f.create_dataset('infostats_pop_puoliso', data=self.infostats_pop_puoliso, dtype=ftype,compression="gzip", compression_opts=9)
@@ -3302,7 +3303,7 @@ class EpisodeStats():
                 q[self.labels['ovella']] = np.sum(np.sum(self.infostats_ove,axis=1)*scalex)
                 q[self.labels['pareja']] = np.sum(np.sum(self.infostats_puoliso,axis=1)*scalex)/2
         elif self.version in set([7,8,9]):
-            #print('version 7/8')
+            #print('version 7/8/9')
             retage=self.map_age(self.min_retirementage)
             if lkm:
                 if grouped:

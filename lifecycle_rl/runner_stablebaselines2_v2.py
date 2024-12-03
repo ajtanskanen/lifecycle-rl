@@ -61,6 +61,9 @@ class runner_stablebaselines2():
 
         self.version = self.env.get_lc_version()
 
+        # n_add = 2
+        self.model_twoperson = set([4,5,6,7,8,9,104])
+
         self.args={'gamma': gamma, 
               'version': version,
               'tau': 1.0,
@@ -528,7 +531,7 @@ class runner_stablebaselines2():
 
         print('sim_single',rank)
 
-        if args['version'] in set([4,5,6,7,8,104]):  # increase by 2
+        if args['version'] in self.model_twoperson:  # increase by 2
             n_add=2
         else:  # increase by 1
             n_add=1

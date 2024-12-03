@@ -750,13 +750,13 @@ class Empstats():
         htv = 6*52
         htv_tt = 21.5*12
         h_to_v = 1.0 / 1860.0
-
+  	  	  	  	 			
         q={}
         if self.year==2018:
             q[self.labels['työllisiä']]= 4_132_662_000 * h_to_v # yritykset, statfin
-            q[self.labels['työikäisiä 18-62']]= 3_108_968 # väestörakenne, statfin, 18-62
+            q[self.labels['työikäisiä 18-62']]= 2_303_999 # TK työssäkäynti, statfin, 18-62
             q[self.labels['työssä ja eläkkeellä']]=np.nan #31_000 # ETK 2020
-            q[self.labels['työssä 63+']]=np.nan #69_669 # TK työssäkäynti
+            q[self.labels['työssä 63+']]=69_669 # TK työssäkäynti
             q[self.labels['palkansaajia']]= self.get_tyotulosumma(self.year)/3465/12.5 # 3_508_270_000 * h_to_v # yritykset, statfin
             q[self.labels['ansiosidonnaisella']]=(31_269_904+7_553_200)/htv_tt  # Kelan tilasto 31.12.2018
             q[self.labels['tmtuella']]=49_880_321/htv_tt   # Kelan tilasto 31.12.2018
@@ -767,9 +767,9 @@ class Empstats():
             #q[self.labels['pareja']]=0
         elif self.year==2019:
             q[self.labels['työllisiä']]= 4_141_593_000 * h_to_v # yritykset, statfin
-            q[self.labels['työikäisiä 18-62']]= 3_098_900 # väestörakenne, statfin, 18-62
+            q[self.labels['työikäisiä 18-62']]= 2_290_170 # TK työssäkäynti, statfin, 18-62
             q[self.labels['työssä ja eläkkeellä']]=np.nan #31_000 # ETK 2020
-            q[self.labels['työssä 63+']]=np.nan #83_356 # TK työssäkäynti
+            q[self.labels['työssä 63+']]=83_356 # TK työssäkäynti
             q[self.labels['palkansaajia']]= self.get_tyotulosumma(self.year)/3527/12.5 # 3_512_025_000 * h_to_v  # Kelan tilasto 31.12.2018
             q[self.labels['ansiosidonnaisella']]=(27_858_120+6_972_312)/htv_tt  # Kelan tilasto 31.12.2018
             q[self.labels['tmtuella']]=48_454_665/htv_tt   # Kelan tilasto 31.12.2019
@@ -780,9 +780,9 @@ class Empstats():
             #q[self.labels['pareja']]=0
         elif self.year==2020:
             q[self.labels['työllisiä']]= 4_062_562_000 * h_to_v # yritykset, statfin
-            q[self.labels['työikäisiä 18-62']]= 3_091_864 # väestörakenne, statfin, 18-62
+            q[self.labels['työikäisiä 18-62']]= 2_194_254  # TK työssäkäynti, statfin, 18-62
             q[self.labels['työssä ja eläkkeellä']]=np.nan #31_000 # ETK 2020
-            q[self.labels['työssä 63+']]=np.nan #90_419 # TK työssäkäynti
+            q[self.labels['työssä 63+']]=90_419 # TK työssäkäynti
             q[self.labels['palkansaajia']]= self.get_tyotulosumma(self.year)/3653/12.5 # 3_459_030_000 * h_to_v #
             q[self.labels['ansiosidonnaisella']]=(40_448_224+12_425_099)/htv_tt  # Kelan tilasto 31.12.2018
             q[self.labels['tmtuella']]=52_449_825/htv_tt   # Kelan tilasto 31.12.2020
@@ -793,9 +793,9 @@ class Empstats():
             #q[self.labels['pareja']]=0
         elif self.year==2021:
             q[self.labels['työllisiä']]= 4_062_562_000 * h_to_v # yritykset, statfin
-            q[self.labels['työikäisiä 18-62']]= 3_094_252 # väestörakenne, statfin, 18-62
+            q[self.labels['työikäisiä 18-62']]=  2_282_158  # TK työssäkäynti, statfin, 18-62
             q[self.labels['työssä ja eläkkeellä']]=np.nan #31_000 # ETK 2020
-            q[self.labels['työssä 63+']]=np.nan #94_968 # TK työssäkäynti
+            q[self.labels['työssä 63+']]=94_968 # TK työssäkäynti
             q[self.labels['palkansaajia']]= self.get_tyotulosumma(self.year)/3738/12.5 # 3_459_030_000 * h_to_v #
             q[self.labels['ansiosidonnaisella']]=(37_549_237+7_553_200)/htv_tt  # Kelan tilasto 31.12.2018
             q[self.labels['tmtuella']]=49_613_125/htv_tt   # Kelan tilasto 31.12.2021
@@ -806,9 +806,9 @@ class Empstats():
             q[self.labels['pareja']]=0
         elif self.year==2022:
             q[self.labels['työllisiä']]= 4_062_562_000 * h_to_v # yritykset, statfin
-            q[self.labels['työikäisiä 18-62']]= 3_104_846 # väestörakenne, statfin, 18-62
+            q[self.labels['työikäisiä 18-62']]= 2_320_154  # TK työssäkäynti, statfin, 18-62
             q[self.labels['työssä ja eläkkeellä']]=np.nan #31_000 # ETK 2020
-            q[self.labels['työssä 63+']]=np.nan #103_394 # TK työssäkäynti
+            q[self.labels['työssä 63+']]=103_394 # TK työssäkäynti
             q[self.labels['palkansaajia']]= self.get_tyotulosumma(self.year)/3848/12.5 # 3_459_030_000 * h_to_v #
             q[self.labels['ansiosidonnaisella']]=(30_676_200+11_611_154)/htv_tt  # Kelan tilasto 31.12.2018
             q[self.labels['tmtuella']]=49_880_300/htv_tt   # Kelan tilasto 31.12.2018
@@ -819,9 +819,9 @@ class Empstats():
             #q[self.labels['pareja']]=0
         elif self.year==2023:
             q[self.labels['työllisiä']]= 4_062_562_000 * h_to_v # yritykset, statfin, 2022
-            q[self.labels['työikäisiä 18-62']]= 3_131_296 # väestörakenne, statfin, 18-62
+            q[self.labels['työikäisiä 18-62']]= 2_320_154 # TK työssäkäynti, statfin, 18-62
             q[self.labels['työssä ja eläkkeellä']]=np.nan #31_000 # ETK 2020
-            q[self.labels['työssä 63+']]= np.nan #103_394 # TK työssäkäynti
+            q[self.labels['työssä 63+']]= 103_394 # TK työssäkäynti
             q[self.labels['palkansaajia']]= self.get_tyotulosumma(self.year)/(3848*1.03)/12.5 # 3_459_030_000 * h_to_v #
             q[self.labels['ansiosidonnaisella']]=(30_676_200+7_553_200)/htv_tt  # Kelan tilasto 31.12.2018
             q[self.labels['tmtuella']]=49_880_300/htv_tt   # Kelan tilasto 31.12.2018
@@ -832,9 +832,22 @@ class Empstats():
             #q[self.labels['pareja']]=0
         elif self.year==2024: # päivitä
             q[self.labels['työllisiä']]= 4_062_562_000 * h_to_v # yritykset, statfin, 2022
-            q[self.labels['työikäisiä 18-62']]= 3_131_296 # väestörakenne, statfin, 18-62
+            q[self.labels['työikäisiä 18-62']]= 2_320_154 # väestörakenne, statfin, 18-62
             q[self.labels['työssä ja eläkkeellä']]=np.nan #31_000 # ETK 2020
-            q[self.labels['työssä 63+']]=np.nan #103_394 # TK työssäkäynti
+            q[self.labels['työssä 63+']]=103_394 # TK työssäkäynti
+            q[self.labels['palkansaajia']]= self.get_tyotulosumma(self.year)/(3848*1.03*1.01)/12.5 # 3_459_030_000 * h_to_v #
+            q[self.labels['ansiosidonnaisella']]=(30_676_200+7_553_200)/htv_tt  # Kelan tilasto 31.12.2018
+            q[self.labels['tmtuella']]=49_880_300/htv_tt   # Kelan tilasto 31.12.2018
+            q[self.labels['työkyvyttömyyseläke']]=185_991  
+            q[self.labels['isyysvapaalla']]=1_424_000/htv # Kelan tilasto 2018
+            q[self.labels['kotihoidontuella']]=np.nan #42_042  # saajia Kelan tilasto 2018
+            q[self.labels['vanhempainvapaalla']]=12_571_400/htv  # Kelan tilasto 2018, äideille
+            #q['pareja']]=0
+        elif self.year==2025: # päivitä
+            q[self.labels['työllisiä']]= 4_062_562_000 * h_to_v # yritykset, statfin, 2022
+            q[self.labels['työikäisiä 18-62']]= 2_320_154 # väestörakenne, statfin, 18-62
+            q[self.labels['työssä ja eläkkeellä']]=np.nan #31_000 # ETK 2020
+            q[self.labels['työssä 63+']]=103_394 # TK työssäkäynti
             q[self.labels['palkansaajia']]= self.get_tyotulosumma(self.year)/(3848*1.03*1.01)/12.5 # 3_459_030_000 * h_to_v #
             q[self.labels['ansiosidonnaisella']]=(30_676_200+7_553_200)/htv_tt  # Kelan tilasto 31.12.2018
             q[self.labels['tmtuella']]=49_880_300/htv_tt   # Kelan tilasto 31.12.2018
