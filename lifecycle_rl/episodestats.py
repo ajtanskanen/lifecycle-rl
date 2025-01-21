@@ -3324,12 +3324,15 @@ class EpisodeStats():
                 q[self.labels['yhteensä']] = aikuisia + lapsia
                 q[self.labels['aikuisia']] = aikuisia
                 q[self.labels['lapsia']] = lapsia
-            q[self.labels['työikäisiä 18-62']] = työikäisiä
+                q[self.labels['työikäisiä 18-62']] = työikäisiä
+            else:
+                q[self.labels['työllisiä 18-62']] = työikäisiä
             q[self.labels['työllisiä']] = np.sum((emp[:,1]+emp[:,10]+emp[:,8]+emp[:,9])*scalex)
             q[self.labels['työssä 63+']] = np.sum(np.sum(emp[self.map_age(63):,[1,9]],axis=1)*scalex_lkm[self.map_age(63):])+np.sum(np.sum(emp[self.map_age(63):,[8,10]],axis=1)*scalex_lkm[self.map_age(63):])
             q[self.labels['työssä ja eläkkeellä']] = np.sum(emp[:,8]*scalex_lkm)+np.sum(emp[:,9]*scalex_lkm)
-            q[self.labels['eläkkeellä']] = eläkkeellä + np.sum(emp[:retage,3]*scalex_lkm[:retage])
-            q[self.labels['vanhuuseläkkeellä']] = eläkkeellä
+            if lkm:
+                q[self.labels['eläkkeellä']] = eläkkeellä + np.sum(emp[:retage,3]*scalex_lkm[:retage])
+                q[self.labels['vanhuuseläkkeellä']] = eläkkeellä
 
             if include_retwork:
                 q[self.labels['palkansaajia']] = np.sum((emp[:,1]+emp[:,10]+emp[:,8]+emp[:,9])*scalex)
@@ -3338,16 +3341,17 @@ class EpisodeStats():
 
             q[self.labels['osaaikatyössä']] = np.sum((emp[:,8]+emp[:,10])*scalex_lkm)
             q[self.labels['kokoaikatyössä']] = np.sum((emp[:,1]+emp[:,9])*scalex_lkm)
-            q[self.labels['ansiosidonnaisella']] = np.sum((emp[:,0]+emp[:,4])*scalex_lkm)
-            q[self.labels['tmtuella']] = np.sum(emp[:,13]*scalex_lkm)
-            q[self.labels['isyysvapaalla']] = np.sum(emp[:,6]*scalex_lkm)
-            q[self.labels['kotihoidontuella']] = np.sum(emp[:,7]*scalex_lkm)
-            q[self.labels['työkyvyttömyyseläke']] = np.sum(emp[:retage,3]*scalex_lkm[:retage])
-            q[self.labels['svpäiväraha']] = np.sum(emp[:,14]*scalex_lkm)
-            q[self.labels['vanhempainvapaalla']] = np.sum(emp[:,5]*scalex_lkm)
-            q[self.labels['opiskelijoita']] = np.sum((emp[:,12]+emp[:,16])*scalex_lkm)
-            q[self.labels['ovella']] = np.sum(np.sum(self.infostats_ove,axis=1)*scalex)
-            q[self.labels['pareja']] = np.sum(np.sum(self.infostats_puoliso,axis=1)*scalex)/2            
+            if lkm:
+                q[self.labels['ansiosidonnaisella']] = np.sum((emp[:,0]+emp[:,4])*scalex_lkm)
+                q[self.labels['tmtuella']] = np.sum(emp[:,13]*scalex_lkm)
+                q[self.labels['isyysvapaalla']] = np.sum(emp[:,6]*scalex_lkm)
+                q[self.labels['kotihoidontuella']] = np.sum(emp[:,7]*scalex_lkm)
+                q[self.labels['työkyvyttömyyseläke']] = np.sum(emp[:retage,3]*scalex_lkm[:retage])
+                q[self.labels['svpäiväraha']] = np.sum(emp[:,14]*scalex_lkm)
+                q[self.labels['vanhempainvapaalla']] = np.sum(emp[:,5]*scalex_lkm)
+                q[self.labels['opiskelijoita']] = np.sum((emp[:,12]+emp[:,16])*scalex_lkm)
+                q[self.labels['ovella']] = np.sum(np.sum(self.infostats_ove,axis=1)*scalex)
+                q[self.labels['pareja']] = np.sum(np.sum(self.infostats_puoliso,axis=1)*scalex)/2            
         else:
             q[self.labels['yhteensä']] = np.sum(np.sum(self.empstate[:,:],1)*scalex)
             q[self.labels['palkansaajia']] = np.sum((self.empstate[:,1])*scalex)

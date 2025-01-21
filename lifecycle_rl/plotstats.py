@@ -168,13 +168,13 @@ class PlotStats():
             df[cctext+' (py)'] = df2[cctext+' (py)']
             df['diff (py)'] = df['estimate (py)']-df[cctext+' (py)']
 
-            print('Henkilövuosia tiloissa skaalattuna väestötasolle henkilövuosina')
+            print('Henkilövuosia töissä väestötasolla')
             print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))
 
             df = df4.copy()
             df[cctext+' (#)'] = df5[cctext+' (#)']
             df['diff (#)'] = df['estimate (#)']-df[cctext+' (#)']
-            print('Henkilöiden lkm tiloissa skaalattuna väestötasolle (keskeneräinen)')
+            print('Henkilöiden lkm tiloissa väestötasolla')
             print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))
         else:
             q = self.episodestats.comp_participants(scale = True)
