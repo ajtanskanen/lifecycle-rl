@@ -595,26 +595,45 @@ class SimStats(EpisodeStats):
             _ = f.create_dataset('n', data=n, dtype=ftype)
             f.close()
 
-    def plot_agg_emtr(self,ben,loadfile,baseloadfile=None,figname=None,label=None,baselabel=None):
-        f = h5py.File(loadfile, 'r')
-        netto=f['netto'][()]
-        eff=f['eff'][()]
-        tva=f['tva'][()]
-        osa_tva=f['osa_tva'][()]
-        min_salary=f['min_salary'][()]
-        max_salary=f['max_salary'][()]
-        salary=f['salary'][()]
-        n=f['n'][()]
-        f.close()
+    # def plot_agg_emtr(self,ben,loadfile,baseloadfile=None,figname=None,label=None,baselabel=None):
+    #     f = h5py.File(loadfile, 'r')
+    #     netto=f['netto'][()]
+    #     eff=f['eff'][()]
+    #     tva=f['tva'][()]
+    #     osa_tva=f['osa_tva'][()]
+    #     min_salary=f['min_salary'][()]
+    #     max_salary=f['max_salary'][()]
+    #     salary=f['salary'][()]
+    #     n=f['n'][()]
+    #     f.close()
         
-        basic_marg=fin_benefits.Marginals(ben,year=self.year)
+    #     basic_marg=fin_benefits.Marginals(ben,year=self.year)
 
-        if baseloadfile is not None:
-            f = h5py.File(baseloadfile, 'r')
-            basenetto=f['netto'][()]
-            baseeff=f['eff'][()]
-            basetva=f['tva'][()]
-            baseosatva=f['osa_tva'][()]
-            f.close()        
+    #     if baseloadfile is not None:
+    #         f = h5py.File(baseloadfile, 'r')
+    #         basenetto=f['netto'][()]
+    #         baseeff=f['eff'][()]
+    #         basetva=f['tva'][()]
+    #         baseosatva=f['osa_tva'][()]
+    #         f.close()        
 
-        plt.hist(eff)
+    #     plt.hist(eff)
+
+    def comp_elasticity(self,x,y,diff=False):
+        xl=x.shape[0]
+        yl=x.shape[0]    
+        el=np.zeros((xl-2,1))
+        elx=np.zeros((xl-2,1))
+    
+        for k in range(1,xl-1):
+            if diff:
+                dx=(-x[k+1]+x[k-1])/(2*x[k])
+            else:
+                dx=-x[k+1]+x[k-1]
+            dy=(y[k+1]-y[k-1])/(2*y[k])
+            el[k-1]=dy/dx
+            elx[k-1]=x[k]
+            
+            #print('{}: {} vs {}'.format(k,(x[k]-x[k-1]),dy))
+        
+        return el,elx        
