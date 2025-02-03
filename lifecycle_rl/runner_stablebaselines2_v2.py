@@ -60,6 +60,7 @@ class runner_stablebaselines2():
         self.save_pop = gym_kwargs['save_pop']
 
         self.version = self.env.get_lc_version()
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
         # n_add = 2
         self.model_twoperson = set([4,5,6,7,8,9,104])
