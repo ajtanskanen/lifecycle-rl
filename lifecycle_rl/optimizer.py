@@ -6,11 +6,11 @@ The aim is to reproduce employment rate at each age
 
 '''
 
-from bayes_opt import BayesianOptimization
-from bayes_opt import UtilityFunction
-from bayes_opt.logger import JSONLogger
-from bayes_opt.util import load_logs
-from bayes_opt.event import Events
+#from bayes_opt import BayesianOptimization
+#from bayes_opt import UtilityFunction
+#from bayes_opt.logger import JSONLogger
+#from bayes_opt.util import load_logs
+#from bayes_opt.event import Events
 from pathlib import Path
 from os import path
 import numpy as np

@@ -4,4 +4,7 @@ numpy
 gym_unemployment
 numpy_financial
 tabulate
-bayesian-optimization
+pandas
+tqdm
+seaborn
+matplotlib
