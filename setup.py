@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(name='lifecycle_rl',
 	version='2.0.0',
-	install_requires=['gym','fin_benefits','numpy','gym_unemployment','numpy_financial','tabulate','pandas','tqdm','seaborn','matplotlib','ipython','celluloid'], #And any other dependencies required 'bayesian-optimization',
+	install_requires=['tensorflow==1.15.0','gym==0.21.0','fin_benefits','numpy','gym_unemployment','numpy_financial','tabulate','pandas','tqdm','seaborn','matplotlib','ipython','celluloid'], #And any other dependencies required 'bayesian-optimization',
 	packages=setuptools.find_packages(),	
     # metadata to display on PyPI
     author="Antti J. Tanskanen",

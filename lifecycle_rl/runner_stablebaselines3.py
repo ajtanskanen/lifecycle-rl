@@ -9,7 +9,7 @@ Initial implementation. Works but needs improvement, e.g., no lr_schedule or lea
 
 import gym, numpy as np
 from stable_baselines3.common.vec_env import SubprocVecEnv,DummyVecEnv
-from stable_baselines3 import A2C, DQN, PPO#, ACKTR
+from stable_baselines3 import ACKTR, A2C, DQN, PPO#, ACKTR
 from stable_baselines3.common.env_checker  import check_env as env_checker_check_env
 #from stable_baselines3.bench import Monitor
 #from stable_baselines3.results_plotter import load_results, ts2xy
