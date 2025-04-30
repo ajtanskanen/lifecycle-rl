@@ -54,7 +54,7 @@ class EpisodeStats():
         self.complexmodels = set([4,5,6,7,8,9,104])
         self.recentmodels = set([6,7,8,9])
 
-        print('save_pop',self.save_pop)
+        #print('save_pop',self.save_pop)
         #print('episodestats, lang',lang)
 
         if self.parttime_actions is not None:
@@ -2700,11 +2700,15 @@ class EpisodeStats():
         '''
         Computes the sum of actually paid wages either by groups or as an aggregate
         '''
-        if not self.save_pop:
-            print('test_salaries: not enough data (save_pop=False)')
-            return
-
         demog2=self.empstats.get_demog()
+
+        if not self.save_pop:
+            if grouped:
+                print('comp_palkkasumma: not enough data for exact grouping (save_pop=False)')
+                return
+            else:
+                scalex=demog2/self.alive
+                return np.sum(self.infostats_palkkatulo*scalex)
 
         if scale_time:
             scale=self.timestep

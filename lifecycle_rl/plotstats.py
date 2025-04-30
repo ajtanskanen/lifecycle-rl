@@ -990,7 +990,7 @@ class PlotStats():
             plt.legend()
             plt.show()
 
-        if not self.save_pop:
+        if not self.episodestats.save_pop:
             print('test_salaries: not enough data (save_pop = False)')
             return
 
@@ -2729,7 +2729,7 @@ class PlotStats():
         Tuloksiin lisättävä inflaatio+palkkojen reaalikasvu = palkkojen nimellinen kasvu
         '''
         
-        if not self.save_pop:
+        if not self.episodestats.save_pop:
             print('test_salaries: not enough data (save_pop = False)')
             return
 

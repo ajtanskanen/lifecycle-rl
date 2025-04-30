@@ -206,21 +206,25 @@ class Lifecycle():
             self.use_sb2=True
 
         if self.runner_sac:
-            print("runner SAC")
+            if not self.silent:
+                print("runner SAC")
             #self.runner=runner_SAC("Q"+self.environment,self.gamma,self.timestep,self.n_time,self.n_pop,
             #     self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year,self.episodestats,self.gym_kwargs,self.version)
             self.runner=runner_SAC(self.environment,self.gamma,self.timestep,self.n_time,self.n_pop,
                  self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year,self.episodestats,self.gym_kwargs,self.version)
         elif self.use_standalone:
-            print("runner standalone")
+            if not self.silent:
+                print("runner standalone")
             self.runner=runner_standalone(self.environment,self.gamma,self.timestep,self.n_time,self.n_pop,
                  self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year,self.episodestats,self.gym_kwargs,self.version,self.processes)
         elif self.use_sb3:
-            print("runner SB3")
+            if not self.silent:
+                print("runner SB3")
             self.runner=runner_stablebaselines3(self.environment,self.gamma,self.timestep,self.n_time,self.n_pop,
                  self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year,self.episodestats,self.gym_kwargs,self.version)
         else:
-            print("runner SB2")
+            if not self.silent:
+                print("runner SB2")
             self.runner=runner_stablebaselines2(self.environment,self.gamma,self.timestep,self.n_time,self.n_pop,
                  self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year,self.episodestats,self.gym_kwargs,self.version,self.processes)
         

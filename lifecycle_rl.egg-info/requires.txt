@@ -1,4 +1,5 @@
-gym
+tensorflow==1.15.0
+gym==0.21.0
 fin_benefits
 numpy
 gym_unemployment
@@ -8,3 +9,5 @@ pandas
 tqdm
 seaborn
 matplotlib
+ipython
+celluloid
