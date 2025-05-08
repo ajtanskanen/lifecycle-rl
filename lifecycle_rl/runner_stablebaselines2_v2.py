@@ -666,3 +666,7 @@ class runner_stablebaselines2():
             base.save_sim(args['simfile']+'_combined')
         else:
             base.save_sim(results+'_combined')
+
+        # remove rank files
+        for k in range(0,self.args['processes']):
+            os.remove(save+str(k))

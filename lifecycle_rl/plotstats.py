@@ -3922,13 +3922,15 @@ class PlotStats():
         if subset==0:
             list_ben=['tyottomyyspvraha','ansiopvraha','peruspvraha','asumistuki','tyoelakemeno','kansanelakemeno','takuuelakemeno','elatustuki','lapsilisa','opintotuki','isyyspaivaraha','aitiyspaivaraha','kotihoidontuki','sairauspaivaraha','toimeentulotuki','etuusmeno']
         elif subset==1:
-            list_ben=['tyotulosumma','etuusmeno','valtionvero','kunnallisvero','ptel','tyottomyysvakuutusmaksu','tyoelakemaksu','sairausvakuutusmaksu','pvhoitomaksu','ylevero','ta_maksut','verot+maksut','verotettava etuusmeno','alv','verot+maksut+alv','muut tulot']
+            list_ben=['etuusmeno','valtionvero','kunnallisvero','ptel','tyottomyysvakuutusmaksu','tyoelakemaksu','sairausvakuutusmaksu','pvhoitomaksu','ylevero','ta_maksut','verot+maksut','alv','verot+maksut+alv','julkinen talous, netto']
         elif subset==2:
-            list_ben=['tyotulosumma','nettotulot','tyotulosumma osa-aika','tyotulosumma kokoaika','valtionvero','kunnallisvero','ptel','tyottomyysvakuutusmaksu','tyoelakemaksu','sairausvakuutusmaksu','pvhoitomaksu','ylevero','ta_maksut','verot+maksut','verotettava etuusmeno','alv','verot+maksut+alv','muut tulot']
+            list_ben=['tyotulosumma','nettotulot','tyotulosumma osa-aika','tyotulosumma kokoaika','valtionvero','kunnallisvero','ptel','tyottomyysvakuutusmaksu','tyoelakemaksu','sairausvakuutusmaksu','pvhoitomaksu','ylevero','ta_maksut','verot+maksut','verotettava etuusmeno','alv','verot+maksut+alv']
         elif subset==3:
-            list_ben=['työssä 63+','työssä ja eläkkeellä','työikäisiä 18-62','työllisiä','ovella','osaaikatyössä','kokoaikatyössä']
+            list_ben=['työssä 63+','työssä ja eläkkeellä','työikäisiä 18-62','työllisiä','osaaikatyössä','kokoaikatyössä'] # 'ovella'
         elif subset==4:
-            list_ben=['yhteensä','työllisiä','osaaikatyössä','kokoaikatyössä','työssä 63+','työssä ja eläkkeellä','työikäisiä 18-62','ovella']
+            list_ben=['yhteensä','työllisiä','osaaikatyössä','kokoaikatyössä','työssä 63+','työssä ja eläkkeellä','työikäisiä 18-62'] # 'ovella'
+        elif subset==5:
+            list_ben=['tyotulosumma','tyotulosumma osa-aika','tyotulosumma kokoaika','etuusmeno','verot+maksut+alv','nettotulot']
         list_ben_eng=[self.output_labels[x] for x in list_ben]
         df2 = df.loc[list_ben_eng]
         df2 = df2.style.format(decimal='.', thousands=',', precision=0)
@@ -3990,6 +3992,7 @@ class PlotStats():
         
         print(self.sel_subset(df_budget,0).to_latex())
         print(self.sel_subset(df_budget,2).to_latex())
+        print(self.sel_subset(df_budget,5).to_latex())
         print(self.sel_subset(df_lkm,4).to_latex())
         print(self.sel_subset(df_htv,3).to_latex())
         print(df_budget)
@@ -4251,6 +4254,7 @@ class PlotStats():
         print(self.sel_subset(dif_budget,0).to_latex())
         print(self.sel_subset(dif_budget,1).to_latex())
         print(self.sel_subset(dif_budget,2).to_latex())
+        print(self.sel_subset(dif_budget,5).to_latex())
         print(self.sel_subset(dif_participants,4).to_latex())
         print(self.sel_subset(dif_htv_budget,3).to_latex())
 
