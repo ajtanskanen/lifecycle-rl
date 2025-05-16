@@ -3242,8 +3242,8 @@ class PlotStats():
         self.plot_wage_reduction_compare(cc2,label1=label1,label2=label2)
 
         if self.episodestats.save_pop:
-            rew1 = self.episodestats.comp_total_reward(output = False,discounted = True)
-            rew2 = cc2.episodestats.comp_total_reward(output = False,discounted = True)
+            rew1 = self.episodestats.comp_total_reward(discounted = True)
+            rew2 = cc2.episodestats.comp_total_reward(discounted = True)
             net1,eqnet1 = self.episodestats.comp_total_netincome()
             net2,eqnet2 = cc2.episodestats.comp_total_netincome()
 

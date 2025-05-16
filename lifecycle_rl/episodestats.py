@@ -255,6 +255,8 @@ class EpisodeStats():
             
         self.infostats_pt_act = np.zeros((self.n_time,n_emps,self.n_groups,3),dtype = np.int64)
         self.infostats_puoliso = np.zeros((self.n_time,n_emps),dtype = np.int64)
+        self.infostats_yksinhuoltaja = np.zeros((self.n_time,1),dtype = np.int64)
+        self.infostats_lapsiperheita = np.zeros((self.n_time,1),dtype = np.int64)
         self.infostats_sairausvakuutus = np.zeros((self.n_time,1))
         self.infostats_pvhoitomaksu = np.zeros((self.n_time,1),dtype=float)
         self.infostats_ylevero = np.zeros((self.n_time,1))
@@ -481,6 +483,8 @@ class EpisodeStats():
         if self.version in self.complexmodels:
             self.actions += cc.actions
             self.infostats_puoliso += cc.infostats_puoliso
+            self.infostats_yksinhuoltaja += cc.infostats_yksinhuoltaja
+            self.infostats_lapsiperheita += cc.infostats_lapsiperheita
         else:
             self.actions += cc.actions
 
@@ -1381,6 +1385,11 @@ class EpisodeStats():
                 self.infostats_ove[t,newemp] += ove
                 self.infostats_ove_g[t,newemp,g] += ove
                 self.infostats_puoliso[t,newemp] += puoliso
+                if c18>0 and puoliso<1 and p_tila == 15: # mies yksinhuoltaja, jos puoliso kuollut
+                    self.infostats_yksinhuoltaja[t] += 1
+                    self.infostats_lapsiperheita[t] += 1
+                elif c18>0 and puoliso>0:
+                    self.infostats_lapsiperheita[t] += 1
 
                 if q is not None:
                     self.add_taxes(t,q,newemp,n,g,person='omat_')
@@ -1419,6 +1428,12 @@ class EpisodeStats():
                 self.infostats_ove[t,p_tila] += p_ove
                 self.infostats_ove_g[t,p_tila,p_g] += p_ove
                 self.infostats_puoliso[t,p_tila] += puoliso
+                if c18>0 and puoliso<1:
+                    self.infostats_yksinhuoltaja[t] += 1
+                    self.infostats_lapsiperheita[t] += 1
+                elif c18>0 and newemp==15:
+                    self.infostats_lapsiperheita[t] += 1
+
                 if q is not None:
                     self.add_taxes(t,q,p_tila,n+1,p_g,person='puoliso_')
                 
@@ -1549,6 +1564,11 @@ class EpisodeStats():
                 self.infostats_ove[t,newemp] += ove
                 self.infostats_ove_g[t,newemp,g] += ove
                 self.infostats_puoliso[t,newemp] += puoliso
+                if c18>0 and puoliso<1 and p_tila == 15: # mies yksinhuoltaja, jos puoliso kuollut
+                    self.infostats_yksinhuoltaja[t] += 1
+                    self.infostats_lapsiperheita[t] += 1
+                elif c18>0 and puoliso>0:
+                    self.infostats_lapsiperheita[t] += 1
 
                 if q is not None:
                     self.add_taxes(t,q,newemp,n,g,person='omat_')
@@ -1587,6 +1607,12 @@ class EpisodeStats():
                 self.infostats_ove[t,p_tila] += p_ove
                 self.infostats_ove_g[t,p_tila,p_g] += p_ove
                 self.infostats_puoliso[t,p_tila] += puoliso
+                if c18>0 and puoliso<1:
+                    self.infostats_yksinhuoltaja[t] += 1
+                    self.infostats_lapsiperheita[t] += 1
+                elif c18>0 and newemp==15:
+                    self.infostats_lapsiperheita[t] += 1
+
                 if q is not None:
                     self.add_taxes(t,q,p_tila,n+1,p_g,person='puoliso_')
                 
@@ -2054,6 +2080,8 @@ class EpisodeStats():
 
         if self.version in self.complexmodels:
             _ = f.create_dataset('infostats_puoliso', data=self.infostats_puoliso,  dtype=ftype,compression="gzip", compression_opts=9)
+            _ = f.create_dataset('infostats_yksinhuoltaja', data=self.infostats_yksinhuoltaja,  dtype=ftype,compression="gzip", compression_opts=9)
+            _ = f.create_dataset('infostats_lapsiperheita', data=self.infostats_lapsiperheita,  dtype=ftype,compression="gzip", compression_opts=9)
 
         if self.version in set([5,6,7,8,9]):
             _ = f.create_dataset('infostats_pt_act', data=self.infostats_pt_act,  dtype=int,compression="gzip", compression_opts=9)
@@ -2288,6 +2316,10 @@ class EpisodeStats():
         if 'infostats_puoliso' in f.keys():
             self.infostats_puoliso=f['infostats_puoliso'][()]
 
+        if 'infostats_yksinhuoltaja' in f.keys():
+            self.infostats_yksinhuoltaja=f['infostats_yksinhuoltaja'][()]
+            self.infostats_lapsiperheita=f['infostats_lapsiperheita'][()]
+
         if 'infostats_ove' in f.keys():
             self.infostats_ove=f['infostats_ove'][()]
         if 'infostats_ove_g' in f.keys():
@@ -2441,7 +2473,7 @@ class EpisodeStats():
         q[self.labels['takuuelakemeno']] = q[self.labels['kokoelakemeno']]-q[self.labels['tyoelakemeno']]-q[self.labels['kansanelakemeno']]
         #q[self.labels['takuuelakemeno_v2']] = np.sum(self.infostats_takuuelake*scalex)
         q[self.labels['elatustuki']] = np.sum(self.infostats_elatustuki*scalex)
-        q[self.labels['lapsilisa']] = np.sum(self.infostats_lapsilisa*scalex)
+        q[self.labels['lapsilisa']] = np.sum(self.infostats_lapsilisa*scalex) #*17/18 skaalaus korjaisi sen, että lapsilisää maksetaan liian pitkään mallissa (FIXME)
         q[self.labels['tyoelakemaksu']] = np.sum(self.infostats_tyelpremium*scalex)
         #q[self.labels['tyoelake_maksettu']] = np.sum(self.infostats_paid_tyel_pension*scalex)
         q[self.labels['opintotuki']] = np.sum(self.infostats_opintotuki*scalex)
@@ -3356,6 +3388,8 @@ class EpisodeStats():
                 q[self.labels['opiskelijoita']] = np.sum((emp[:,12]+emp[:,16])*scalex_lkm)
                 q[self.labels['ovella']] = np.sum(np.sum(self.infostats_ove,axis=1)*scalex)
                 q[self.labels['pareja']] = np.sum(np.sum(self.infostats_puoliso,axis=1)*scalex)/2            
+                q[self.labels['yksinhuoltajia']] = np.sum(np.sum(self.infostats_yksinhuoltaja,axis=1)*scalex)
+                q[self.labels['lapsiperheitä']] = np.sum(np.sum(self.infostats_lapsiperheita,axis=1)*scalex)
         else:
             q[self.labels['yhteensä']] = np.sum(np.sum(self.empstate[:,:],1)*scalex)
             q[self.labels['palkansaajia']] = np.sum((self.empstate[:,1])*scalex)

@@ -1118,6 +1118,7 @@ class Empstats():
             q[self.labels['ovella']]=39_000
             q[self.labels['pareja']]=1_280_698
             q[self.labels['lapsiperheitä']]=561965
+            q[self.labels['yksinhuoltajia']] = 186_180 
         elif self.year==2019:
             aikuisia = np.sum(np.sum(demog2))*self.timestep
             lapsia = 1_049_057
@@ -1138,6 +1139,7 @@ class Empstats():
             q[self.labels['ovella']]=39_000
             q[self.labels['pareja']]=1278825
             q[self.labels['lapsiperheitä']]=558302
+            q[self.labels['yksinhuoltajia']] =  186_773  
         elif self.year==2020:
             aikuisia = np.sum(np.sum(demog2))*self.timestep
             lapsia = 1_041_526
@@ -1159,6 +1161,7 @@ class Empstats():
             q[self.labels['ovella']]=39_000
             q[self.labels['pareja']]=1279182
             q[self.labels['lapsiperheitä']]=556052
+            q[self.labels['yksinhuoltajia']] =   186_692   
         elif self.year==2021:
             aikuisia = np.sum(np.sum(demog2))*self.timestep
             lapsia = 1_035_517
@@ -1180,6 +1183,7 @@ class Empstats():
             q[self.labels['ovella']]=39_000
             q[self.labels['pareja']]=1278528
             q[self.labels['lapsiperheitä']]=553613
+            q[self.labels['yksinhuoltajia']] =   185_620   
         elif self.year==2022:
             aikuisia = np.sum(np.sum(demog2))*self.timestep
             lapsia = 1_026_192
@@ -1201,6 +1205,7 @@ class Empstats():
             q[self.labels['ovella']]=39_000
             q[self.labels['pareja']]=1276202
             q[self.labels['lapsiperheitä']]=552034
+            q[self.labels['yksinhuoltajia']] =   186_639   
         elif self.year==2023:
             aikuisia = np.sum(np.sum(demog2))*self.timestep
             lapsia = 1_022_205
@@ -1222,6 +1227,7 @@ class Empstats():
             q[self.labels['ovella']]=39_000
             q[self.labels['pareja']]=1276202
             q[self.labels['lapsiperheitä']]=552034
+            q[self.labels['yksinhuoltajia']] =   188_866   
         elif self.year==2024: # päivitä
             aikuisia = np.sum(np.sum(demog2))*self.timestep
             lapsia = 1_022_205  # v2023
@@ -1243,6 +1249,7 @@ class Empstats():
             q[self.labels['ovella']]=39_000
             q[self.labels['pareja']]=1276202
             q[self.labels['lapsiperheitä']]=552034
+            q[self.labels['yksinhuoltajia']] =   188_866   
         elif self.year==2025: # päivitä
             aikuisia = np.sum(np.sum(demog2))*self.timestep
             lapsia = 1_022_205  # v2023
@@ -1264,6 +1271,7 @@ class Empstats():
             q[self.labels['ovella']]=39_000
             q[self.labels['pareja']]=1276202
             q[self.labels['lapsiperheitä']]=552034
+            q[self.labels['yksinhuoltajia']] =   188_866   
         elif self.year==2026: # päivitä
             aikuisia = np.sum(np.sum(demog2))*self.timestep
             lapsia = 1_022_205  # v2023
@@ -1284,7 +1292,8 @@ class Empstats():
             q[self.labels['opiskelijoita']]=126153+118325
             q[self.labels['ovella']]=39_000
             q[self.labels['pareja']]=1276202
-            q[self.labels['lapsiperheitä']]=552034
+            q[self.labels['lapsiperheitä']] = 552034
+            q[self.labels['yksinhuoltajia']] =   188_866  
         
         return q
         
@@ -1522,9 +1531,9 @@ class Empstats():
             q[self.labels['tyottomyysvakuutusmaksu']]=0.019*q[self.labels['tyotulosumma']]
             q[self.labels['sairausvakuutusmaksu']]=(1_335_000_000+407_000_000)*kerroin
             q[self.labels['ylevero']]=497_000_000*kerroin
-            q[self.labels['ansiopvraha']]=1_840_034_600*kerroin # 1_930_846_464+1_964_486_581 # ansioturva + perusturva = 3 895 333 045
-            q[self.labels['peruspvraha']]=1_843_804_553*kerroin # Kelasto
-            q[self.labels['asumistuki']]=(1_684_214_127 + 679_207_428)*kerroin # yleinen plus eläkkeensaajan 2023
+            q[self.labels['ansiopvraha']]=2_023_180_630 # Kelasto
+            q[self.labels['peruspvraha']]=282_918_845 + 1_627_911_702 # Kelasto
+            q[self.labels['asumistuki']]=1_676_928_570 + 685_251_876 # yleinen plus eläkkeensaajan 2023
             q[self.labels['tyoelakemeno']]=31_449_600_000*kerroin
             q[self.labels['kansanelakemeno']]=2_167_992_823*kerroin
             q[self.labels['takuuelakemeno']]=273_173_956*kerroin
