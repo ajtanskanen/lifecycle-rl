@@ -2446,6 +2446,7 @@ class EpisodeStats():
         q={}
         q[self.labels['tyotulosumma']] = np.sum(self.infostats_palkkatulo*scalex)
         q[self.labels['tyotulosumma eielakkeella']] = np.sum(self.infostats_palkkatulo_eielakkeella*scalex)
+        q[self.labels['tyotulosumma, eläkkeellä']] = q[self.labels['tyotulosumma']] - q[self.labels['tyotulosumma eielakkeella']]
         q[self.labels['tyotulosumma opiskelijat']] = np.sum(self.infostats_palkkatulo_emp[:,16]*scalex[:,0])
         q[self.labels['tyotulosumma osa-aika']] = np.sum((self.infostats_palkkatulo_emp[:,10]+self.infostats_palkkatulo_emp[:,8])*scalex[:,0])
         q[self.labels['tyotulosumma kokoaika']] = np.sum((self.infostats_palkkatulo_emp[:,1]+self.infostats_palkkatulo_emp[:,9])*scalex[:,0])
@@ -3501,13 +3502,13 @@ class EpisodeStats():
         alive[:,0] = np.sum(self.galive[:,0:3],1)
         muut_m = np.sum(self.gempstate[:,0,0:3]+self.gempstate[:,1,0:3]+self.gempstate[:,4,0:3]
             +self.gempstate[:,10,0:3]+self.gempstate[:,13,0:3],axis=1)[:,None]/alive
-        opisk_m = np.sum(self.gempstate[:,12,0:3]+self.gempstate[:,16,0:3],axis=1)[:,None]/alive
+        opisk_m = np.sum(self.gempstate[:,12,0:3],axis=1)[:,None]/alive
         svpaivaraha_m = np.sum(self.gempstate[:,14,0:3],axis=1)[:,None]/alive
 
         alive[:,0] = np.sum(self.galive[:,3:6],1)
         muut_n = np.sum(self.gempstate[:,0,3:6]+self.gempstate[:,1,3:6]+self.gempstate[:,4,3:6]
             +self.gempstate[:,10,3:6]+self.gempstate[:,13,3:6],axis=1)[:,None]/alive
-        opisk_n = np.sum(self.gempstate[:,12,3:6]+self.gempstate[:,16,3:6],axis=1)[:,None]/alive
+        opisk_n = np.sum(self.gempstate[:,12,3:6],axis=1)[:,None]/alive
         svpaivaraha_n = np.sum(self.gempstate[:,14,3:6],axis=1)[:,None]/alive
 
         if show:
@@ -3532,12 +3533,16 @@ class EpisodeStats():
 
         alive = np.zeros((self.galive.shape[0],1))
         alive[:,0] = np.sum(self.galive[:,0:3],1)
-        ulkopuolella_m = np.sum(self.gempstate[:,7,0:3],axis=1)[:,None]/alive
-        tyovoimassa_m = np.sum(self.gempstate[:,6,0:3],axis=1)[:,None]/alive
+        ulkopuolella_m = np.sum(self.gempstate[:,7,0:3],axis=1)[:,None]/alive # kht
+        tyovoimassa_m = np.sum(self.gempstate[:,6,0:3],axis=1)[:,None]/alive # isyysvapaa
 
         alive[:,0] = np.sum(self.galive[:,3:6],1)
-        ulkopuolella_n=(np.sum(self.gempstate[:,7,3:6],axis=1)[:,None] )/alive
-        tyovoimassa_n = np.sum(self.gempstate[:,5,3:6],axis=1)[:,None]/alive
+        ulkopuolella_n=(np.sum(self.gempstate[:,7,3:6],axis=1)[:,None] )/alive # kht
+        tyovoimassa_n = np.sum(self.gempstate[:,5,3:6],axis=1)[:,None]/alive # äitiysvapaa
+
+        #if self.version == 9:
+        #    w0 = self.rates.get_initial_state_weights_v9()
+        #    ulkopuolella_m[0] = w0[]
 
         if show:
             m,n=ulkopuolella_m[::skip],ulkopuolella_n[::skip]

@@ -180,8 +180,11 @@ def get_style_EK():
         
 def lineplot(x,y,y2=None,y3=None,y4=None,y5=None,y6=None,
                 label=None,label2=None,label3=None,label4=None,label5=None,label6=None,
-                xlabel='',ylabel='',selite=False,source=None,xlim=None,ylim=None,figname=None,show=True):
+                xlabel='',ylabel='',selite=False,source=None,xlim=None,ylim=None,figname=None,
+                show=True,grayscale=False):
     csfont,pal=setup_EK_fonts()
+    #if grayscale:
+    #    pal = sns.light_palette("black", 8, reverse = True)
 
     linestyle={'linewidth': 3}
     legendstyle={'frameon': False}

@@ -1115,7 +1115,7 @@ class Empstats():
             q[self.labels['työkyvyttömyyseläke']]=198_762
             q[self.labels['vanhempainvapaalla']]=84_387 # Kelan tilasto 2018
             q[self.labels['opiskelijoita']]=109076+111441
-            q[self.labels['ovella']]=39_000
+            q[self.labels['ovella']]=18_732
             q[self.labels['pareja']]=1_280_698
             q[self.labels['lapsiperheitä']]=561965
             q[self.labels['yksinhuoltajia']] = 186_180 
@@ -1131,12 +1131,12 @@ class Empstats():
             q[self.labels['työssä 63+']]=83_356 # ETK 2020
             q[self.labels['palkansaajia']]=2_204_000 # TK
             q[self.labels['ansiosidonnaisella']]=116_972+27_157  # Kelan tilasto 31.12.2018
-            q[self.labels['isyysvapaalla']]=59_640 # Kelan tilasto 2018
-            q[self.labels['kotihoidontuella']]=89_663 # saajia Kelan tilasto 2018
+            q[self.labels['isyysvapaalla']]=58_409 # Kelan tilasto 2019
+            q[self.labels['kotihoidontuella']]=89_662 # saajia Kelan tilasto 2019
             q[self.labels['työkyvyttömyyseläke']]=195_316
-            q[self.labels['vanhempainvapaalla']]=84_387 # Kelan tilasto 2018
+            q[self.labels['vanhempainvapaalla']]=80_067 # Kelan tilasto 2019
             q[self.labels['opiskelijoita']]=114433+109652
-            q[self.labels['ovella']]=39_000
+            q[self.labels['ovella']]=24_570
             q[self.labels['pareja']]=1278825
             q[self.labels['lapsiperheitä']]=558302
             q[self.labels['yksinhuoltajia']] =  186_773  
@@ -1153,12 +1153,12 @@ class Empstats():
             q[self.labels['palkansaajia']]=2_204_000 # TK
             q[self.labels['ansiosidonnaisella']]=116_972+27_157  # Kelan tilasto 31.12.2018
             q[self.labels['tmtuella']]=189_780  # Kelan tilasto 31.12.2018
-            q[self.labels['isyysvapaalla']]=59_640 # Kelan tilasto 2018
-            q[self.labels['kotihoidontuella']]=86_614 # saajia Kelan tilasto 2018
+            q[self.labels['isyysvapaalla']]=58_409 # Kelan tilasto 2020
+            q[self.labels['kotihoidontuella']]=86_611 # saajia Kelan tilasto 2020
             q[self.labels['työkyvyttömyyseläke']]=191_597
-            q[self.labels['vanhempainvapaalla']]=84_387 # Kelan tilasto 2018
+            q[self.labels['vanhempainvapaalla']]=79_666 # Kelan tilasto 2020
             q[self.labels['opiskelijoita']]=126153+118325
-            q[self.labels['ovella']]=39_000
+            q[self.labels['ovella']]=29_072
             q[self.labels['pareja']]=1279182
             q[self.labels['lapsiperheitä']]=556052
             q[self.labels['yksinhuoltajia']] =   186_692   
@@ -1175,12 +1175,12 @@ class Empstats():
             q[self.labels['palkansaajia']]=2_204_000 # TK
             q[self.labels['ansiosidonnaisella']]=116_972+27_157  # Kelan tilasto 31.12.2018 # vuoden aikana 355 729
             q[self.labels['tmtuella']]=189_780  # Kelan tilasto 31.12.2018
-            q[self.labels['isyysvapaalla']]=59_640 # Kelan tilasto 2018
-            q[self.labels['kotihoidontuella']]=82_386 # saajia Kelan tilasto 2018
+            q[self.labels['isyysvapaalla']]=58_170	 # Kelan tilasto 2021
+            q[self.labels['kotihoidontuella']]=82_385 # saajia Kelan tilasto 2021
             q[self.labels['työkyvyttömyyseläke']]=185_991  
-            q[self.labels['vanhempainvapaalla']]=84_387 # Kelan tilasto 2018
+            q[self.labels['vanhempainvapaalla']]=82_686 # Kelan tilasto 2020
             q[self.labels['opiskelijoita']]=126153+118325
-            q[self.labels['ovella']]=39_000
+            q[self.labels['ovella']]=31_616
             q[self.labels['pareja']]=1278528
             q[self.labels['lapsiperheitä']]=553613
             q[self.labels['yksinhuoltajia']] =   185_620   
@@ -1197,12 +1197,12 @@ class Empstats():
             q[self.labels['palkansaajia']]=2_204_000 # TK
             q[self.labels['ansiosidonnaisella']]=116_972+27_157  # Kelan tilasto 31.12.2018
             q[self.labels['tmtuella']]=189_780  # Kelan tilasto 31.12.2018
-            q[self.labels['isyysvapaalla']]=59_640 # Kelan tilasto 2018
-            q[self.labels['kotihoidontuella']]=79_880 # saajia Kelan tilasto 2018
+            q[self.labels['isyysvapaalla']]=61_655	 # Kelan tilasto 2022
+            q[self.labels['kotihoidontuella']]=79_878 # saajia Kelan tilasto 2022
             q[self.labels['työkyvyttömyyseläke']]=185_991  
-            q[self.labels['vanhempainvapaalla']]=84_387 # Kelan tilasto 2018
+            q[self.labels['vanhempainvapaalla']]=80_310	 # Kelan tilasto 2021, äidille
             q[self.labels['opiskelijoita']]=126153+118325
-            q[self.labels['ovella']]=39_000
+            q[self.labels['ovella']]=51_761
             q[self.labels['pareja']]=1276202
             q[self.labels['lapsiperheitä']]=552034
             q[self.labels['yksinhuoltajia']] =   186_639   
@@ -1219,15 +1219,15 @@ class Empstats():
             q[self.labels['palkansaajia']]=2_204_000 # TK
             q[self.labels['ansiosidonnaisella']]=116_972+27_157  # Kelan tilasto 31.12.2018
             q[self.labels['tmtuella']]=189_780  # Kelan tilasto 31.12.2018
-            q[self.labels['isyysvapaalla']]=59_640 # Kelan tilasto 2018
-            q[self.labels['kotihoidontuella']]=79_880 # saajia Kelan tilasto 2018
+            q[self.labels['isyysvapaalla']]=61_960 # Kelan tilasto 2023
+            q[self.labels['kotihoidontuella']]=71_550 # saajia Kelan tilasto 2024
             q[self.labels['työkyvyttömyyseläke']]=185_991  
-            q[self.labels['vanhempainvapaalla']]=84_387 # Kelan tilasto 2018
+            q[self.labels['vanhempainvapaalla']]=75_335 # Kelan tilasto 2018
             q[self.labels['opiskelijoita']]=126153+118325
-            q[self.labels['ovella']]=39_000
-            q[self.labels['pareja']]=1276202
-            q[self.labels['lapsiperheitä']]=552034
-            q[self.labels['yksinhuoltajia']] =   188_866   
+            q[self.labels['ovella']] = 56_874
+            q[self.labels['pareja']] = 1_276_202
+            q[self.labels['lapsiperheitä']] = 552_034
+            q[self.labels['yksinhuoltajia']] = 188_866   
         elif self.year==2024: # päivitä
             aikuisia = np.sum(np.sum(demog2))*self.timestep
             lapsia = 1_022_205  # v2023
@@ -1241,13 +1241,13 @@ class Empstats():
             q[self.labels['palkansaajia']]=2_204_000 # TK
             q[self.labels['ansiosidonnaisella']]=116_972+27_157  # Kelan tilasto 31.12.2018
             q[self.labels['tmtuella']]=189_780  # Kelan tilasto 31.12.2018
-            q[self.labels['isyysvapaalla']]=59_640 # Kelan tilasto 2018
-            q[self.labels['kotihoidontuella']]=79_880 # saajia Kelan tilasto 2018
+            q[self.labels['isyysvapaalla']]=65_092 # Kelan tilasto 2018
+            q[self.labels['kotihoidontuella']]=62_919 # saajia Kelan tilasto 2024
             q[self.labels['työkyvyttömyyseläke']]=185_991  
-            q[self.labels['vanhempainvapaalla']]=84_387 # Kelan tilasto 2018
+            q[self.labels['vanhempainvapaalla']]=77_882 # Kelan tilasto 2024
             q[self.labels['opiskelijoita']]=126153+118325
-            q[self.labels['ovella']]=39_000
-            q[self.labels['pareja']]=1276202
+            q[self.labels['ovella']]=70_843
+            q[self.labels['pareja']]=1_276_202
             q[self.labels['lapsiperheitä']]=552034
             q[self.labels['yksinhuoltajia']] =   188_866   
         elif self.year==2025: # päivitä
@@ -1268,8 +1268,8 @@ class Empstats():
             q[self.labels['työkyvyttömyyseläke']]=185_991  
             q[self.labels['vanhempainvapaalla']]=84_387 # Kelan tilasto 2018
             q[self.labels['opiskelijoita']]=126153+118325
-            q[self.labels['ovella']]=39_000
-            q[self.labels['pareja']]=1276202
+            q[self.labels['ovella']]=70_843 # 2024
+            q[self.labels['pareja']]=1_276_202
             q[self.labels['lapsiperheitä']]=552034
             q[self.labels['yksinhuoltajia']] =   188_866   
         elif self.year==2026: # päivitä
@@ -1290,9 +1290,9 @@ class Empstats():
             q[self.labels['työkyvyttömyyseläke']]=185_991  
             q[self.labels['vanhempainvapaalla']]=84_387 # Kelan tilasto 2018
             q[self.labels['opiskelijoita']]=126153+118325
-            q[self.labels['ovella']]=39_000
-            q[self.labels['pareja']]=1276202
-            q[self.labels['lapsiperheitä']] = 552034
+            q[self.labels['ovella']]=70_843 # 2024
+            q[self.labels['pareja']]=1_276_202
+            q[self.labels['lapsiperheitä']] = 552_034
             q[self.labels['yksinhuoltajia']] =   188_866  
         
         return q
@@ -1320,12 +1320,42 @@ class Empstats():
             return 107_206_000_000*1.024*1.036*1.046*1.041 # vs 119 400 000 000
         elif y==2028:
             return 107_206_000_000*1.024*1.036*1.046*1.041*1.040 # vs 119 400 000 000
+        
+    def get_tyotulosumma_verottaja(self,y: int):
+        '''
+        lähde: Verohallinnon tilastotietokanta
+        palkansaajan ansiotulot yhteensä + elinkeinonharjoittajan ansiotulot yhteensä
+        '''
+        if y==2018:
+            return 92_970_798_983
+        elif y==2019:
+            return 96_532_963_473
+        elif y==2020:
+            return 97_135_183_791
+        elif y==2021:
+            return 101_786_729_322
+        elif y==2022:
+            return 108_342_488_666
+        elif y==2023:
+            return 113_425_265_679
+        elif y==2024:
+            return 113_425_265_679*1.024  # vs 111 000 000 000
+        elif y==2025:
+            return 113_425_265_679*1.024*1.036  # vs 115 000 000 000
+        elif y==2026:
+            return 113_425_265_679*1.024*1.036*1.046 # vs 119 400 000 000
+        elif y==2027:
+            return 113_425_265_679*1.024*1.036*1.046*1.041 # vs 119 400 000 000
+        elif y==2028:
+            return 113_425_265_679*1.024*1.036*1.046*1.041*1.040 # vs 119 400 000 000        
 
     def stat_budget(self,scale=False):
         q={}
         if self.year==2018:
             q[self.labels['tyotulosumma']]=self.get_tyotulosumma(self.year) #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
-            q[self.labels['tyotulosumma eielakkeella']]=np.nan #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q[self.labels['ansiotulot, verottaja']]=self.get_tyotulosumma_verottaja(self.year)
+            q[self.labels['tyotulosumma eielakkeella']]=np.nan  #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q[self.labels['tyotulosumma, eläkkeellä']]=769_788_858
             q[self.labels['etuusmeno']]=0
             q[self.labels['verot+maksut']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
             q[self.labels['verot+maksut+alv']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
@@ -1358,7 +1388,9 @@ class Empstats():
             q[self.labels['ta_maksut']]=0.2057*q[self.labels['tyotulosumma']] # karkea
         elif self.year==2019:
             q[self.labels['tyotulosumma']]=self.get_tyotulosumma(self.year) #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
-            q[self.labels['tyotulosumma eielakkeella']]=np.nan #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q[self.labels['ansiotulot, verottaja']]=self.get_tyotulosumma_verottaja(self.year)
+            q[self.labels['tyotulosumma eielakkeella']]= np.nan #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q[self.labels['tyotulosumma, eläkkeellä']]= 807_175_071
             q[self.labels['etuusmeno']]=0
             q[self.labels['verot+maksut']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
             q[self.labels['verot+maksut+alv']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
@@ -1390,7 +1422,9 @@ class Empstats():
             q[self.labels['ta_maksut']]=0.2057*q[self.labels['tyotulosumma']] # karkea
         elif self.year==2020:
             q[self.labels['tyotulosumma']]=self.get_tyotulosumma(self.year) #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q[self.labels['ansiotulot, verottaja']]=self.get_tyotulosumma_verottaja(self.year)
             q[self.labels['tyotulosumma eielakkeella']]=np.nan #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q[self.labels['tyotulosumma, eläkkeellä']]= 789_093_779
             q[self.labels['etuusmeno']]=0
             q[self.labels['verot+maksut']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
             q[self.labels['verot+maksut+alv']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
@@ -1422,7 +1456,9 @@ class Empstats():
             q[self.labels['ta_maksut']]=0.2057*q[self.labels['tyotulosumma']] # karkea
         elif self.year==2021:
             q[self.labels['tyotulosumma']]=self.get_tyotulosumma(self.year) # lähde: ETK, tyel + julkinen + yel + myel
+            q[self.labels['ansiotulot, verottaja']]=self.get_tyotulosumma_verottaja(self.year)
             q[self.labels['tyotulosumma eielakkeella']]=np.nan #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q[self.labels['tyotulosumma, eläkkeellä']]=  802_271_881
             q[self.labels['etuusmeno']]=0
             q[self.labels['verot+maksut']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
             q[self.labels['verot+maksut+alv']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
@@ -1454,7 +1490,9 @@ class Empstats():
             q[self.labels['ta_maksut']]=0.2057*q[self.labels['tyotulosumma']] # karkea
         elif self.year==2022:
             q[self.labels['tyotulosumma']]=self.get_tyotulosumma(self.year) # lähde: ETK, tyel + julkinen + yel + myel
+            q[self.labels['ansiotulot, verottaja']]=self.get_tyotulosumma_verottaja(self.year)
             q[self.labels['tyotulosumma eielakkeella']]=np.nan #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q[self.labels['tyotulosumma, eläkkeellä']]= 871_873_296
             q[self.labels['etuusmeno']]=0
             q[self.labels['verot+maksut']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
             q[self.labels['verot+maksut+alv']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
@@ -1487,7 +1525,9 @@ class Empstats():
         elif self.year==2023:
             kerroin=1.03
             q[self.labels['tyotulosumma']]=self.get_tyotulosumma(self.year) #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q[self.labels['ansiotulot, verottaja']]=self.get_tyotulosumma_verottaja(self.year)
             q[self.labels['tyotulosumma eielakkeella']]=np.nan #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q[self.labels['tyotulosumma, eläkkeellä']]= 931_201_954
             q[self.labels['etuusmeno']]=0
             q[self.labels['verot+maksut']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
             q[self.labels['verot+maksut+alv']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
@@ -1520,7 +1560,9 @@ class Empstats():
         elif self.year==2024: # update
             kerroin=1.03*1.01
             q[self.labels['tyotulosumma']]=self.get_tyotulosumma(self.year) #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q[self.labels['ansiotulot, verottaja']]=self.get_tyotulosumma_verottaja(self.year)
             q[self.labels['tyotulosumma eielakkeella']]=np.nan #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q[self.labels['tyotulosumma, eläkkeellä']]= 931_201_954
             q[self.labels['etuusmeno']]=0
             q[self.labels['verot+maksut']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
             q[self.labels['verot+maksut+alv']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
@@ -1553,7 +1595,9 @@ class Empstats():
         elif self.year==2025: # update
             kerroin=1.03*1.01*1.02
             q[self.labels['tyotulosumma']]=self.get_tyotulosumma(self.year) #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q[self.labels['ansiotulot, verottaja']]=self.get_tyotulosumma_verottaja(self.year)
             q[self.labels['tyotulosumma eielakkeella']]=np.nan #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q[self.labels['tyotulosumma, eläkkeellä']]= 931_201_954
             q[self.labels['etuusmeno']]=0
             q[self.labels['verot+maksut']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
             q[self.labels['verot+maksut+alv']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
@@ -1586,7 +1630,9 @@ class Empstats():
         elif self.year==2026: # update
             kerroin=1.03*1.01*1.02*1.03
             q[self.labels['tyotulosumma']]=self.get_tyotulosumma(self.year) #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q[self.labels['ansiotulot, verottaja']]=self.get_tyotulosumma_verottaja(self.year)
             q[self.labels['tyotulosumma eielakkeella']]=np.nan #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
+            q[self.labels['tyotulosumma, eläkkeellä']]= 931_201_954
             q[self.labels['etuusmeno']]=0
             q[self.labels['verot+maksut']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
             q[self.labels['verot+maksut+alv']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
@@ -2034,18 +2080,18 @@ class Empstats():
             o_x=np.array([20,30,40,50,60,70])
             f_osatyo=np.array([57.0,22.6,17.5,12.6,19.6,66.6])
             m_osatyo=np.array([37.1,10.3,5.8,6.3,12.0,66.0])
-        elif self.year==2024: # 2023, päivitä
+        elif self.year==2024: # 2024
             o_x=np.array([20,30,40,50,60,70])
-            f_osatyo=np.array([57.0,22.6,17.5,12.6,19.6,66.6])
-            m_osatyo=np.array([37.1,10.3,5.8,6.3,12.0,66.0])
+            f_osatyo=np.array([55.6,23.3,17.1,12.4,18.6,67.5])
+            m_osatyo=np.array([39.4,10.7,6.8,5.9,11.6,62.1])
         elif self.year==2025: # 2023, päivitä
             o_x=np.array([20,30,40,50,60,70])
-            f_osatyo=np.array([57.0,22.6,17.5,12.6,19.6,66.6])
-            m_osatyo=np.array([37.1,10.3,5.8,6.3,12.0,66.0])
+            f_osatyo=np.array([55.6,23.3,17.1,12.4,18.6,67.5])
+            m_osatyo=np.array([39.4,10.7,6.8,5.9,11.6,62.1])
         elif self.year==2026: # 2023, päivitä
             o_x=np.array([20,30,40,50,60,70])
-            f_osatyo=np.array([57.0,22.6,17.5,12.6,19.6,66.6])
-            m_osatyo=np.array([37.1,10.3,5.8,6.3,12.0,66.0])
+            f_osatyo=np.array([55.6,23.3,17.1,12.4,18.6,67.5])
+            m_osatyo=np.array([39.4,10.7,6.8,5.9,11.6,62.1])
         else:
             print('Empstats, unknown year',self.year)
 
