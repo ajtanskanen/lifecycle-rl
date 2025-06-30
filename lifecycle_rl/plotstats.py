@@ -792,7 +792,7 @@ class PlotStats():
             plt.xlim(0,max)
             plt.ylim(0,0.8)
             if figname is not None:
-                plt.savefig(figname+'tyolldistribs.'+self.figformat, format = self.figformat)
+                plt.savefig(figname+'tyolldistribs_v1.'+self.figformat, format = self.figformat)
             if fig is None:
                 plt.show()
 
@@ -812,7 +812,7 @@ class PlotStats():
             plt.xlim(0,max)
             plt.ylim(0,0.8)
             if figname is not None:
-                plt.savefig(figname+'tyolldistribs.'+self.figformat, format = self.figformat)
+                plt.savefig(figname+'tyolldistribs_v2.'+self.figformat, format = self.figformat)
             if fig is None:
                 plt.show()
 
@@ -906,11 +906,13 @@ class PlotStats():
 
         plt.show()
 
-    def plot_unempdistribs(self,unemp_distrib,max = 2.5,figname = None,miny = None,maxy = None,unemp_distrib2 = None,label1 = '',label2 = ''):
+    def plot_unempdistribs(self,unemp_distrib,max = 2.5,figname = None,miny = None,maxy = None,unemp_distrib2 = None,label1 = '',label2 = '',fig=None,ax=None):
         '''
         plots distribution of unemployment durations
         '''
-        #fig,ax = plt.subplots()
+        if fig is None:
+            fig2,ax = plt.subplots()
+
         max_time = 50
         nn_time = int(np.round((max_time)*self.inv_timestep))+1
         x = np.linspace(0,max_time,nn_time)
@@ -926,7 +928,6 @@ class PlotStats():
         else:
             scaled2 = None
 
-        fig,ax = plt.subplots()
         self.plot_vlines_unemp(0.6)
         ax.set_xlabel(self.labels['unemp duration'])
         ax.set_ylabel(self.labels['probability'])
@@ -943,7 +944,8 @@ class PlotStats():
         if figname is not None:
             plt.savefig(figname+'unempdistribs.'+self.figformat, format = self.figformat)
 
-        plt.show()
+        if fig is None:
+            plt.show()
         
     def plot_saldist(self,t = 0,sum = False,all = False,n = 10,bins = 30):
         if all:
@@ -4217,7 +4219,10 @@ class PlotStats():
         self.plot_tyolldistribs_both(unemp_distrib1,tyoll_distrib1,max = 2.5,figname = figname)
 
 
-    def plot_simfig(self,filename,grayscale = False,figname = None,cc2 = None):
+    def plot_simfig_no5(self,filename,grayscale = False,figname = None,cc2 = None):
+        '''
+        Create fig no 5 to the paper
+        '''
         agg_htv,agg_tyoll,agg_rew,agg_discounted_rew,emp_tyolliset,emp_tyolliset_osuus,\
             emp_tyottomat,emp_tyottomat_osuus,emp_htv,emps,best_rew,\
             best_emp,emps,agg_netincome,agg_equivalent_netincome,budget,participants,htv_budget,\
@@ -4227,8 +4232,8 @@ class PlotStats():
 
         mean_htv,mean_tyoll,h_mean,m_mean,diff_htv,mean_rew,um_mean,m_mean,std_htv,h_std,mean_unempratio \
             = self.episodestats.get_simstats(filename,use_mean = True)
-        #median_htv,median_tyoll,h_median,m_median,median_rew,um_median,std_tyoll,s_tyoll,median_unempratio \
-        #    = self.episodestats.get_simstats(filename,use_mean = False)
+        median_htv,median_tyoll,h_median,m_median,median_rew,um_median,std_tyoll,s_tyoll,median_unempratio \
+            = self.episodestats.get_simstats(filename,use_mean = False)
         if self.version>0:
             print('lisäpäivillä on {:.0f} henkilöä'.format(self.episodestats.count_putki_dist(emps)))
 
@@ -4237,7 +4242,7 @@ class PlotStats():
             plt.rcParams['figure.facecolor'] = 'white' # Or any suitable colour...
 
         diff_htv = agg_htv-mean_htv
-        diff_tyoll = agg_tyoll-median_tyoll
+        diff_tyoll = agg_tyoll-mean_tyoll
         mean_discounted_rew = np.mean(agg_discounted_rew)
         mean_netincome = np.mean(agg_netincome)
         mean_equi_netincome = np.mean(agg_equivalent_netincome)
@@ -4249,6 +4254,7 @@ class PlotStats():
         ax[0,0].set_xticks([8,16,24,32,40,48])
         ax[0,0].set_ylabel(self.labels['osuus %'])
         ax[0,0].set_xlabel(self.labels['Työaika [h]'])
+        ax[0,0].text(5,42,'A')
         
         m_median = np.median(emp_tyolliset_osuus,axis = 0)
         s_emp = np.std(emp_tyolliset_osuus,axis = 0)
@@ -4302,6 +4308,7 @@ class PlotStats():
         ax[0,1].legend(frameon=False)
         ax[0,1].set_ylabel(self.labels['Osatyön osuus %'])
         ax[0,1].set_xlabel(self.labels['age'])
+        ax[0,1].text(20,90,'B')
 
         unemp_distrib1,emp_distrib1,unemp_distrib_bu1,\
             tyoll_distrib1,tyoll_distrib_bu1,\
@@ -4323,6 +4330,96 @@ class PlotStats():
         #self.plot_unempdistribs(unemp_distrib1,figname = figname,max = 2.5,miny = 1e-5,maxy = 1)
         #self.plot_tyolldistribs(unemp_distrib1,tyoll_distrib1,tyollistyneet = True,figname = figname)
         #self.plot_tyolldistribs_both(unemp_distrib1,tyoll_distrib1,max = 2.5,figname = figname)
+
+
+    def plot_simfig_no7(self,filename,filename2,label1='Reform',label2='Baseline',figname='images/comparison_',grayscale = False,cc2 = None):
+        '''
+        Create fig no 7 to the paper
+        '''
+        mean_htv1,mean_tyoll1,h_mean1,m_mean1,diff_htv1,mean_rew1,um_mean1,mean_tyolliset_osuus1,std_htv,h_std,mean_unempratio1 \
+            = self.episodestats.get_simstats(filename,use_mean = True)
+        median_htv1,median_tyoll1,h_median1,m_median1,median_rew1,median_tyott1,std_tyoll1,s_tyoll1,median_unempratio1 \
+            = self.episodestats.get_simstats(filename,use_mean = False)
+        
+        mean_htv2,mean_tyoll2,h_mean2,m_mean2,diff_htv2,mean_rew2,um_mean2,mean_tyolliset_osuus1,std_htv2,s_htv1,mean_unempratio2 \
+            = self.episodestats.get_simstats(filename2,use_mean = True)
+        median_htv2,median_tyoll2,h_median2,m_median2,median_rew2,median_tyott2,std_tyoll2,s_tyoll2,median_unempratio2 \
+            = self.episodestats.get_simstats(filename2,use_mean = False)
+
+        agg_htv1,agg_tyoll1,agg_rew1,agg_discounted_rew1,emp_tyolliset1,emp_tyolliset_osuus1,\
+            emp_tyottomat1,emp_tyottomat_osuus1,emp_htv1,emps1,best_rew1,\
+            best_emp1,emps1,agg_netincome1,agg_equivalent_netincome1,budget1,participants1,htv_budget1,\
+            alives1,agg_empstate1,agg_alives1,agg_tyottomyysaste1,emp_tyottomyysaste1,pt_agg1,pt_agegroup1,\
+            galives1,agg_galives1,gempstate1,agg_gempstate1\
+                = self.episodestats.load_simstats(filename)
+
+        agg_htv2,agg_tyoll2,agg_rew2,agg_discounted_rew2,emp_tyolliset2,emp_tyolliset_osuus2,\
+            emp_tyottomat2,emp_tyottomat_osuus2,emp_htv2,emps2,best_rew2,\
+            best_emp2,emps2,agg_netincome2,agg_equivalent_netincome2,budget2,participants2,htv_budget2,\
+            alives2,agg_empstate2,agg_alives2,agg_tyottomyysaste2,emp_tyottomyysaste2,pt_agg2,pt_agegroup2,\
+            galives2,agg_galives2,gempstate2,agg_gempstate2\
+                = self.episodestats.load_simstats(filename2)
+                
+        color_reform = 'black'
+        color_baseline = 'darkgray'
+        color_obs = 'lightgray'
+
+        if grayscale:
+            plt.style.use('grayscale')
+            plt.rcParams['figure.facecolor'] = 'white' # Or any suitable colour...
+
+        fig,ax = plt.subplots(2,2)
+        ax[0,0].set_xlabel(self.labels['age'])
+        ax[0,0].set_ylabel(self.labels['Työllisyysaste [%]'])
+        x = np.linspace(self.min_age,self.max_age,self.n_time)
+        ax[0,0].plot(x,100*m_mean1,label = label1,color=color_reform)
+        ax[0,0].plot(x,100*m_mean2,label = label2,color=color_baseline)
+        ax[0,0].plot(x,100*self.empstats.emp_stats(),'--',label = 'observation',color=color_obs)
+        ax[0,0].legend(frameon=False)
+        ax[0,0].text(20,80,'A')
+
+
+        ax[0,1].set_xlabel(self.labels['age'])
+        ax[0,1].set_ylabel(self.labels['Työttömyysaste [%]'])
+        x = np.linspace(self.min_age,self.max_age,self.n_time)
+        ax[0,1].plot(x,100*mean_unempratio1,label = label1, color=color_reform)
+        ax[0,1].plot(x,100*mean_unempratio2,label = label2, color=color_baseline)
+        ax[0,1].plot(x,100*self.empstats.unempratio_stats(tyossakayntitutkimus=True),'--',label = 'Observation',color=color_obs)
+        ax[0,1].legend(frameon=False)
+        ax[0,1].text(20,20,'B')
+
+        x = np.linspace(8,48,6)
+        wd=3
+        ax[1,0].bar(x-wd,pt_agg1[0,:]*mean_tyoll1,width=3,label = label1, color=color_reform)
+        ax[1,0].bar(x,pt_agg2[0,:]*mean_tyoll2,width=3,label = label2, color=color_baseline)
+        ax[1,0].set_xticks([8,16,24,32,40,48])
+        ax[1,0].legend(frameon=False)
+        ax[1,0].set_ylabel(self.labels['lkm'])
+        ax[1,0].set_xlabel(self.labels['Työaika [h]'])
+        ax[1,0].text(48,0.9e6,'C')
+        
+        unemp_distrib1,emp_distrib1,unemp_distrib_bu1,\
+            tyoll_distrib1,tyoll_distrib_bu1,\
+            tyoll_virta1,tyot_virta1,tyot_virta_ansiosid1,tyot_virta_tm1,\
+            unemp_dur1,unemp_lastdur1 = self.episodestats.load_simdistribs(filename)
+
+        unemp_distrib2,emp_distrib2,unemp_distrib_bu2,\
+            tyoll_distrib2,tyoll_distrib_bu2,\
+            tyoll_virta2,tyot_virta2,tyot_virta_ansiosid2,tyot_virta_tm2,\
+            unemp_dur2,unemp_lastdur2 = self.episodestats.load_simdistribs(filename2)
+
+        #print('Keskikestot käytettyjen ansiosidonnaisten päivärahojen mukaan')
+        #self.plot_compare_unemp_durdistribs(unemp_dur1,unemp_dur2,unemp_lastdur1,unemp_lastdur2,label1 = label1,label2 = label2)
+
+        #self.plot_compare_empdistribs(emp_distrib1,emp_distrib2,label1 = label1,label2 = label2)
+        #self.plot_unempdistribs(unemp_distrib1,figname = figname,max = 4,miny = 1e-3,maxy = 2,unemp_distrib2 = unemp_distrib2,label1 = label1,label2 = label2,fig=fig,ax=ax[1,1])
+        self.plot_tyolldistribs_both(unemp_distrib1,tyoll_distrib1,max = 2.5,figname = figname,emp_distrib2 = unemp_distrib2,tyoll_distrib2 = tyoll_distrib2,
+                                     label1 = label1,label2 = label2,fig=fig,ax=ax[1,1],kuva2=False)
+        ax[1,1].text(0.1,0.9,'D')
+
+        if figname is not None:
+            plt.savefig(figname+'fig7.pdf')
+
 
     def plot_simstat_workforce_stack(self,empstate,figname = None):
         empstate_ratio = 100*self.episodestats.empstate/self.episodestats.alive
@@ -4445,8 +4542,8 @@ class PlotStats():
         mean_netincome2 = np.mean(agg_netincome2)
         mean_equi_netincome2 = np.mean(agg_equivalent_netincome2)        
 
-        print('Vaikutus mediaanityöllisyyteen {:.0f} htv ({:.0f} vs {:.0f})'.format(median_htv2-median_htv1,median_htv2,median_htv1))
-        print('Vaikutus keskiarvotyöllisyyteen {:.0f} htv ({:.0f} vs {:.0f})'.format(mean_htv2-mean_htv1,mean_htv2,mean_htv1))
+        print('Vaikutus mediaanityöllisyyteen {:.0f} htv ({:.0f} vs {:.0f})'.format(median_htv1-median_htv2,median_htv1,median_htv2))
+        print('Vaikutus keskiarvotyöllisyyteen {:.0f} htv ({:.0f} vs {:.0f})'.format(mean_htv1-mean_htv2,mean_htv1,mean_htv2))
 
         print(f'Mean undiscounted reward {mean_rew1} ({label1}) vs {mean_rew2} ({label2})')
         #print(f'Mean discounted reward {mean_discounted_rew1} v2 {mean_discounted_rew2}')
@@ -4572,7 +4669,7 @@ class PlotStats():
         ax.set_ylabel(self.labels['osuus'])
         ax.set_xlabel(self.labels['Työaika [h]'])
         if figname is not None:
-            plt.savefig(figname+'_worktime.pdf')
+            plt.savefig(figname+'_worktime_prop.pdf')
         plt.show()
 
         fig,ax = plt.subplots()
@@ -4584,6 +4681,8 @@ class PlotStats():
         ax.legend()
         ax.set_ylabel(self.labels['lkm'])
         ax.set_xlabel(self.labels['Työaika [h]'])
+        if figname is not None:
+            plt.savefig(figname+'_worktime_abs.pdf')
         plt.show()
 
         fig,ax = plt.subplots()

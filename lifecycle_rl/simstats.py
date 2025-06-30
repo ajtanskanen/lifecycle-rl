@@ -85,9 +85,9 @@ class SimStats(EpisodeStats):
 
         q=self.comp_budget(scale=True)
         budget = pd.DataFrame.from_dict(q,orient='index',columns=['e/v'])
-        q=self.comp_participants(scale=True)
+        q=self.comp_participants(scale=True,lkm=False)
         htv_budget = pd.DataFrame.from_dict(q,orient='index',columns=['htv'])
-        q_lkm=self.comp_participants(lkm=True)
+        q_lkm=self.comp_participants(scale=True,lkm=True)
         participants = pd.DataFrame.from_dict(q_lkm,orient='index',columns=['lkm'])
 
         if include_distrib:
@@ -99,7 +99,7 @@ class SimStats(EpisodeStats):
         agg_tyoll[0]=tyolliset
         agg_tyottomyysaste[0]=kokotyottomyysaste
         agg_discounted_rew[0],agg_rew[0]=self.get_reward()
-        print(agg_rew[0])
+        #print(agg_rew[0])
 
         best_rew=agg_rew[0]
         best_emp=0
@@ -149,7 +149,7 @@ class SimStats(EpisodeStats):
                 q=self.comp_budget(scale=True)
                 budget2 = pd.DataFrame.from_dict(q,orient='index',columns=['e/v'])
                 budget += budget2
-                q=self.comp_participants(scale=True)
+                q=self.comp_participants(scale=True,lkm=False)
                 htv2 = pd.DataFrame.from_dict(q,orient='index',columns=['htv'])
                 htv_budget += htv2
                 q_lkm=self.comp_participants(scale=True,lkm=True)
@@ -168,7 +168,7 @@ class SimStats(EpisodeStats):
                 alives[i,:] = self.alive[:,0]
                 galives[i,:] = self.galive[:,:]
                 agg_discounted_rew[i],agg_rew[i] = self.get_reward()
-                print(agg_rew[i])
+                #print(agg_rew[i])
                 
                 if include_distrib:
                     net,equiv = self.comp_total_netincome()
@@ -262,7 +262,7 @@ class SimStats(EpisodeStats):
         #    self.save_sim(results+'_best')
                     
         print('done')
-        print('best_emp',best_emp)
+        #print('best_emp',best_emp)
         
     def run_optimize_x(self,target,results,n,startn=0,averaged=False):
         '''
@@ -296,10 +296,10 @@ class SimStats(EpisodeStats):
  
     def get_simstats(self,filename1,use_mean=True):
         agg_htv,agg_tyoll,agg_rew,agg_discounted_rew,emp_tyolliset,emp_tyolliset_osuus,\
-            emp_tyottomat,emp_tyottomat_osuus,emp_htv,emps,best_rew,\
-            best_emp,emps,agg_netincome,agg_equivalent_netincome,budget,participants,htv_budget,alives,agg_empstate,agg_alives,\
-            agg_tyottomyysaste,emp_tyottomyysaste,pt_agg,pt_agegroup,galives,agg_galives,gempstate,agg_gempstate\
-                =self.load_simstats(filename1)
+        emp_tyottomat,emp_tyottomat_osuus,emp_htv,emps,best_rew,\
+        best_emp,emps,agg_netincome,agg_equivalent_netincome,budget,participants,htv_budget,alives,agg_empstate,agg_alives,\
+        agg_tyottomyysaste,emp_tyottomyysaste,pt_agg,pt_agegroup,galives,agg_galives,gempstate,agg_gempstate\
+            =self.load_simstats(filename1)
 
         mean_htv=np.mean(agg_htv)
         median_htv=np.median(agg_htv)
@@ -594,30 +594,6 @@ class SimStats(EpisodeStats):
             _ = f.create_dataset('step_salary', data=step_salary, dtype=ftype)
             _ = f.create_dataset('n', data=n, dtype=ftype)
             f.close()
-
-    # def plot_agg_emtr(self,ben,loadfile,baseloadfile=None,figname=None,label=None,baselabel=None):
-    #     f = h5py.File(loadfile, 'r')
-    #     netto=f['netto'][()]
-    #     eff=f['eff'][()]
-    #     tva=f['tva'][()]
-    #     osa_tva=f['osa_tva'][()]
-    #     min_salary=f['min_salary'][()]
-    #     max_salary=f['max_salary'][()]
-    #     salary=f['salary'][()]
-    #     n=f['n'][()]
-    #     f.close()
-        
-    #     basic_marg=fin_benefits.Marginals(ben,year=self.year)
-
-    #     if baseloadfile is not None:
-    #         f = h5py.File(baseloadfile, 'r')
-    #         basenetto=f['netto'][()]
-    #         baseeff=f['eff'][()]
-    #         basetva=f['tva'][()]
-    #         baseosatva=f['osa_tva'][()]
-    #         f.close()        
-
-    #     plt.hist(eff)
 
     def comp_elasticity(self,x,y,diff=False):
         xl=x.shape[0]

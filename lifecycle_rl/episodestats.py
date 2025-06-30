@@ -49,6 +49,7 @@ class EpisodeStats():
         self.save_pop = save_pop
         self.include_perustulo = include_perustulo
         self.parttime_actions = parttime_actions
+        self.lang = lang
         self.labels = self.lab.get_output_labels(lang)
 
         self.complexmodels = set([4,5,6,7,8,9,104])
@@ -143,7 +144,7 @@ class EpisodeStats():
             self.n_groups = 6
             
         self.empstats = Empstats(year=self.year,max_age=self.max_age,n_groups=self.n_groups,timestep=self.timestep,n_time=self.n_time,
-                                min_age=self.min_age)
+                                min_age=self.min_age,lang=self.lang)
         self.init_variables()
         self.set_datetime()
 
@@ -1523,10 +1524,10 @@ class EpisodeStats():
                 if p_tila==3:
                     p_tila=2
 
-            if newemp==12 and act[0]>0: # töissä oleva opiskelija
-                newemp=16
-            if p_tila==12 and act[1]>0: # töissä oleva opiskelija
-                p_tila=16
+            #if newemp==12 and act[0]>0: # töissä oleva opiskelija
+            #    newemp=16
+            #if p_tila==12 and act[1]>0: # töissä oleva opiskelija
+            #    p_tila=16
 
             self.empstate[t,newemp] += 1
             self.empstate[t,p_tila] += 1
@@ -2453,7 +2454,7 @@ class EpisodeStats():
 
         q[self.labels['etuusmeno']] = np.sum(self.infostats_etuustulo*scalex)
         #q[self.labels['etuusmeno_v2']] = 0
-        q[self.labels['verot+maksut']] = np.sum(self.infostats_taxes*scalex) # sisältää verot ja sosiaalivakuutusmaksut
+        #q[self.labels['verot+maksut']] = np.sum(self.infostats_taxes*scalex) # sisältää verot ja sosiaalivakuutusmaksut
         #q[self.labels['verot+maksut_v2']] = 0
         #q[self.labels['verot+maksut+alv']] = 0
         q[self.labels['palkkaverot+maksut']] = np.sum(self.infostats_wagetaxes*scalex)
@@ -2498,12 +2499,14 @@ class EpisodeStats():
         else:
             q[self.labels['verotettava etuusmeno']] = q[self.labels['kokoelakemeno']]+q[self.labels['tyottomyyspvraha']]+q[self.labels['aitiyspaivaraha']]+q[self.labels['isyyspaivaraha']]+q[self.labels['sairauspaivaraha']]+q[self.labels['kotihoidontuki']]+q[self.labels['opintotuki']]
         q[self.labels['alv']] = np.sum(self.infostats_alv*scalex)
+        q[self.labels['verot+maksut']] = q[self.labels['sairausvakuutusmaksu']] + q[self.labels['pvhoitomaksu']] + q[self.labels['ylevero']] + q[self.labels['tyottomyysvakuutusmaksu']] + \
+            q[self.labels['valtionvero']] + q[self.labels['kunnallisvero']] + q[self.labels['ptel']]
         q[self.labels['verot+maksut+alv']] = q[self.labels['verot+maksut']]+q[self.labels['alv']]
         q[self.labels['verot+maksut+alv+ta']] = q[self.labels['verot+maksut+alv']]+q[self.labels['ta_maksut_elake']] + q[self.labels['ta_maksut_muut']]
         q[self.labels['julkinen talous, netto']] = q[self.labels['verot+maksut+alv+ta']] - q[self.labels['etuusmeno']]
 
         q[self.labels['nettotulot']] = np.sum(self.infostats_tulot_netto*scalex)
-        if debug:
+        if False:
             q[self.labels['tulot_netto_v2']] = q[self.labels['tyotulosumma']]+q[self.labels['etuusmeno']]-q[self.labels['verot+maksut+alv']]-q[self.labels['pvhoitomaksu']]
             q[self.labels['etuusmeno_v2']] = q[self.labels['tyottomyyspvraha']]+q[self.labels['kansanelakemeno']]+q[self.labels['takuuelakemeno']]+q[self.labels['opintotuki']]+q[self.labels['isyyspaivaraha']]+\
                 q[self.labels['aitiyspaivaraha']]+q[self.labels['sairauspaivaraha']]+q[self.labels['toimeentulotuki']]+\
@@ -2787,6 +2790,54 @@ class EpisodeStats():
             a_ps_norw = np.sum(scalex[min_cage:max_cage,0]*ps_norw[min_cage:max_cage,0])
 
         return a_ps,a_ps_norw
+    
+    def comp_palkkasumma_new(self,start=18,end=68,grouped=False,scale_time=True):
+        '''
+        Computes the sum of actually paid wages either by groups or as an aggregate
+        Not used
+        '''
+        demog2=self.empstats.get_demog()
+
+        if not self.save_pop:
+            if grouped:
+                print('comp_palkkasumma: not enough data for exact grouping (save_pop=False)')
+                return
+            else:
+                scalex=demog2/self.alive
+                return np.sum(self.infostats_palkkatulo*scalex)
+
+        if scale_time:
+            scale=self.timestep
+        else:
+            scale=1.0
+
+        min_cage=self.map_age(start)
+        max_cage=self.map_age(end)+1
+
+        scalex=demog2/self.alive
+        ps = np.zeros((self.n_time,6))
+        ps_norw = np.zeros((self.n_time,6))
+        a_ps = np.zeros(6)
+        a_ps_norw = np.zeros(6)
+        for k in range(self.n_pop):
+            g=int(self.infostats_group[k,0])
+            for t in range(min_cage,max_cage):
+                e=int(self.popempstate[t,k])
+                if e in set([1,10,16]):
+                    ps[t,g] += self.infostats_pop_wage[t,k]
+                    ps_norw[t,g] += self.infostats_pop_wage[t,k]
+                elif e in set([8,9]):
+                    ps[t,g] += self.infostats_pop_wage[t,k]
+
+        if grouped:
+            for g in range(6):
+                a_ps[g] = np.sum(scalex[min_cage:max_cage,0]*ps[min_cage:max_cage,g])
+                a_ps_norw[g] = np.sum(scalex[min_cage:max_cage,0]*ps_norw[min_cage:max_cage,g])
+        else:
+            a_ps = np.sum(scalex[min_cage:max_cage,0]*ps[min_cage:max_cage,0])
+            a_ps_norw = np.sum(scalex[min_cage:max_cage,0]*ps_norw[min_cage:max_cage,0])
+
+        return a_ps,a_ps_norw    
         
     def comp_potential_palkkasumma(self,start=18,end=70,grouped=False,scale_time=True,full=False,include_kela=False):
         '''
@@ -2935,7 +2986,6 @@ class EpisodeStats():
 
         return employed,ahtv,unemployed,parttimeratio,i_ps,i_ps_norw,unempratio,empratio
 
-
     def comp_unemployed_ratio_by_age(self,emp=None,grouped=False,g=0,per_pop=True):
         if emp is None:
             if grouped:
@@ -3006,7 +3056,7 @@ class EpisodeStats():
 
         return ansiosid_osuus,tm_osuus    
 
-    def comp_unemp_stats_by_group(self,emp,scale_time=True,start=19,end=68,per_pop=True):
+    def comp_unemp_stats_by_group(self,emp=None,scale_time=True,start=19,end=68,per_pop=True):
         '''
         Laskee työttömien osuuden ryhmittäin
         '''
@@ -3032,22 +3082,7 @@ class EpisodeStats():
         '''
         Laskee työttömien osuuden yhteensä
         '''
-        if emp is None:
-            emp=self.empstate
-
-        if self.minimal:
-            tyot_osuus = np.sum(emp[:,0,:])/np.sum(emp,1)
-        else:
-            # työllisiksi lasketaan kokoaikatyössä olevat, osa-aikaiset, ve+työ, ve+osatyö
-            # suhteessa väestöön
-            if per_pop:
-                nn = self.alive[:,0]
-            else:
-                nn = self.comp_workforce(emp,ratio=False)
-
-            tyot_osuus=np.sum(emp[:,0]+emp[:,4]+emp[:,13])/np.sum(nn)
-
-        return tyot_osuus                    
+        return np.sum(self.comp_unemp_stats_by_group(emp,scale_time,start,end,per_pop))
 
     def comp_parttime_aggregate(self,emp=None,start=20,end=63.5,scale_time=True,grouped=False,g=0):
         '''
@@ -3099,53 +3134,6 @@ class EpisodeStats():
         kokotyo_osuus = np.reshape(kokotyo_osuus,(osatyo_osuus.shape[0],1))
 
         return kokotyo_osuus,osatyo_osuus
-
-    def comp_genders(self,scale_time=True):
-        demog2=self.empstats.get_demog()
-
-        if scale_time:
-            scale=self.timestep
-        else:
-            scale=1.0
-
-        start=self.min_age
-        end=self.max_age
-        min_cage=self.map_age(start)
-        max_cage=self.map_age(end)+2
-
-        scalex=demog2[min_cage:max_cage]/self.alive*scale
-        scalex2=demog2[min_cage:max_cage]*scale
-        
-        np.zeros((self.n_time,self.n_groups),dtype = np.int64)
-        women = np.sum(np.sum(self.galive[min_cage:max_cage,3:6],axis=1,keepdims=True)*scalex)
-        men = np.sum(np.sum(self.galive[min_cage:max_cage,0:3],axis=1,keepdims=True)*scalex)
-
-        return women,men
-
-    def comp_children(self,scale_time=True):
-        demog2=self.empstats.get_demog()
-
-        if scale_time:
-            scale=self.timestep
-        else:
-            scale=1.0
-
-        start = self.min_age
-        end = self.max_age
-        min_cage = self.map_age(start)
-        max_cage = self.map_age(end)+2
-
-        scalex = demog2[min_cage:max_cage]/self.alive[min_cage:max_cage]
-
-        c3 = np.sum(self.infostats_children_under3[min_cage:max_cage,:],axis=1)[:,None] * scalex * scale * 0.5
-        c7 = np.sum(self.infostats_children_under7[min_cage:max_cage,:],axis=1)[:,None] * scalex * scale * 0.5
-        c18 = np.sum(self.infostats_children_under18[min_cage:max_cage,:],axis=1)[:,None] * scalex * scale * 0.5
-        
-        w = np.sum(self.galive[min_cage:max_cage,3:6],axis=1,keepdims=True)*scalex # eri ikäisiä naisia kvartaalilla
-        naiset_in = np.array([0.005727417359024218,0.01059128848986463,0.01890046459242574,0.02426763737216155,0.03430309811874956,0.04005336001334001,0.04828193258133925,0.0616650502143103,0.06816135422294255,0.08110212638514526,0.08670537010159651,0.09630583689479538,0.1017242873234555,0.1049780682386882,0.09842716448625606,0.0926950575069941,0.08550675779214809,0.07716610533218086,0.06553524804177546,0.05361265498076101,0.04137449445721435,0.03453863465866466,0.02571906863491097,0.01716422485134555,0.01061106141460255,0.007058537179019107,0.00411962160512664,0.002444757874941232,0.001108792068875555,0.000507964152244113,0.0002458210422812193,0.0001691474966170501,0.0001316872427983539,3.270538984824699e-05,0.0,3.007066606525334e-05,6.002400960384154e-05,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
-        c_vrt = w[min_cage:max_cage:4] * naiset_in[:,None]
-
-        return c3,c7,c18,c_vrt
 
     def comp_children_ages(self,scale_time=True):
         '''
@@ -3281,6 +3269,103 @@ class EpisodeStats():
         if returns:
             return self.stats_employed,self.stats_parttime,self.stats_unemployed
 
+    def scale_by_sex(self,gemp,g=None,axis=1):
+        demog2=self.empstats.get_demog_bysex()
+
+        alive_men = np.sum(self.galive[:,0:3],1)
+        alive_women = np.sum(self.galive[:,3:6],1)
+        scalex_men = (demog2[:,0]/np.maximum(1,alive_men)*self.timestep)[:, None]
+        scalex_women = (demog2[:,1]/np.maximum(1,alive_women)*self.timestep)[:, None]
+        scalex_men[0] = scalex_men[1]
+        scalex_women[0] = scalex_women[1]
+
+        # tilastoista puuttuu 18,0 -vuotiaat. monistetaan 18,25 -vuotiaiden tiedot
+        gemp[0,:,:] = gemp[1,:,:]
+
+        if g is None:
+            if axis==1:
+                summa = np.sum(gemp[:,0:3,:],axis=1)*scalex_men+np.sum(gemp[:,3:6,:],axis=1)*scalex_women
+            else:
+                summa = np.sum(gemp[:,:,0:3],axis=2)*scalex_men+np.sum(gemp[:,:,3:6],axis=2)*scalex_women
+        else: # a single group g
+            if g in {0,1,2}:
+                if axis==1:
+                    summa = np.squeeze(gemp[:,g,:])*scalex_men
+                else:
+                    summa = np.squeeze(gemp[:,:,g])*scalex_men
+            else:
+                if axis==1:
+                    summa = np.squeeze(gemp[:,g,:])*scalex_women
+                else:
+                    summa = np.squeeze(gemp[:,:,g])*scalex_women
+
+        return summa
+    
+    def scale_var_by_sex(self,var,g=None):
+        demog2=self.empstats.get_demog_bysex()
+
+        alive_men = np.sum(self.galive[:,0:3],1)
+        alive_women = np.sum(self.galive[:,3:6],1)
+        scalex_men = np.squeeze(demog2[:,0]/alive_men*self.timestep)
+        scalex_women = np.squeeze(demog2[:,1]/alive_women*self.timestep)
+
+        if g is None:
+            np.sum(var[:,0:3]*scalex_men,axis=1)+np.sum(gemp[:,3:6,:]*scalex_women,axis=1)            
+        else: # a single group g
+            summa = np.sum(var[:,g]*scalex_women,axis=1)
+
+        return summa    
+
+    def comp_genders(self,scale_time=True):
+        demog2=self.empstats.get_demog()
+
+        if scale_time:
+            scale=self.timestep
+        else:
+            scale=1.0
+
+        start=self.min_age
+        end=self.max_age
+        min_cage=self.map_age(start)
+        max_cage=self.map_age(end)+2
+
+        scalex=demog2[min_cage:max_cage]/self.alive*scale
+        scalex2=demog2[min_cage:max_cage]*scale
+
+        alive_men = np.sum(self.galive[min_cage:max_cage,0:3],1)
+        alive_women = np.sum(self.galive[min_cage:max_cage,3:6],1)
+        scalex_men = np.squeeze(demog2[min_cage:max_cage,0]/alive_men*self.timestep)
+        scalex_women = np.squeeze(demog2[min_cage:max_cage,1]/alive_women*self.timestep)
+        
+        women = np.sum(np.sum(self.galive[min_cage:max_cage,3:6],axis=1,keepdims=True)*scalex_men)
+        men = np.sum(np.sum(self.galive[min_cage:max_cage,0:3],axis=1,keepdims=True)*scalex_men)
+
+        return women,men
+
+    def comp_children(self,scale_time=True):
+        demog2=self.empstats.get_demog()
+
+        if scale_time:
+            scale=self.timestep
+        else:
+            scale=1.0
+
+        start = self.min_age
+        end = self.max_age
+        min_cage = self.map_age(start)
+        max_cage = self.map_age(end)+2
+
+        scalex = demog2[min_cage:max_cage]/self.alive[min_cage:max_cage]
+
+        c3 = np.sum(self.infostats_children_under3[min_cage:max_cage,:],axis=1)[:,None] * scalex * scale * 0.5
+        c7 = np.sum(self.infostats_children_under7[min_cage:max_cage,:],axis=1)[:,None] * scalex * scale * 0.5
+        c18 = np.sum(self.infostats_children_under18[min_cage:max_cage,:],axis=1)[:,None] * scalex * scale * 0.5
+        
+        w = np.sum(self.galive[min_cage:max_cage,3:6],axis=1,keepdims=True)*scalex # eri ikäisiä naisia kvartaalilla
+        naiset_in = np.array([0.005727417359024218,0.01059128848986463,0.01890046459242574,0.02426763737216155,0.03430309811874956,0.04005336001334001,0.04828193258133925,0.0616650502143103,0.06816135422294255,0.08110212638514526,0.08670537010159651,0.09630583689479538,0.1017242873234555,0.1049780682386882,0.09842716448625606,0.0926950575069941,0.08550675779214809,0.07716610533218086,0.06553524804177546,0.05361265498076101,0.04137449445721435,0.03453863465866466,0.02571906863491097,0.01716422485134555,0.01061106141460255,0.007058537179019107,0.00411962160512664,0.002444757874941232,0.001108792068875555,0.000507964152244113,0.0002458210422812193,0.0001691474966170501,0.0001316872427983539,3.270538984824699e-05,0.0,3.007066606525334e-05,6.002400960384154e-05,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
+        c_vrt = w[min_cage:max_cage:4] * naiset_in[:,None]
+
+        return c3,c7,c18,c_vrt
 
     def comp_participants(self,scale=True,include_retwork=True,grouped=False,g=0,lkm=False,emp_htv=None):
         '''
@@ -3309,7 +3394,7 @@ class EpisodeStats():
                 emp=self.empstate
 
             aikuisia = np.sum(np.sum(emp,axis=1)*scalex)
-            työikäisiä = np.sum(np.sum(emp[self.map_age(18):self.map_age(63)+1,:],axis=1)*scalex[self.map_age(18):self.map_age(63)+1])
+            työikäisiä = np.sum(np.sum(emp[self.map_age(18):self.map_age(63),:],axis=1)*scalex[self.map_age(18):self.map_age(63)])
             eläkkeellä = np.sum(np.sum(emp[:,2],axis=1)*scalex)
             # tässä scalex on timestep*aikuisten lkm. infostats_children_under18 sisältää lasten määrän per naiset ja miehet
             lapsia = np.sum(np.sum(self.infostats_children_under18,axis=1)*scalex_lapset)*0.5 # lapset lasketaan sekä isälle että äidille
@@ -3340,57 +3425,59 @@ class EpisodeStats():
                 q[self.labels['ovella']] = np.sum(np.sum(self.infostats_ove,axis=1)*scalex)
                 q[self.labels['pareja']] = np.sum(np.sum(self.infostats_puoliso,axis=1)*scalex)/2
         elif self.version in set([7,8,9]):
-            #print('version 7/8/9')
             retage=self.map_age(self.min_retirementage)
+            kaikkitilat = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16]
             if lkm:
                 if grouped:
-                    emp = np.squeeze(self.gempstate[:,:,g])
+                    #emp = np.squeeze(self.gempstate[:,:,g])
+                    emp = self.scale_by_sex(self.gempstate[:,:,g],g=g)
                 else:
-                    emp = self.empstate
+                    #emp = self.empstate
+                    emp = self.scale_by_sex(self.gempstate[:,:,:],axis=2)
             else:
                 if grouped:
-                    emp = np.squeeze(self.emp_htv[:,g,:])
+                    #emp = np.squeeze(self.emp_htv[:,g,:])
+                    emp = self.scale_by_sex(self.emp_htv[:,g,:],g=g)
                 else:
-                    emp = np.sum(self.emp_htv[:,:,:],axis=1)
+                    #emp = np.sum(self.emp_htv[:,:,:],axis=1)
+                    emp = self.scale_by_sex(self.emp_htv[:,:,:],axis=1)
 
-            aikuisia = np.sum(np.sum(emp,axis=1)*scalex)
-            työikäisiä = np.sum(np.sum(emp[self.map_age(18):self.map_age(63)+1,:],axis=1)*scalex[self.map_age(18):self.map_age(63)+1])
+            aikuisia = np.sum(emp[:,kaikkitilat]) # np.sum(np.sum(emp,axis=1)*scalex)
             lapsia = np.sum(np.sum(self.infostats_children_under18,axis=1)*scalex_lapset)*0.5 # lasketaan kerran kummallekin vanhemlla, siksi kerroin 0,5
-            eläkkeellä = np.sum(emp[:,2]*scalex)
             if lkm:
                 q[self.labels['yhteensä']] = aikuisia + lapsia
                 q[self.labels['aikuisia']] = aikuisia
                 q[self.labels['lapsia']] = lapsia
-                q[self.labels['työikäisiä 18-62']] = työikäisiä
-            else:
-                q[self.labels['työllisiä 18-62']] = työikäisiä
-            q[self.labels['työllisiä']] = np.sum((emp[:,1]+emp[:,10]+emp[:,8]+emp[:,9])*scalex)
-            q[self.labels['työssä 63+']] = np.sum(np.sum(emp[self.map_age(63):,[1,9]],axis=1)*scalex_lkm[self.map_age(63):])+np.sum(np.sum(emp[self.map_age(63):,[8,10]],axis=1)*scalex_lkm[self.map_age(63):])
-            q[self.labels['työssä ja eläkkeellä']] = np.sum(emp[:,8]*scalex_lkm)+np.sum(emp[:,9]*scalex_lkm)
+                q[self.labels['työikäisiä 18-62']] = np.sum(emp[self.map_age(18):self.map_age(63),kaikkitilat])
+
+            q[self.labels['työllisiä 18-62']] = np.sum(emp[self.map_age(18):self.map_age(63),[1,8,9,10]])
+            q[self.labels['työllisiä']] = np.sum(emp[:,[1,8,9,10]]) 
+            q[self.labels['työssä 63+']] = np.sum(emp[self.map_age(63):,[1,8,9,10]]) 
+            q[self.labels['työssä ja eläkkeellä']] = np.sum(emp[:,[8,9]]) 
             if lkm:
-                q[self.labels['eläkkeellä']] = eläkkeellä + np.sum(emp[:retage,3]*scalex_lkm[:retage])
-                q[self.labels['vanhuuseläkkeellä']] = eläkkeellä
+                q[self.labels['eläkkeellä']] = np.sum(emp[:,[2,3,8,9]])
+                q[self.labels['vanhuuseläkkeellä']] = np.sum(emp[retage:,[2,3,8,9]])
 
             if include_retwork:
-                q[self.labels['palkansaajia']] = np.sum((emp[:,1]+emp[:,10]+emp[:,8]+emp[:,9])*scalex)
+                q[self.labels['palkansaajia']] = np.sum(emp[:,[1,8,9,10]]) 
             else:
-                q[self.labels['palkansaajia']] = np.sum((emp[:,1]+emp[:,10])*scalex)
+                q[self.labels['palkansaajia']] = np.sum(emp[:,[1,10]]) 
 
-            q[self.labels['osaaikatyössä']] = np.sum((emp[:,8]+emp[:,10])*scalex_lkm)
-            q[self.labels['kokoaikatyössä']] = np.sum((emp[:,1]+emp[:,9])*scalex_lkm)
+            q[self.labels['osaaikatyössä']] = np.sum(emp[:,[8,10]]) 
+            q[self.labels['kokoaikatyössä']] = np.sum(emp[:,[1,9]]) 
             if lkm:
-                q[self.labels['ansiosidonnaisella']] = np.sum((emp[:,0]+emp[:,4])*scalex_lkm)
-                q[self.labels['tmtuella']] = np.sum(emp[:,13]*scalex_lkm)
-                q[self.labels['isyysvapaalla']] = np.sum(emp[:,6]*scalex_lkm)
-                q[self.labels['kotihoidontuella']] = np.sum(emp[:,7]*scalex_lkm)
-                q[self.labels['työkyvyttömyyseläke']] = np.sum(emp[:retage,3]*scalex_lkm[:retage])
-                q[self.labels['svpäiväraha']] = np.sum(emp[:,14]*scalex_lkm)
-                q[self.labels['vanhempainvapaalla']] = np.sum(emp[:,5]*scalex_lkm)
-                q[self.labels['opiskelijoita']] = np.sum((emp[:,12]+emp[:,16])*scalex_lkm)
-                q[self.labels['ovella']] = np.sum(np.sum(self.infostats_ove,axis=1)*scalex)
+                q[self.labels['ansiosidonnaisella']] = np.sum(emp[:,[0,4]]) 
+                q[self.labels['tmtuella']] = np.sum(emp[:,13]) 
+                q[self.labels['isyysvapaalla']] = np.sum(emp[:,6]) 
+                q[self.labels['kotihoidontuella']] = np.sum(emp[:,7]) 
+                q[self.labels['työkyvyttömyyseläke']] = np.sum(emp[:retage,3]) 
+                q[self.labels['svpäiväraha']] = np.sum(emp[:,14]) 
+                q[self.labels['vanhempainvapaalla']] = np.sum(emp[:,5]) 
+                q[self.labels['opiskelijoita']] = np.sum(emp[:,[12,16]]) 
+                q[self.labels['ovella']] = np.sum(np.sum(self.infostats_ove,axis=1)*scalex) 
                 q[self.labels['pareja']] = np.sum(np.sum(self.infostats_puoliso,axis=1)*scalex)/2            
                 q[self.labels['yksinhuoltajia']] = np.sum(np.sum(self.infostats_yksinhuoltaja,axis=1)*scalex)
-                q[self.labels['lapsiperheitä']] = np.sum(np.sum(self.infostats_lapsiperheita,axis=1)*scalex)
+                q[self.labels['lapsiperheitä']] = np.sum(np.sum(self.infostats_lapsiperheita,axis=1)*scalex)                
         else:
             q[self.labels['yhteensä']] = np.sum(np.sum(self.empstate[:,:],1)*scalex)
             q[self.labels['palkansaajia']] = np.sum((self.empstate[:,1])*scalex)
@@ -3401,44 +3488,6 @@ class EpisodeStats():
             q[self.labels['vanhempainvapaalla']] = np.sum(self.empstate[:,1]*0)
 
         return q
-
-    # def comp_employment_groupstats(self,scale_time=True,g=0,include_retwork=True,grouped=True):
-    #     demog2=self.empstats.get_demog()
-
-    #     if scale_time:
-    #         scale=self.timestep
-    #     else:
-    #         scale=1.0
-
-    #     #min_cage=self.map_age(self.min_age)
-    #     #max_cage=self.map_age(self.max_age)+1
-
-    #     scalex = np.squeeze(demog2/self.alive*scale) # self.n_pop
-
-    #     #d = np.squeeze(demog2[min_cage:max_cage])
-
-    #     if grouped:
-    #         ratiostates = np.squeeze(self.gempstate[:,:,g])/self.alive
-    #         demogstates = np.squeeze(self.gempstate[:,:,g])
-    #     else:
-    #         ratiostates=self.empstate[:,:]/self.alive
-    #         demogstates=self.empstate[:,:]
-
-    #     if self.version in set([1,2,3,4,5,6,7,104]):
-    #         if include_retwork:
-    #             stats_employed = np.sum((demogstates[:,1]+demogstates[:,9])*scalex)
-    #             stats_parttime = np.sum((demogstates[:,10]+demogstates[:,8])*scalex)
-    #         else:
-    #             stats_employed = np.sum((demogstates[:,1])*scalex)
-    #             stats_parttime = np.sum((demogstates[:,10])*scalex)
-    #         stats_unemployed = np.sum((demogstates[:,0]+demogstates[:,4]+demogstates[:,13])*scalex)
-    #     else:
-    #         stats_employed = np.sum((demogstates[:,0]+demogstates[:,3])*scalex)
-    #         stats_parttime = np.sum((demogstates[:,3])*scalex)
-    #         stats_unemployed = np.sum((demogstates[:,0])*scalex)
-    #         #stats_all = np.sum(demogstates,1)
-
-    #     return stats_employed,stats_parttime,stats_unemployed
 
     def comp_state_stats(self,state,start=20,end=63.5):
 
@@ -4242,23 +4291,40 @@ class EpisodeStats():
 
         return tyollisyysaste,osatyoaste,tyottomyysaste,ka_tyottomyysaste        
 
-    def comp_workforce_group(self,by_age=True,ratio=False):
+    def comp_workforce_group(self,emp=None,by_age=True,ratio=False):
         if self.version in set([1,2,3,4,5,6,7,8,9,104]):
-            employed=self.gempstate[:,1,:]
-            retired=self.gempstate[:,2,:]
-            unemployed=self.gempstate[:,0,:]
-            disabled=self.gempstate[:,1,:]
-            piped=self.gempstate[:,4,:]
-            mother=self.gempstate[:,5,:]
-            dad=self.gempstate[:,6,:]
-            kotihoidontuki=self.gempstate[:,7,:]
-            vetyo=self.gempstate[:,9,:]
-            veosatyo=self.gempstate[:,8,:]
-            osatyo=self.gempstate[:,10,:]
-            outsider=self.gempstate[:,11,:]
-            student=self.gempstate[:,12,:]+self.gempstate[:,16,:]
-            tyomarkkinatuki=self.gempstate[:,13,:]
-            sv=self.gempstate[:,14,:]
+            if emp is None:
+                employed=self.gempstate[:,1,:]
+                retired=self.gempstate[:,2,:]
+                unemployed=self.gempstate[:,0,:]
+                disabled=self.gempstate[:,1,:]
+                piped=self.gempstate[:,4,:]
+                mother=self.gempstate[:,5,:]
+                dad=self.gempstate[:,6,:]
+                kotihoidontuki=self.gempstate[:,7,:]
+                vetyo=self.gempstate[:,9,:]
+                veosatyo=self.gempstate[:,8,:]
+                osatyo=self.gempstate[:,10,:]
+                outsider=self.gempstate[:,11,:]
+                student=self.gempstate[:,12,:]+self.gempstate[:,16,:]
+                tyomarkkinatuki=self.gempstate[:,13,:]
+                sv=self.gempstate[:,14,:]
+            else:
+                employed=emp[:,1,:]
+                retired=emp[:,2,:]
+                unemployed=emp[:,0,:]
+                disabled=emp[:,1,:]
+                piped=emp[:,4,:]
+                mother=emp[:,5,:]
+                dad=emp[:,6,:]
+                kotihoidontuki=emp[:,7,:]
+                vetyo=emp[:,9,:]
+                veosatyo=emp[:,8,:]
+                osatyo=emp[:,10,:]
+                outsider=emp[:,11,:]
+                student=emp[:,12,:]+emp[:,16,:]
+                tyomarkkinatuki=emp[:,13,:]
+                sv=emp[:,14,:]
             if ratio:
                 workforce=(employed+osatyo+veosatyo+vetyo+unemployed+piped+tyomarkkinatuki+dad+mother+sv)/self.galive[:,:]
             else:
