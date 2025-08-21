@@ -2744,7 +2744,7 @@ class EpisodeStats():
                 return
             else:
                 scalex=demog2/self.alive
-                return np.sum(self.infostats_palkkatulo*scalex)
+                return np.sum(self.infostats_palkkatulo*scalex),0
 
         if scale_time:
             scale=self.timestep

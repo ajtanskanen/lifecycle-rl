@@ -219,3 +219,44 @@ def lineplot(x,y,y2=None,y3=None,y4=None,y5=None,y6=None,
 
     if show:
         plt.show()
+
+def add_label(ax, text='(a)', x0=None, y0=None, **kwargs):
+    '''
+    Adds labels to multi-axis figures.
+    '''
+    from string import ascii_lowercase
+
+    if isinstance(ax, np.ndarray):
+        abc = [f'({letter})' for letter in list(ascii_lowercase)]
+
+        f = ax.flat[0].get_figure()
+        if y0 is None:
+            y0 = f.subplotpars.top
+        if x0 is None:
+            x0 = f.subplotpars.left
+        for i, _ax in enumerate(ax.flat):
+            _ax.annotate(r'{} '.format(abc[i]),
+                         xy=(-x0, y0), annotation_clip=False,
+                         xycoords='axes fraction', weight='bold',
+                         fontsize=plt.rcParams['font.size'],
+                         va='bottom', **kwargs
+                         )
+    else:
+        fig = ax.get_figure()
+        if x0 is None:
+            x0 = fig.subplotpars.left
+        if y0 is None:
+            y0 = fig.subplotpars.top
+        #if plt.rcParams['text.usetex'] is True:
+        #    ax.annotate(r'\textbf {{{}}}'.format(text),
+        #                xy=(-x0, y0), annotation_clip=False,
+        #                xycoords='axes fraction', weight='bold',
+        #                fontsize=plt.rcParams['font.size'],
+        #                va='top', **kwargs,
+        #                )
+        #else:
+        ax.annotate(r'{}'.format(text),
+                    xy=(-x0, y0), annotation_clip=False,
+                    xycoords='axes fraction', weight='bold',
+                    fontsize=plt.rcParams['font.size'],
+                    )        

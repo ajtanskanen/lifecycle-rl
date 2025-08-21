@@ -306,7 +306,7 @@ class SimStats(EpisodeStats):
         mean_tyoll=np.mean(agg_tyoll)
         median_tyoll=np.median(agg_tyoll)
         std_htv=np.std(agg_htv)
-        std_tyoll=np.std(emp_tyolliset_osuus)
+        std_tyoll=np.std(emp_tyolliset)
         diff_htv=agg_htv-mean_htv
         diff_tyoll=agg_tyoll-mean_tyoll
         mean_rew = np.mean(agg_rew)
