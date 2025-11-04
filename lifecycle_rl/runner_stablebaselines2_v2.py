@@ -63,7 +63,7 @@ class runner_stablebaselines2():
         os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
         # n_add = 2
-        self.model_twoperson = set([4,5,6,7,8,9,104])
+        self.model_twoperson = set([4,5,6,7,8,9,10,11,104]) # self.version
 
         self.args={'gamma': gamma, 
               'version': version,
@@ -532,11 +532,6 @@ class runner_stablebaselines2():
 
         print('sim_single',rank)
 
-        if args['version'] in self.model_twoperson:  # increase by 2
-            n_add=2
-        else:  # increase by 1
-            n_add=1
-
         render = args['render']
         print('pop',args['pop'],'procs',args['processes'])
         deterministic = args['deterministic']
@@ -564,6 +559,18 @@ class runner_stablebaselines2():
         #print('Child',rank,'check point 4')
 
         env.seed(args['seed'] + rank)
+
+        if hasattr(env, 'get_lc_twoperson'):
+            if env.get_lc_twoperson():
+                n_add=2
+            else:  # increase by 1
+                n_add=1
+        else:
+            print('get_lc_twoperson: Fallback')
+            if args['version'] in self.model_twoperson:  # increase by 2
+                n_add=2
+            else:  # increase by 1
+                n_add=1
 
         model=self.setup_model_v2(env,rank=rank,debug=args['debug'],rlmodel=args['rlmodel'],load=args['load'],
                  deterministic=args['deterministic'],arch=args['arch'],predict=True,n_cpu_tf_sess=1)

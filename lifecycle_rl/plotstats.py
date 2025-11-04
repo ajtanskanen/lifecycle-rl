@@ -34,7 +34,7 @@ import timeit
 #locale.setlocale(locale.LC_ALL, 'fi_FI')
 
 class PlotStats():
-    def __init__(self,stats,timestep,n_time,n_emps,n_pop,env,minimal,min_age,max_age,min_retirementage,year = 2018,version = 9,
+    def __init__(self,stats,timestep,n_time,n_emps,n_pop,env,minimal,min_age,max_age,min_retirementage,year = 2018,version = 10,
         params = None,gamma = 0.92,lang = 'English'):
         self.version = version
         self.gamma = gamma
@@ -43,8 +43,8 @@ class PlotStats():
         self.params['n_emps'] = n_emps
         self.episodestats = stats
 
-        self.complex_models = {1,2,3,4,5,6,7,8,9,104}
-        self.recent_models = set([5,6,7,8,9])
+        self.complex_models = {1,2,3,4,5,6,7,8,9,10,11,104}
+        self.recent_models = set([5,6,7,8,9,10,11])
         self.no_groups_models = {0,101}
         self.savings_models = {101,104}
 
@@ -132,7 +132,7 @@ class PlotStats():
         df['diff'] = df[cctext1_new]-df[cctext2_new]
         return df
 
-    def compare_against(self,cc = None,cctext = 'toteuma'):
+    def compare_against(self,cc = None,cctext = 'toteuma',selftext = ''):
         if self.version in self.complex_models:
             q = self.episodestats.comp_budget(scale = True)
             if cc is None:
@@ -142,7 +142,7 @@ class PlotStats():
 
             df1 = pd.DataFrame.from_dict(q,orient = 'index',columns = ['e/y'])
             df2 = pd.DataFrame.from_dict(q_stat,orient = 'index',columns = [cctext])
-            df = self.compare_df(df1,df2,cctext1 = 'e/y',cctext2 = cctext,cctext2_new = cctext)
+            df = self.compare_df(df1,df2,cctext1 = selftext+'e/y',cctext2 = cctext,cctext2_new = cctext)
             #df = df1.copy()
             #df[cctext] = df2[cctext]
             #df['diff'] = df1['e/v']-df2[cctext]
@@ -192,6 +192,38 @@ class PlotStats():
 
             print('Henkilöitä tiloissa skaalattuna väestötasolle')
             print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))    
+
+    def compare_disab(self,cc = None, xstart = None,xend = None, label1 = 'toteuma',label2='self',figname=None):
+        # fig,ax = plt.subplots()
+        # leg = 'TK Miehet'
+        tk1 = np.sum(self.episodestats.gempstate[:,3,:],axis = 1)
+        tk2 = np.sum(cc.episodestats.gempstate[:,3,:],axis = 1)
+        alive1 = np.zeros((self.episodestats.galive.shape[0],1))
+        alive2 = np.zeros((cc.episodestats.galive.shape[0],1))
+        alive1[:,0] = np.sum(self.episodestats.galive[:,:],1)
+        alive2[:,0] = np.sum(cc.episodestats.galive[:,:],1)
+
+        tk1 = np.reshape(tk1,(self.episodestats.galive.shape[0],1))
+        tk2 = np.reshape(tk2,(cc.episodestats.galive.shape[0],1))
+        osuus1 = 100*tk1/alive1
+        osuus2 = 100*tk2/alive2
+        x = np.linspace(self.min_age,self.max_age,self.n_time)
+
+        # ax.plot(x,osuus1,label = label1)
+        # ax.plot(x,osuus2,label = label2)
+        # ax.set_xlabel(self.labels['age'])
+        # ax.set_ylabel(self.labels['ratio'])
+        # ax.legend(bbox_to_anchor = (1.05, 1), loc = 2, borderaxespad = 0.)
+        # if xstart is not None:
+        #     ax.set_xlim([xstart,xend])
+        # if figname is not None:
+        #     plt.savefig(figname+'disab.'+self.figformat, format = self.figformat)
+
+        # plt.show()
+
+        lineplot(x,osuus1,y2 = osuus2,xlim = [20,75],#ylim = [0,100],
+                 label = label1,label2 = label2,xlabel = self.labels['age'],ylabel = self.labels['ratio'],
+                 selite = True,figname = figname+'disab2.'+self.figformat,legend_loc='upper left')
 
     def render_dist(self,grayscale = False,figname = None,palette_EK = True):
 
@@ -332,7 +364,7 @@ class PlotStats():
             for k in range(self.n_employment):
                 print(f'Tilassa {k} palkkasumma on {ps[k]:.2f} e')
 
-        if self.version in set([4,5,6,7,8,104]):
+        if self.version in self.complex_models:
             print_html('<h2>Lapset ja puolisot</h2>')
             self.plot_spouse()
             self.plot_children()
@@ -3423,6 +3455,8 @@ class PlotStats():
         initial1 = np.mean(real1[1,:])
         initial2 = np.mean(real2[1,:])
 
+        self.compare_disab(cc = cc2, xstart = None,xend = None, label1 = label1,label2 = label2,figname=figname)
+
         self.plot_wage_reduction_compare(cc2,label1=label1,label2=label2)
 
         if self.episodestats.save_pop:
@@ -3527,19 +3561,7 @@ class PlotStats():
         else:
             ls = None
 
-        if True:
-            lineplot(x,100*tyollaste1_full,y2 = 100*tyollaste2_full,xlim = [20,70],ylim = [0,100],label = label1,label2 = label2,xlabel = self.labels['age'],ylabel = self.labels['tyollisyysaste %'],selite = True,figname = figname+'emp.'+self.figformat)
-        else:
-            fig,ax = plt.subplots()
-            ax.set_xlabel(self.labels['age'],**csfont)
-            ax.set_ylabel(self.labels['tyollisyysaste %'],**csfont)
-            ax.plot(x,100*tyollaste1_full,label = label1)
-            ax.plot(x,100*tyollaste2_full,ls = ls,label = label2)
-            ax.set_ylim([0,100])
-            ax.legend()
-            if figname is not None:
-                plt.savefig(figname+'emp.'+self.figformat, format = self.figformat)
-            plt.show()
+        lineplot(x,100*tyollaste1_full,y2 = 100*tyollaste2_full,xlim = [20,75],ylim = [0,100],label = label1,label2 = label2,xlabel = self.labels['age'],ylabel = self.labels['tyollisyysaste %'],selite = True,figname = figname+'emp.'+self.figformat)
 
         self.plot_gender_emp(cc = cc2,diff = False,label1 = label1,label2 = label2)
         self.plot_gender_emp(cc = cc2,diff = True,label1 = label1,label2 = label2)

@@ -136,6 +136,7 @@ class Lifecycle():
                 'extra_ppr': self.extra_ppr,
                 'startage': self.startage,
                 'investment': self.include_investment,
+                'retage70': self.retage70,
                 'wealth': self.include_wealth,
                 'year': self.year,
                 'r_mean': self.r_mean,
@@ -165,10 +166,10 @@ class Lifecycle():
         self.n_age = self.max_age-self.min_age+1
         self.n_time = int(np.round((self.n_age-1)*self.inv_timestep))+1
 
-        if self.version in set([4,5,6,7,8,9,104]):
+        if self.version in set([4,5,6,7,8,9,10,104]):
             self.min_retirementage=self.env.get_retirementage()
 
-        if self.version in set([7,8,9]):
+        if self.version in set([7,8,9,10]):
             parttime_actions = self.env.setup_parttime_actions()
         else:
             parttime_actions = None
@@ -295,9 +296,10 @@ class Lifecycle():
         self.exploration=False
         self.exploration_ratio=0.10
         self.randomness=True
-        self.include_emtr=False
-        self.library=0
-        self.processes=10
+        self.include_emtr = False
+        self.library = 0
+        self.processes = 10
+        self.retage70 = 0
         
         self.random_returns=False
         self.r_mean=0.0
@@ -318,6 +320,9 @@ class Lifecycle():
             if key=='profile':
                 if value is not None:
                     self.profile=value
+            elif key=='retage70':
+                if value is not None:
+                    self.retage70=value
             elif key=='processes':
                 if value is not None:
                     self.processes=value

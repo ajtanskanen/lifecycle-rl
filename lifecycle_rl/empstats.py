@@ -1606,15 +1606,15 @@ class Empstats():
         elif y==2023:
             return 107_206_000_000 # vs 108 100 000 000 (vero.fi)
         elif y==2024:
-            return 107_206_000_000*1.024  # vs 111 000 000 000
+            return 110_074_600_000  # vs 111 000 000 000
         elif y==2025:
-            return 107_206_000_000*1.024*1.036  # vs 115 000 000 000
+            return 110_074_600_000*1.036  # vs 115 000 000 000
         elif y==2026:
-            return 107_206_000_000*1.024*1.036*1.046 # vs 119 400 000 000
+            return 110_074_600_000*1.036*1.046 # vs 119 400 000 000
         elif y==2027:
-            return 107_206_000_000*1.024*1.036*1.046*1.041 # vs 119 400 000 000
+            return 110_074_600_000*1.036*1.046*1.041 # vs 119 400 000 000
         elif y==2028:
-            return 107_206_000_000*1.024*1.036*1.046*1.041*1.040 # vs 119 400 000 000
+            return 110_074_600_000*1.036*1.046*1.041*1.040 # vs 119 400 000 000
         
     def get_tyotulosumma_verottaja(self,y: int):
         '''
@@ -1634,15 +1634,15 @@ class Empstats():
         elif y==2023:
             return 113_425_265_679
         elif y==2024:
-            return 113_425_265_679*1.024  # vs 111 000 000 000
+            return 113_425_265_679*1.024 
         elif y==2025:
-            return 113_425_265_679*1.024*1.036  # vs 115 000 000 000
+            return 113_425_265_679*1.024*1.036
         elif y==2026:
-            return 113_425_265_679*1.024*1.036*1.046 # vs 119 400 000 000
+            return 113_425_265_679*1.024*1.036*1.046 
         elif y==2027:
-            return 113_425_265_679*1.024*1.036*1.046*1.041 # vs 119 400 000 000
+            return 113_425_265_679*1.024*1.036*1.046*1.041 
         elif y==2028:
-            return 113_425_265_679*1.024*1.036*1.046*1.041*1.040 # vs 119 400 000 000        
+            return 113_425_265_679*1.024*1.036*1.046*1.041*1.040 
 
     def stat_budget(self,scale=False):
         q={}
@@ -1864,15 +1864,18 @@ class Empstats():
             q[self.labels['valtionvero']]=22_236_000_000 # budjetti 2024
             q[self.labels['kunnallisvero']]=9_610_000_000 #8_000_000_000 # ok? 9 620
             q[self.labels['ptel']]=6_816_800_000
-            q[self.labels['tyoelakemaksu']]=30_439_600_000*kerroin # Lähde: ETK
+            q[self.labels['tyoelakemaksu']] = 32_979_300_000 # Lähde: ETK
             q[self.labels['tyottomyysvakuutusmaksu']]=0.019*q[self.labels['tyotulosumma']]
             q[self.labels['sairausvakuutusmaksu']]=(1_335_000_000+407_000_000)*kerroin
             q[self.labels['ylevero']]=497_000_000*kerroin
             q[self.labels['ansiopvraha']]=2_023_180_630 # Kelasto
             q[self.labels['peruspvraha']]=282_918_845 + 1_627_911_702 # Kelasto
             q[self.labels['asumistuki']]=1_676_928_570 + 685_251_876 # yleinen plus eläkkeensaajan 2023
-            q[self.labels['tyoelakemeno']]=31_449_600_000*kerroin
-            q[self.labels['kansanelakemeno']]=2_167_992_823*kerroin
+            q[self.labels['tyoelakemeno']] = 36_377_000_000	
+            q[self.labels['tyokyvyttomyyselakemeno']]= 2_653_900_000  # sis työeläke ja kela
+            q[self.labels['osittainenvanhuuselakemeno']] = 63_800_000 + 555_500_000
+            q[self.labels['vanhuuselakemeno']] = 33_336_000_000 # sis työeläke ja kela
+            q[self.labels['kansanelakemeno']]=2_167_992_823*kerroin # 2 677 yhteensä takuueläkkeen kanssa
             q[self.labels['takuuelakemeno']]=273_173_956*kerroin
             q[self.labels['elatustuki']]=229_501_872 + 55_500_000 # elatustuki + elatusapu
             q[self.labels['lapsilisa']]=1_352_354_007*kerroin
