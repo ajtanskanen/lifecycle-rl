@@ -1818,7 +1818,7 @@ class Empstats():
             q[self.labels['alv']]=20_217_000_000 # vero.fi ennakkotilasto
             q[self.labels['ta_maksut']]=0.2101*q[self.labels['tyotulosumma']] # karkea
         elif self.year==2023:
-            kerroin=1.03
+            #kerroin=1.03
             q[self.labels['tyotulosumma']]=self.get_tyotulosumma(self.year) #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
             q[self.labels['ansiotulot, verottaja']]=self.get_tyotulosumma_verottaja(self.year)
             q[self.labels['tyotulosumma eielakkeella']]=np.nan #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
@@ -1845,7 +1845,7 @@ class Empstats():
             q[self.labels['isyyspaivaraha']]=193_579_475 # lähde kelasto
             q[self.labels['aitiyspaivaraha']]=797_086_438 # lähde kelasto
             q[self.labels['kotihoidontuki']]=179_411_703 + 25_980_995 + 10_629_749 # kotihoidontuki + joustava hoitoraha + osittainen hoitoraha # lähde kelasto
-            q[self.labels['sairauspaivaraha']]=901_058_982 # lähde kelasto
+            q[self.labels['sairauspaivaraha']]=1_036_088_383	 # lähde kelasto
             q[self.labels['toimeentulotuki']]=718_462_857 # perustoimeentulotuki, lähde kelasto
             if self.include_perustulo:
                 q[self.labels['perustulo']]=0
@@ -1853,7 +1853,7 @@ class Empstats():
             q[self.labels['alv']]=21_275_000_000 # vero.fi ennakkotilasto
             q[self.labels['ta_maksut']]=0.2109*self.get_tyotulosumma(self.year)
         elif self.year==2024: # update
-            kerroin=1.03*1.01
+            kerroin=1.03
             q[self.labels['tyotulosumma']]=self.get_tyotulosumma(self.year) #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
             q[self.labels['ansiotulot, verottaja']]=self.get_tyotulosumma_verottaja(self.year)
             q[self.labels['tyotulosumma eielakkeella']]=np.nan #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
@@ -1862,12 +1862,12 @@ class Empstats():
             q[self.labels['verot+maksut']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
             q[self.labels['verot+maksut+alv']]=0   # tuloverot 30_763_000_000 ml YLE ja kirkollisvero
             q[self.labels['valtionvero']]=22_236_000_000 # budjetti 2024
-            q[self.labels['kunnallisvero']]=9_610_000_000 #8_000_000_000 # ok? 9 620
-            q[self.labels['ptel']]=6_816_800_000
+            q[self.labels['kunnallisvero']]=10_016_000_000 # veronmaksajat
+            q[self.labels['ptel']]=8_923_000_000
             q[self.labels['tyoelakemaksu']] = 32_979_300_000 # Lähde: ETK
             q[self.labels['tyottomyysvakuutusmaksu']]=0.019*q[self.labels['tyotulosumma']]
             q[self.labels['sairausvakuutusmaksu']]=(1_335_000_000+407_000_000)*kerroin
-            q[self.labels['ylevero']]=497_000_000*kerroin
+            q[self.labels['ylevero']]=539_625_600
             q[self.labels['ansiopvraha']]=2_023_180_630 # Kelasto
             q[self.labels['peruspvraha']]=282_918_845 + 1_627_911_702 # Kelasto
             q[self.labels['asumistuki']]=1_676_928_570 + 685_251_876 # yleinen plus eläkkeensaajan 2023
@@ -1875,23 +1875,23 @@ class Empstats():
             q[self.labels['tyokyvyttomyyselakemeno']]= 2_653_900_000  # sis työeläke ja kela
             q[self.labels['osittainenvanhuuselakemeno']] = 63_800_000 + 555_500_000
             q[self.labels['vanhuuselakemeno']] = 33_336_000_000 # sis työeläke ja kela
-            q[self.labels['kansanelakemeno']]=2_167_992_823*kerroin # 2 677 yhteensä takuueläkkeen kanssa
-            q[self.labels['takuuelakemeno']]=273_173_956*kerroin
+            q[self.labels['kansanelakemeno']]=2_364_361_791	 # 2 677 yhteensä takuueläkkeen kanssa
+            q[self.labels['takuuelakemeno']]=312_704_867
             q[self.labels['elatustuki']]=229_501_872 + 55_500_000 # elatustuki + elatusapu
-            q[self.labels['lapsilisa']]=1_352_354_007*kerroin
-            q[self.labels['opintotuki']]=(417_404_073+54_057)*kerroin
-            q[self.labels['isyyspaivaraha']]=149_559_776*kerroin
-            q[self.labels['aitiyspaivaraha']]=850_374_956*kerroin
-            q[self.labels['kotihoidontuki']]=245_768_701*kerroin
-            q[self.labels['sairauspaivaraha']]=901_058_982*kerroin # 2023
-            q[self.labels['toimeentulotuki']]=718_462_857*kerroin
+            q[self.labels['lapsilisa']]=1_385_697_489
+            q[self.labels['opintotuki']]=517_674_718	
+            q[self.labels['isyyspaivaraha']]=289_789_004	# Vanhempainpäiväraha miehille	
+            q[self.labels['aitiyspaivaraha']]=860_873_705	# Vanhempainpäiväraha naisille
+            q[self.labels['kotihoidontuki']]=147_614_862 + 25_886_505 + 10_503_594 # kotihoidontuki + joustava hoitoraha + osittainen hoitoraha # lähde kelasto
+            q[self.labels['sairauspaivaraha']]=1_021_831_305
+            q[self.labels['toimeentulotuki']]=824_852_749
             if self.include_perustulo:
                 q[self.labels['perustulo']]=0
-            q[self.labels['pvhoitomaksu']]=271_000_000*kerroin
-            q[self.labels['alv']]=20_217_000_000*kerroin #21_775_000_000
-            q[self.labels['ta_maksut']]=0.1995*q[self.labels['tyotulosumma']] # karkea      
+            q[self.labels['pvhoitomaksu']]=175_800_000*kerroin
+            q[self.labels['alv']]=25_833_000_000
+            q[self.labels['ta_maksut']]=18_542_000_000 + 2_043_000_000 # veronmaksajat https://www.veronmaksajat.fi/tutkimus-ja-tilastot/suomen-verot-ja-menot/verotuotot/#1aa36db4
         elif self.year==2025: # update
-            kerroin=1.03*1.01*1.02
+            kerroin=1.03
             q[self.labels['tyotulosumma']]=self.get_tyotulosumma(self.year) #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
             q[self.labels['ansiotulot, verottaja']]=self.get_tyotulosumma_verottaja(self.year)
             q[self.labels['tyotulosumma eielakkeella']]=np.nan #+4_613_400_000+1_239_900_000 # lähde: ETK, tyel + julkinen + yel + myel
@@ -1902,7 +1902,7 @@ class Empstats():
             q[self.labels['valtionvero']]=22_236_000_000 # budjetti 2024
             q[self.labels['kunnallisvero']]=10_135_000_000
             q[self.labels['ptel']]=6_816_800_000
-            q[self.labels['tyoelakemaksu']]=30_439_600_000*kerroin # Lähde: ETK
+            q[self.labels['tyoelakemaksu']]=32_979_300_000*kerroin # Lähde: ETK
             q[self.labels['tyottomyysvakuutusmaksu']]=0.019*q[self.labels['tyotulosumma']]
             q[self.labels['sairausvakuutusmaksu']]=(1_335_000_000+407_000_000)*kerroin
             q[self.labels['ylevero']]=497_000_000*kerroin
@@ -1922,7 +1922,7 @@ class Empstats():
             q[self.labels['toimeentulotuki']]=718_462_857*kerroin
             if self.include_perustulo:
                 q[self.labels['perustulo']]=0
-            q[self.labels['pvhoitomaksu']]=271_000_000*kerroin
+            q[self.labels['pvhoitomaksu']]=175_800_000*kerroin
             q[self.labels['alv']]=20_217_000_000*kerroin #21_775_000_000
             q[self.labels['ta_maksut']]=0.2034*q[self.labels['tyotulosumma']] # karkea  
         elif self.year==2026: # update
@@ -1957,7 +1957,7 @@ class Empstats():
             q[self.labels['toimeentulotuki']]=718_462_857*kerroin
             if self.include_perustulo:
                 q[self.labels['perustulo']]=0
-            q[self.labels['pvhoitomaksu']]=271_000_000*kerroin
+            q[self.labels['pvhoitomaksu']]=175_800_000*kerroin # 2024
             q[self.labels['alv']]=20_217_000_000*kerroin #21_775_000_000
             q[self.labels['ta_maksut']]=0.2034*q[self.labels['tyotulosumma']] # karkea                              
 
@@ -2382,16 +2382,16 @@ class Empstats():
             m_osatyo=np.array([37.1,10.3,5.8,6.3,12.0,66.0])
         elif self.year==2024: # 2024
             o_x=np.array([20,30,40,50,60,70])
-            f_osatyo=np.array([55.6,23.3,17.1,12.4,18.6,67.5])
-            m_osatyo=np.array([39.4,10.7,6.8,5.9,11.6,62.1])
+            f_osatyo=np.array([58.5,24.0,17.7,12.8,19.0,70.0])
+            m_osatyo=np.array([41.7,11.4,7.4,6.6,12.0,62.1])
         elif self.year==2025: # 2023, päivitä
             o_x=np.array([20,30,40,50,60,70])
-            f_osatyo=np.array([55.6,23.3,17.1,12.4,18.6,67.5])
-            m_osatyo=np.array([39.4,10.7,6.8,5.9,11.6,62.1])
+            f_osatyo=np.array([58.5,24.0,17.7,12.8,19.0,70.0])
+            m_osatyo=np.array([41.7,11.4,7.4,6.6,12.0,62.1])
         elif self.year==2026: # 2023, päivitä
             o_x=np.array([20,30,40,50,60,70])
-            f_osatyo=np.array([55.6,23.3,17.1,12.4,18.6,67.5])
-            m_osatyo=np.array([39.4,10.7,6.8,5.9,11.6,62.1])
+            f_osatyo=np.array([58.5,24.0,17.7,12.8,19.0,70.0])
+            m_osatyo=np.array([41.7,11.4,7.4,6.6,12.0,62.1])
         else:
             print('Empstats, unknown year',self.year)
 

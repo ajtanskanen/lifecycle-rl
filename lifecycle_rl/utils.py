@@ -181,7 +181,7 @@ def get_style_EK():
 def lineplot(x,y,y2=None,y3=None,y4=None,y5=None,y6=None,
                 label=None,label2=None,label3=None,label4=None,label5=None,label6=None,
                 xlabel='',ylabel='',selite=False,source=None,xlim=None,ylim=None,figname=None,
-                show=True,grayscale=False,legend_loc='upper right'):
+                show=True,grayscale=False,legend_loc='upper right',ax=None):
     csfont,pal=setup_EK_fonts()
     #if grayscale:
     #    pal = sns.light_palette("black", 8, reverse = True)
@@ -189,7 +189,11 @@ def lineplot(x,y,y2=None,y3=None,y4=None,y5=None,y6=None,
     linestyle={'linewidth': 3}
     legendstyle={'frameon': False}
 
-    fig, axs = plt.subplots()
+    if ax is not None:
+        axs = ax
+    else:
+        fig, axs = plt.subplots()
+        
     axs.plot(x,y,label=label,**linestyle)
     if y2 is not None:
         axs.plot(x,y2,label=label2,**linestyle)

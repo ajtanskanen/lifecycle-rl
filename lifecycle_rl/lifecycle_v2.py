@@ -166,10 +166,17 @@ class Lifecycle():
         self.n_age = self.max_age-self.min_age+1
         self.n_time = int(np.round((self.n_age-1)*self.inv_timestep))+1
 
-        if self.version in set([4,5,6,7,8,9,10,104]):
+        self.complexmodels = set([4,5,6,7,8,9,10,11,104])
+        self.minimalmodels = set([0,101])
+        self.ptmodels = set([5,6,7,8,9,10,11])
+        self.recentmodels = set([6,7,8,9,10,11])
+        self.savings_models = set([101,102,103,104])
+
+
+        if self.version in self.complexmodels:
             self.min_retirementage=self.env.get_retirementage()
 
-        if self.version in set([7,8,9,10]):
+        if self.version in self.ptmodels:
             parttime_actions = self.env.setup_parttime_actions()
         else:
             parttime_actions = None

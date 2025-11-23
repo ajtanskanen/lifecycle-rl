@@ -46,7 +46,9 @@ class PlotStats():
         self.complex_models = {1,2,3,4,5,6,7,8,9,10,11,104}
         self.recent_models = set([5,6,7,8,9,10,11])
         self.no_groups_models = {0,101}
-        self.savings_models = {101,104}
+        self.savings_models = {101,102,103,104}
+        self.minimalmodels = set([0,101])
+        self.ptmodels = set([5,6,7,8,9,10,11])
 
         self.lab = Labels()
         self.reset(timestep,n_time,n_emps,n_pop,env,minimal,min_age,max_age,min_retirementage,year,params = params,lang = lang)
@@ -193,7 +195,7 @@ class PlotStats():
             print('Henkilöitä tiloissa skaalattuna väestötasolle')
             print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))    
 
-    def compare_disab(self,cc = None, xstart = None,xend = None, label1 = 'toteuma',label2='self',figname=None):
+    def compare_disab(self,cc = None, xstart = None,xend = None, label1 = 'toteuma',label2='self',figname=None,ax=None):
         # fig,ax = plt.subplots()
         # leg = 'TK Miehet'
         tk1 = np.sum(self.episodestats.gempstate[:,3,:],axis = 1)
@@ -221,9 +223,18 @@ class PlotStats():
 
         # plt.show()
 
+        if figname is not None:
+            fname = figname+'disab2.'+self.figformat
+        else:
+            fname = None
+        if ax is not None:
+            show = False
+        else:
+            show = True
+
         lineplot(x,osuus1,y2 = osuus2,xlim = [20,75],#ylim = [0,100],
                  label = label1,label2 = label2,xlabel = self.labels['age'],ylabel = self.labels['ratio'],
-                 selite = True,figname = figname+'disab2.'+self.figformat,legend_loc='upper left')
+                 selite = True,figname = fname,legend_loc='upper left',ax = ax,show = show)
 
     def render_dist(self,grayscale = False,figname = None,palette_EK = True):
 
@@ -451,7 +462,10 @@ class PlotStats():
             self.plot_alive()
             self.plot_moved()
             if self.episodestats.save_pop:
-                self.plot_emtr(figname = figname+'_emtr')
+                if figname is not None:
+                    self.plot_emtr(figname = figname+'_emtr')
+                else:
+                    self.plot_emtr()
             
             
     def plot_pt_act(self):
@@ -777,6 +791,54 @@ class PlotStats():
 
         plt.show()
 
+    def plot_unempbasis_distrib(self,basis_distrib1,figname = None,basis_distrib2 = None,label1 = 'LCM 2024',label2 = ' ',ax=None,fig=None,vrt=False):
+        '''
+        Tulostaa työllistymisaikajakauman
+        '''
+        max_time = 50
+        nn_time = int(np.round((max_time)*self.inv_timestep))+1
+        x = np.array([0,500,1000,1500,2000,2500,3000,3500,4000,4500,5000,5500,6000,6500,7000,7500,8000,10000])*12
+        scaled1,x1 = np.histogram(basis_distrib1,x)
+        scaled1 = scaled1 / np.sum(scaled1)
+
+        y = np.empty((2027,17))
+        y[2021] = np.array([0.0,0.0100,0.0800,0.2000,0.2400,0.1900,0.1200,0.0600,0.0400,0.0200,0.0100,0.0100,0.0100,0.0,0.0,0.0,0.0100])
+        y[2022] = np.array([0.0,0.0100,0.0800,0.2100,0.2400,0.1800,0.1100,0.0600,0.0400,0.0200,0.0100,0.0100,0.0100,0.0,0.0,0.0,0.0100])
+        y[2023] = np.array([0.0,0.0,0.0600,0.1600,0.2200,0.1900,0.1300,0.0800,0.0500,0.0300,0.0200,0.0100,0.0100,0.0100,0.0,0.0,0.0100])
+        y[2024] = np.array([0.0,0.0,0.0500,0.1300,0.2100,0.2000,0.1500,0.0900,0.0500,0.0400,0.0200,0.0100,0.0100,0.0100,0.0,0.0,0.0100])
+
+        if basis_distrib2 is not None:
+            scaled2,x2 = np.histogram(basis_distrib2,x)
+
+        if fig is None:
+            fig2,ax = plt.subplots()
+
+        #ax.set_xlabel(self.labels['palkka [v]'])
+        w = 12 * 250
+        ax.set_xlabel('Salary [e/y]')
+        #point = 0.6
+        #self.plot_vlines_unemp(point)
+        #ax.plot(x1[1:-1],scaled1[1:],label = label1)
+        ax.bar(x1[:-1]+0.5*w, scaled1[:],label=label1,width=w)
+        #if self.year in y:
+        #ax.plot(x[1:],y[2024],label='TYJ')
+        ax.bar(x[:-1]-0.5*w, y[2024],label='Data',width=w)
+        if basis_distrib2 is not None:
+            ax.bar(x2[:-1], scaled2[:],label=label2,width=w)
+            #ax.plot(x2[1:-1],scaled2[1:],label = label2)
+            ax.legend(frameon=False)
+        ax.legend() #bbox_to_anchor = (1.05, 1), loc = 2, borderaxespad = 0.)
+        
+        ax.set_ylabel(self.labels['osuus'])
+
+        #plt.xlim(0,max)
+        #plt.ylim(0,0.8)
+        if figname is not None:
+            plt.savefig(figname+'tyolldistribs_v1.'+self.figformat, format = self.figformat)
+        if fig is None:
+            plt.show()
+
+
     def plot_tyolldistribs_both(self,emp_distrib1,tyoll_distrib1,max = 10,figname = None,emp_distrib2 = None,
                                 tyoll_distrib2 = None,label1 = '',label2 = ' ',ax=None,fig=None,kyyra=False,
                                 kuva1=True,kuva2=True,kuva3=True,kuva4=False):
@@ -795,103 +857,17 @@ class PlotStats():
         jaljella_tyoll1 = np.cumsum(scaled0_1[::-1])[::-1] # jäljellä olevien summa
         scaled_tyoll1 = scaled_tyoll1/jaljella_tyoll1
 
-        x_kyyra = (np.array([3.,   4.,   5.,   6.,   7.,   8.,   9.,  10.,  11.,  12.,  13.,
-        14.,  15.,  16.,  17.,  18.,  19.,  20.,  21.,  22.,  23.,  24.,
-        25.,  26.,  27.,  28.,  29.,  30.,  31.,  32.,  33.,  34.,  35.,
-        36.,  37.,  38.,  39.,  40.,  41.,  42.,  43.,  44.,  45.,  46.,
-        47.,  48.,  49.,  50.,  51.,  52.,  53.,  54.,  55.,  56.,  57.,
-        58.,  59.,  60.,  61.,  62.,  63.,  64.,  65.,  66.,  67.,  68.,
-        69.,  70.,  71.,  72.,  73.,  74.,  75.,  76.,  77.,  78.,  79.,
-        80.,  81.,  82.,  83.,  84.,  85.,  86.,  87.,  88.,  89.,  90.,
-        91.,  92.,  93.,  94.,  95.,  96.,  97.,  98.,  99., 100., 101.,
-       102., 103., 104., 105., 106., 107., 108., 109., 110., 111., 112.,
-       113., 114., 115., 116., 117., 118., 119., 120., 121., 122., 123.,
-       124., 125., 126., 127., 128., 129., 130.]))*5/21.5/12
-        y_kyyra =np.array([0.48774143, 0.48065421, 0.473237  , 0.46566751, 0.45562168,
-       0.43629937, 0.41793805, 0.40329701, 0.39526206, 0.39211617,
-       0.38981398, 0.38666046, 0.38497377, 0.38491688, 0.38532182,
-       0.38553248, 0.38543221, 0.38547923, 0.38567366, 0.38587103,
-       0.38344443, 0.37975074, 0.37642517, 0.37352384, 0.36997617,
-       0.36578874, 0.36297649, 0.358484  , 0.35284605, 0.3467472 ,
-       0.33972463, 0.33174987, 0.32294971, 0.31698824, 0.31196971,
-       0.30679491, 0.30253486, 0.29904288, 0.29502462, 0.2905118 ,
-       0.28744608, 0.28594706, 0.28575034, 0.28690443, 0.28929661,
-       0.28927616, 0.28828181, 0.28706763, 0.28649977, 0.28437917,
-       0.28202644, 0.27979115, 0.27624335, 0.27228658, 0.26835276,
-       0.26380064, 0.25852309, 0.25261635, 0.24992518, 0.24812431,
-       0.24689822, 0.24405707, 0.24165859, 0.24008598, 0.23840025,
-       0.23795052, 0.23751934, 0.23664964, 0.23533992, 0.23416073,
-       0.23320789, 0.23117778, 0.22933802, 0.22683363, 0.2266146 ,
-       0.22688929, 0.22725099, 0.22702055, 0.22718732, 0.22636686,
-       0.22672498, 0.22826112, 0.22914547, 0.22940085, 0.23327939,
-       0.23893542, 0.24863062, 0.27787148, 0.26950739, 0.26281677,
-       0.25951026, 0.25560049, 0.25147602, 0.24502427, 0.24041623,
-       0.23382593, 0.22858865, 0.21814101, 0.20447218, 0.18663645,
-       0.1446926 , 0.14551604, 0.14366102, 0.13859348, 0.13399242,
-       0.13096065, 0.12951185, 0.12480499, 0.12265939, 0.11911154,
-       0.11824094, 0.11824094, 0.11824094, 0.11824094, 0.11824094,
-       0.11824094, 0.11824094, 0.11824094, 0.11824094, 0.11824094,
-       0.11824094, 0.11824094, 0.11824094, 0.11824094, 0.11824094,
-       0.11824094, 0.11824094, 0.11824094])
+        # exit rate kyyrä ja pesola (2019)
+        x_kyyra = (np.array([ 13.,  26.,  39.,  52.,  65.,  78.,  91., 104., 117., 130.]))*5/21.5/12
+        y_kyyra =np.array([0.4839454 , 0.38065915, 0.30236521, 0.28661407, 0.25400715, 0.22479255, 0.23189427, 0.27568799, 0.15755385, 0.11960807])
 
-        x_korpela = (np.array([12,1.30000000e+001, 1.40000000e+001, 1.50000000e+001, 1.60000000e+001,
-       1.70000000e+001, 1.80000000e+001, 1.90000000e+001, 2.00000000e+001,
-       2.10000000e+001, 2.20000000e+001, 2.30000000e+001, 2.40000000e+001,
-       2.50000000e+001, 2.60000000e+001, 2.70000000e+001, 2.80000000e+001,
-       2.90000000e+001, 3.00000000e+001, 3.10000000e+001, 3.20000000e+001,
-       3.30000000e+001, 3.40000000e+001, 3.50000000e+001, 3.60000000e+001,
-       3.70000000e+001, 3.80000000e+001, 3.90000000e+001, 4.00000000e+001,
-       4.10000000e+001, 4.20000000e+001, 4.30000000e+001, 4.40000000e+001,
-       4.50000000e+001, 4.60000000e+001, 4.70000000e+001, 4.80000000e+001,
-       4.90000000e+001, 5.00000000e+001, 5.10000000e+001, 5.20000000e+001,
-       5.30000000e+001, 5.40000000e+001, 5.50000000e+001, 5.60000000e+001,
-       5.70000000e+001, 5.80000000e+001, 5.90000000e+001, 6.00000000e+001,
-       6.10000000e+001, 6.20000000e+001, 6.30000000e+001, 6.40000000e+001,
-       6.50000000e+001, 6.60000000e+001, 6.70000000e+001, 6.80000000e+001,
-       6.90000000e+001, 7.00000000e+001, 7.10000000e+001, 7.20000000e+001,
-       7.30000000e+001, 7.40000000e+001, 7.50000000e+001, 7.60000000e+001,
-       7.70000000e+001, 7.80000000e+001, 7.90000000e+001, 8.00000000e+001,
-       8.10000000e+001, 8.20000000e+001, 8.30000000e+001, 8.40000000e+001,
-       8.50000000e+001, 8.60000000e+001, 8.70000000e+001, 8.80000000e+001,
-       8.90000000e+001, 9.00000000e+001, 9.10000000e+001, 9.20000000e+001,
-       9.30000000e+001, 9.40000000e+001, 9.50000000e+001, 9.60000000e+001,
-       9.70000000e+001, 9.80000000e+001, 9.90000000e+001, 1.00000000e+002,
-       1.01000000e+002, 1.02000000e+002, 1.03000000e+002, 1.04000000e+002,
-       1.05000000e+002, 1.06000000e+002, 1.07000000e+002, 1.08000000e+002,
-       1.09000000e+002, 1.10000000e+002, 1.11000000e+002, 1.12000000e+002,
-       1.13000000e+002, 1.14000000e+002, 1.15000000e+002, 1.16000000e+002,
-       1.17000000e+002, 1.18000000e+002, 1.19000000e+002, 1.20000000e+002,
-       1.21000000e+002, 1.22000000e+002, 1.23000000e+002, 1.24000000e+002,
-       1.25000000e+002, 1.26000000e+002, 1.27000000e+002, 1.28000000e+002,
-       1.29000000e+002, 1.30000000e+002, 1.31000000e+002, 1.32000000e+002,
-       1.33000000e+002, 1.34000000e+002, 1.35000000e+002, 1.36000000e+002,
-       1.37000000e+002, 1.38000000e+002, 1.39000000e+002]))*5/21.5/12
-        y_korpela = np.array([0.36634489, 0.3712625 , 0.3737362 , 0.37261894, 0.36696307,
-       0.36011844, 0.35364387, 0.34593355, 0.3302184 , 0.30888619,
-       0.29183666, 0.28586133, 0.28372728, 0.28264278, 0.28044634,
-       0.27777315, 0.27412831, 0.27135718, 0.26884005, 0.26631116,
-       0.26220482, 0.25665922, 0.25247993, 0.2467685 , 0.24010541,
-       0.23186031, 0.22228843, 0.21494636, 0.20647014, 0.19716494,
-       0.18789599, 0.18024787, 0.17247576, 0.16618646, 0.1588571 ,
-       0.15002195, 0.14180584, 0.13481919, 0.12767463, 0.12440564,
-       0.12180318, 0.11924956, 0.11758082, 0.11733597, 0.115384  ,
-       0.11366109, 0.11259041, 0.11085596, 0.11131547, 0.11267098,
-       0.11537801, 0.11691272, 0.11537278, 0.11301114, 0.11251264,
-       0.11132543, 0.1074644 , 0.10562117, 0.1068476 , 0.10832975,
-       0.10856973, 0.10759017, 0.10677824, 0.10492006, 0.10459137,
-       0.10666814, 0.10885596, 0.10875626, 0.11046971, 0.11428489,
-       0.11784619, 0.11984868, 0.12022363, 0.12102249, 0.12190136,
-       0.12221   , 0.12318878, 0.12285696, 0.12303786, 0.12290282,
-       0.12316982, 0.12266738, 0.12029652, 0.11592693, 0.11258608,
-       0.11097561, 0.11169333, 0.11553204, 0.11826566, 0.11772872,
-       0.11747456, 0.11793919, 0.11980385, 0.118573  , 0.11904534,
-       0.12097195, 0.12318839, 0.12471748, 0.12680951, 0.12728434,
-       0.1232965 , 0.12173178, 0.1233776 , 0.12377923, 0.12205541,
-       0.11626052, 0.11548151, 0.11426759, 0.11014299, 0.10944358,
-       0.1087023 , 0.10589827, 0.10289012, 0.1019225 , 0.10197774,
-       0.10116682, 0.0956926 , 0.09130366, 0.09640094, 0.10081442,
-       0.10061306, 0.1032594 , 0.10388315, 0.10167487, 0.10128151,
-       0.10229247, 0.10113101, 0.09755199])
+        # exit rate Korplea
+        x_korpela = (np.array([ 13.,  26.,  39.,  52.,  65.,  78.,  91., 104., 117., 130.]))*5/21.5/12
+        y_korpela =np.array([0.49958705, 0.41401094, 0.27543074, 0.17505567, 0.20015082,0.26644122, 0.31987234, 0.16057378, 0.18221992, 0.21903784])
+
+        # job rate Korplea
+        x_korpela2 = (np.array([ 13.,  26.,  39.,  52.,  65.,  78.,  91., 104., 117., 130.]))*5/21.5/12
+        y_korpela2 =np.array([0.31687424, 0.25103138, 0.21882637, 0.12202941, 0.10988931, 0.09760329, 0.10500084, 0.11543548, 0.11946684, 0.0853002 ])
 
         if emp_distrib2 is not None:
             scaled0_2,x0_2 = np.histogram(emp_distrib2,x)
@@ -958,7 +934,7 @@ class PlotStats():
 
             if kyyra:
                 ax.plot(x_kyyra,y_kyyra,'--',label='Kyyrä & Pesola')
-                ax.plot(x_korpela,y_korpela,'-.',label='Korpela')
+                #ax.plot(x_korpela,y_korpela,'-.',label='Korpela')
 
             if emp_distrib2 is not None:
                 ax.plot(x2_2[1:-1],scaled_tyoll2[1:],label = label2)
@@ -983,7 +959,8 @@ class PlotStats():
 
             if kyyra:
                 ax.plot(x_kyyra,y_kyyra,'--',label='Kyyrä & Pesola')
-                ax.plot(x_korpela,y_korpela,'-.',label='Korpela')
+                #ax.plot(x_korpela,y_korpela,'-.',label='Korpela exit')
+                ax.plot(x_korpela2,y_korpela2,'-.',label='Korpela job')
 
             ax.legend(frameon=False,loc='lower left')
             plt.xlim(0,max)
@@ -1645,17 +1622,21 @@ class PlotStats():
         ax.legend()
         plt.show()
 
-    def plot_kassanjasen(self):
+    def plot_kassanjasen(self,fig=None,ax=None):
         x2,vrt = self.empstats.get_kassanjasenyys_rate()
         x = np.linspace(self.min_age,self.max_age,self.n_time)
-        fig,ax = plt.subplots()
+        nofig = False
+        if fig is None:
+            nofig = True
+            fig,ax = plt.subplots()
         jasenia = 100.0*self.episodestats.infostats_kassanjasen/self.episodestats.alive
         ax.plot(x+self.timestep,jasenia,label = 'työttömyyskassan jäsenien osuus kaikista')
         ax.plot(x2,100.0*vrt,label = 'havainto')
         ax.set_xlabel(self.labels['age'])
         ax.set_ylabel(self.labels['ratio'])
         ax.legend()
-        plt.show()
+        if nofig:
+            plt.show()
         mini = np.nanmin(jasenia)
         maxi = np.nanmax(jasenia)
         print('Kassanjäseniä min {:1f} % max {:1f} %'.format(mini,maxi))
@@ -2321,12 +2302,21 @@ class PlotStats():
         plt.show()
 
 
-    def plot_unemp_shares(self):
-        empstate_ratio = 100*self.episodestats.empstate/self.episodestats.alive
-        self.plot_states(empstate_ratio,ylabel = 'Osuus tilassa [%]',onlyunemp = True,stack = True)
+    def plot_unemp_shares(self,ax=None,empstate=None):
+        if empstate is None:
+            empstate_ratio = 100*self.episodestats.empstate/self.episodestats.alive
+        else:
+            empstate_ratio = 100*empstate/self.episodestats.alive
+        print(empstate_ratio)
+        self.plot_states(empstate_ratio,ylabel = 'Osuus tilassa [%]',onlyunemp = True,stack = True,ax=ax)
 
-    def plot_gender_emp(self,grayscale = False,figname = None,cc = None,diff = None,label1 = '',label2 = ''):
-        fig,ax = plt.subplots()
+    def plot_gender_emp(self,grayscale = False,figname = None,cc = None,diff = None,label1 = '',label2 = '',ax=None):
+        if ax is None:
+            fig,ax = plt.subplots()
+            show = True
+        else:
+            show = False
+
         if grayscale:
             lstyle = '--'
         else:
@@ -2374,7 +2364,8 @@ class PlotStats():
         if figname is not None:
             plt.savefig(figname+'tyollisyysaste_spk.'+self.figformat, format = self.figformat)
 
-        plt.show()
+        if show:
+            plt.show()
         
     def plot_group_emp(self,grayscale = False,figname = None):
         fig,ax = plt.subplots()
@@ -3744,6 +3735,153 @@ class PlotStats():
             self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time = 40,max_time = 64,virta_label = 'tm-Työttömyys',label1 = label1,label2 = label2)
             self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time = 55,max_time = 64,virta_label = 'tm-Työttömyys',label1 = label1,label2 = label2)
 
+    def compare_simfig_no8(self,cc2,label1 = 'perus',label2 = 'vaihtoehto',grayscale = True,figname = None,dash = False,palette_EK = True):
+        if grayscale:
+            plt.style.use('grayscale')
+            plt.rcParams['figure.facecolor'] = 'white' # Or any suitable colour...
+
+        if palette_EK:
+            csfont,pal = setup_EK_fonts()
+        else:
+            csfont = {}
+
+        diff_emp = self.episodestats.empstate/self.episodestats.alive-cc2.episodestats.empstate/cc2.episodestats.alive
+        diff_emp = diff_emp*100
+        x = np.linspace(self.min_age,self.max_age,self.n_time)
+        real1 = self.episodestats.comp_presentvalue()
+        real2 = cc2.episodestats.comp_presentvalue()
+        mean_real1 = np.mean(real1,axis = 1)
+        mean_real2 = np.mean(real2,axis = 1)
+        initial1 = np.mean(real1[1,:])
+        initial2 = np.mean(real2[1,:])
+
+        fig,ax = plt.subplots(2,2)
+
+        self.compare_disab(cc = cc2, xstart = None,xend = None, label1 = label1,label2 = label2,ax=ax[1,0])
+
+        emp_htv1 = np.sum(cc2.episodestats.emp_htv,axis = 1)
+        emp_htv2 = np.sum(self.episodestats.emp_htv,axis = 1)
+
+        if self.minimal>0:
+            s = 20
+            e = 70
+        else:
+            s = 21
+            e = 60 #63.5
+
+        tyoll_osuus1,htv_osuus1,tyot_osuus1,kokotyo_osuus1,osatyo_osuus1 = \
+            self.episodestats.comp_employed_ratio(self.episodestats.empstate,emp_htv = emp_htv1)
+        tyoll_osuus2,htv_osuus2,tyot_osuus2,kokotyo_osuus2,osatyo_osuus2 = \
+            cc2.episodestats.comp_employed_ratio(cc2.episodestats.empstate,emp_htv = emp_htv2)
+        htv1,tyolliset1,tyottomat1,osatyolliset1,kokotyolliset1,tyollaste1,osatyolaste1,kokotyolaste1,tyottomyys_aste1 = \
+            self.episodestats.comp_tyollisyys_stats(self.episodestats.empstate,scale_time = True,start = s,end = e,emp_htv = emp_htv1,agegroups = False)
+        htv2,tyolliset2,tyottomat2,osatyolliset2,kokotyolliset2,tyollaste2,osatyolaste2,kokotyolaste2,tyottomyys_aste2 = \
+            cc2.episodestats.comp_tyollisyys_stats(cc2.episodestats.empstate,scale_time = True,start = s,end = e,emp_htv = emp_htv2,agegroups = False)
+
+        tyollaste1 = tyollaste1*100
+        tyollaste2 = tyollaste2*100
+        tyotaste1 = self.episodestats.comp_unemp_stats_agg(per_pop = False)*100
+        tyotaste2 = cc2.episodestats.comp_unemp_stats_agg(per_pop = False)*100
+        tyovoimatutk_tyollaste = self.empstats.get_tyollisyysaste_tyovoimatutkimus(self.year)
+        tyovoimatutk_tytaste = self.empstats.get_tyottomyysaste_tyovoimatutkimus(self.year)
+        tyossakayntitutk_tyollaste = self.empstats.get_tyollisyysaste_tyossakayntitutkimus(self.year)
+        tyossakayntitutk_tytaste = self.empstats.get_tyottomyysaste_tyossakayntitutkimus(self.year)
+
+        htv1_full,tyolliset1_full,tyottomat1_full,osata1_full,kokota1_full,tyollaste1_full,osatyo_osuus1_full,kokotyo_osuus1_full,tyot_osuus1_full,tyot_aste1 = \
+            self.episodestats.comp_tyollisyys_stats(self.episodestats.empstate,scale_time = True,start = 18,end = 75,emp_htv = emp_htv1,agegroups = True)
+        htv2_full,tyolliset2_full,tyottomat2_full,osata2_full,kokota2_full,tyollaste2_full,osatyo_osuus2_full,kokotyo_osuus2_full,tyot_osuus2_full,tyot_aste2 = \
+            cc2.episodestats.comp_tyollisyys_stats(cc2.episodestats.empstate,scale_time = True,start = 18,end = 75,emp_htv = emp_htv2,agegroups = True)
+        haj1 = self.episodestats.comp_uncertainty(self.episodestats.empstate,emp_htv = emp_htv1)
+        haj2 = cc2.episodestats.comp_uncertainty(cc2.episodestats.empstate,emp_htv = emp_htv2)
+
+        ansiosid_osuus1,tm_osuus1 = self.episodestats.comp_unemployed_detailed(self.episodestats.empstate)
+        ansiosid_osuus2,tm_osuus2 = cc2.episodestats.comp_unemployed_detailed(cc2.episodestats.empstate)
+
+        if dash:
+            ls = '--'
+        else:
+            ls = None
+
+        lineplot(x,100*tyollaste1_full,y2 = 100*tyollaste2_full,xlim = [20,75],ylim = [0,100],label = label1,label2 = label2,
+                 xlabel = self.labels['age'],ylabel = self.labels['tyollisyysaste %'],selite = True,ax=ax[0,0],show=False)
+
+        self.plot_gender_emp(cc = cc2,diff = False,label1 = label1,label2 = label2,ax=ax[1,1])
+        #self.plot_gender_emp(cc = cc2,diff = True,label1 = label1,label2 = label2)
+
+        ax[0,1].set_xlabel(self.labels['age'])
+        ax[0,1].set_ylabel(self.labels['tyottomyysaste'])
+        ax[0,1].plot(x,100*tyot_osuus1_full,label = label1)
+        ax[0,1].plot(x,100*tyot_osuus2_full,ls = ls,label = label2)
+        ax[0,1].legend()
+
+        # fig,ax = plt.subplots()
+        # ax.set_xlabel(self.labels['age'])
+        # ax.set_ylabel('Osatyö [%]')
+        # ax.plot(x,100*osatyo_osuus1_full,label = label1)
+        # ax.plot(x,100*osatyo_osuus2_full,ls = ls,label = label2)
+        # ax.set_ylim([0,100])
+        # ax.legend()
+        if figname is not None:
+            plt.savefig(figname+'_no8.'+self.figformat, format = self.figformat)
+        plt.show()
+
+        if self.episodestats.save_pop:
+            unemp_distrib,emp_distrib,unemp_distrib_bu = self.episodestats.comp_empdistribs(ansiosid = True,tmtuki = True,putki = True,outsider = False)
+            tyoll_distrib,tyoll_distrib_bu = self.episodestats.comp_tyollistymisdistribs(ansiosid = True,tmtuki = True,putki = True,outsider = False)
+            unemp_distrib2,emp_distrib2,unemp_distrib_bu2 = cc2.episodestats.comp_empdistribs(ansiosid = True,tmtuki = True,putki = True,outsider = False)
+            tyoll_distrib2,tyoll_distrib_bu2 = cc2.episodestats.comp_tyollistymisdistribs(ansiosid = True,tmtuki = True,putki = True,outsider = False)
+
+            self.plot_compare_empdistribs(emp_distrib,emp_distrib2,label1 = label1,label2 = label2)
+            if self.language== 'English':
+                print('Jakauma ansiosidonnainen+tmtuki+putki, no max age')
+            else:
+                print('Jakauma ansiosidonnainen+tmtuki+putki, no max age')
+            self.plot_compare_unempdistribs(unemp_distrib,unemp_distrib2,label1 = label1,label2 = label2)
+            self.plot_compare_unempdistribs(unemp_distrib,unemp_distrib2,label1 = label1,label2 = label2,logy = False)
+            self.plot_compare_unempdistribs(unemp_distrib,unemp_distrib2,label1 = label1,label2 = label2,logy = False,diff = True)
+            self.plot_compare_tyolldistribs(unemp_distrib,tyoll_distrib,unemp_distrib2,tyoll_distrib2,tyollistyneet = False,label1 = label1,label2 = label2)
+            self.plot_compare_tyolldistribs(unemp_distrib,tyoll_distrib,unemp_distrib2,tyoll_distrib2,tyollistyneet = True,label1 = label1,label2 = label2)
+
+            unemp_distrib,emp_distrib,unemp_distrib_bu = self.episodestats.comp_empdistribs(ansiosid = True,tmtuki = True,putki = True,outsider = False,max_age = 54)
+            tyoll_distrib,tyoll_distrib_bu = self.episodestats.comp_tyollistymisdistribs(ansiosid = True,tmtuki = True,putki = True,outsider = False,max_age = 54)
+            unemp_distrib2,emp_distrib2,unemp_distrib_bu2 = cc2.episodestats.comp_empdistribs(ansiosid = True,tmtuki = True,putki = True,outsider = False,max_age = 54)
+            tyoll_distrib2,tyoll_distrib_bu2 = cc2.episodestats.comp_tyollistymisdistribs(ansiosid = True,tmtuki = True,putki = True,outsider = False,max_age = 54)
+
+            self.plot_compare_empdistribs(emp_distrib,emp_distrib2,label1 = label1,label2 = label2)
+            if self.language== 'English':
+                print('Jakauma ansiosidonnainen+tmtuki+putki, max age 54')
+            else:
+                print('Jakauma ansiosidonnainen+tmtuki+putki, max age 54')
+            self.plot_compare_unempdistribs(unemp_distrib,unemp_distrib2,label1 = label1,label2 = label2)
+            self.plot_compare_tyolldistribs(unemp_distrib,tyoll_distrib,unemp_distrib2,tyoll_distrib2,tyollistyneet = False,label1 = label1,label2 = label2)
+            self.plot_compare_tyolldistribs(unemp_distrib,tyoll_distrib,unemp_distrib2,tyoll_distrib2,tyollistyneet = True,label1 = label1,label2 = label2)
+
+        if self.episodestats.save_pop:
+            print(label2)
+            keskikesto = self.episodestats.comp_unemp_durations(return_q = False)
+            self.plot_unemp_durdistribs(keskikesto)
+
+            print(label1)
+            keskikesto = cc2.episodestats.comp_unemp_durations(return_q = False)
+            self.plot_unemp_durdistribs(keskikesto)
+
+            tyoll_virta,tyot_virta = self.episodestats.comp_virrat(ansiosid = True,tmtuki = True,putki = True,outsider = False)
+            tyoll_virta2,tyot_virta2 = cc2.episodestats.comp_virrat(ansiosid = True,tmtuki = True,putki = True,outsider = False)
+            self.plot_compare_virrat(tyoll_virta,tyoll_virta2,virta_label = 'Työllisyys',label1 = label1,label2 = label2)
+            self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time = 40,max_time = 64,virta_label = 'Työttömyys',label1 = label1,label2 = label2)
+            self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time = 55,max_time = 64,virta_label = 'Työttömyys',label1 = label1,label2 = label2)
+
+            tyoll_virta,tyot_virta = self.episodestats.comp_virrat(ansiosid = True,tmtuki = False,putki = True,outsider = False)
+            tyoll_virta2,tyot_virta2 = cc2.episodestats.comp_virrat(ansiosid = True,tmtuki = False,putki = True,outsider = False)
+            self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time = 40,max_time = 64,virta_label = 'ei-tm-Työttömyys',label1 = label1,label2 = label2)
+            self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time = 55,max_time = 64,virta_label = 'ei-tm-Työttömyys',label1 = label1,label2 = label2)
+
+            tyoll_virta,tyot_virta = self.episodestats.comp_virrat(ansiosid = False,tmtuki = True,putki = True,outsider = False)
+            tyoll_virta2,tyot_virta2 = cc2.episodestats.comp_virrat(ansiosid = False,tmtuki = True,putki = True,outsider = False)
+            self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time = 40,max_time = 64,virta_label = 'tm-Työttömyys',label1 = label1,label2 = label2)
+            self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time = 55,max_time = 64,virta_label = 'tm-Työttömyys',label1 = label1,label2 = label2)
+
+
     def plot_density(self,emtr,figname = None,etla_x_emtr = None,etla_emtr = None,xlabel = 'EMTR',foretitle = 'in all states:',
                      text_in_title=True,plot_mean=True,bins=101,ax=None):
         axvcolor = 'gray'
@@ -4440,7 +4578,7 @@ class PlotStats():
         unemp_distrib1,emp_distrib1,unemp_distrib_bu1,\
             tyoll_distrib1,tyoll_distrib_bu1,\
             tyoll_virta,tyot_virta,tyot_virta_ansiosid,tyot_virta_tm,\
-            unemp_dur,unemp_lastdur = self.episodestats.load_simdistribs(filename)
+            unemp_dur,unemp_lastdur,unemp_basis_distrib = self.episodestats.load_simdistribs(filename)
        
         print('Keskikestot käytettyjen ansiosidonnaisten päivärahojen mukaan')
         self.plot_unemp_durdistribs(unemp_dur)
@@ -4453,45 +4591,32 @@ class PlotStats():
         self.plot_tyolldistribs_both(unemp_distrib1,tyoll_distrib1,max = 2.5,figname = figname)
 
 
-    def plot_simfig_no6(self,grayscale = False,figname = None,cc2 = None):
+    def plot_simfig_no8(self,filename,grayscale = True,figname = None,cc2 = None):
         '''
-        Create fig no 6 to the paper
+        Create fig no 7 to the paper
         '''
 
         # create benefits
-        # perhetyyppi 3: 1 aikuinen, ei lapsia. Työtön (työmarkkinatuki), ei puolisoa
-        p2021,selite=fin_benefits.perheparametrit(perhetyyppi=3,kuntaryhmä=1,vuosi=2023,tulosta=False,ei_toimeentulotukea=False)
-        p2022,selite=fin_benefits.perheparametrit(perhetyyppi=3,kuntaryhmä=1,vuosi=2022,tulosta=False,ei_toimeentulotukea=False)
-        p2023,selite=fin_benefits.perheparametrit(perhetyyppi=3,kuntaryhmä=1,vuosi=2023,tulosta=False,ei_toimeentulotukea=False)
-        include_alv=False
-        # Luokka Benefits sisältää etuuskoodin
-        ben2021=fin_benefits.Benefits(year=2021,lang='eng')
-        marg2021=fin_benefits.Marginals(ben2021,year=2021,incl_alv=include_alv,lang='eng')
-        # Luokka Benefits sisältää etuuskoodin
-        ben2022=fin_benefits.Benefits(year=2022,lang='eng')
-        marg2022=fin_benefits.Marginals(ben2022,year=2022,incl_alv=include_alv,lang='eng')
-        # Luokka Benefits sisältää etuuskoodin
-        ben2023=fin_benefits.Benefits(year=2023,lang='eng')
-        marg2023=fin_benefits.Marginals(ben2023,year=2023,incl_alv=include_alv,lang='eng')
-        # ja lasketaan & plotataan tulokset
         if grayscale:
             plt.style.use('grayscale')
             plt.rcParams['figure.facecolor'] = 'white' # Or any suitable colour...
 
-        fig,ax = plt.subplots(2,2)
-        #fig.tight_layout()
-        netto2022,eff2022,tva2022,osatva2022,brutto2022 = marg2022.laske_ja_plottaa(p2022,incl_alv=include_alv,max_salary=4000,min_y=0,max_y=5000,ax=ax[0,1],plot_tva=False,plot_eff=True,plot_netto=False,plot_brutto=False,plot_osatva=False,grayscale=False,publication=True)
-        netto2023,eff2023,tva2023,osatva2023,brutto2023 = marg2023.laske_ja_plottaa(p2023,incl_alv=include_alv,max_salary=4000,min_y=0,max_y=5000,ax=ax[0,1],plot_tva=False,plot_eff=True,plot_netto=False,plot_brutto=False,plot_osatva=False,grayscale=False,publication=True)
+        fig,ax = plt.subplots(2,1)
 
-        marg2021.laske_ja_plottaa_marginaalit(p2021,plot_eff=True,plot_tva=False,plot_netto=False,plot_brutto=False,plot_osatva=False,plot_julkinen=False,
-                                              grayscale=False,incl_perustulo=False,incl_elake=False,incl_alv=include_alv,
-                                              incl_opintotuki=False,max_salary=4000,dt=100,ax=ax[0,0],show=False,legend=False)        
+        self.plot_simfig_unempbasis(filename,fig=fig,ax=ax[0])
 
         # create emtr and ptr
-        self.plot_emtr_fig6(ax1=ax[1,1],ax2=ax[1,0])
+        agg_htv,agg_tyoll,agg_rew,agg_discounted_rew,emp_tyolliset,emp_tyolliset_osuus,\
+            emp_tyottomat,emp_tyottomat_osuus,emp_htv,emps,best_rew,best_emp,emps,\
+            agg_netincome,agg_equivalent_netincome,budget,participants,htv_budget,alives,agg_empstate,agg_alives,\
+            agg_tyottomyysaste,emp_tyottomyysaste,pt_agg,pt_agegroup,galives,agg_galives,gempstate,agg_gempstate = \
+            self.episodestats.load_simstats(filename)
+
+        self.plot_unemp_shares(ax=ax[1],empstate=agg_empstate)
         add_label(ax)
+
         if figname is not None:
-            plt.savefig(figname+'fig6.pdf')
+            plt.savefig(figname+'fig8.pdf')
 
     def plot_simfig_no2(self,grayscale = False,figname = None):
         '''
@@ -4514,6 +4639,28 @@ class PlotStats():
         if figname is not None:
                 plt.savefig(figname, format = 'pdf')
         plt.show()
+
+    def plot_simfig_no6(self,grayscale = False,figname = None):
+        '''
+        Create fig no 2 to the paper
+        '''
+
+        if grayscale:
+            plt.style.use('grayscale')
+            plt.rcParams['figure.facecolor'] = 'white' # Or any suitable colour...
+
+        fig,ax = plt.subplots(1,2)
+
+        empstate_ratio = 100*self.episodestats.empstate/self.episodestats.alive
+        ratio_label = self.labels['osuus']
+        self.plot_states(empstate_ratio,ylabel = ratio_label,stack = True,ax=ax[0],legend_infig=False)
+
+        self.plot_emp_vs_workforce(empstate=None,alive=None,figname = None,ax = ax[1],legend_infig=True)
+        fig.subplots_adjust(wspace=0.9)
+        add_label(ax)
+        if figname is not None:
+                plt.savefig(figname, format = 'pdf')
+        plt.show()        
 
     def plot_simfig_no5(self,filename,grayscale = False,figname = None,cc2 = None):
         '''
@@ -4611,7 +4758,7 @@ class PlotStats():
         unemp_distrib1,emp_distrib1,unemp_distrib_bu1,\
             tyoll_distrib1,tyoll_distrib_bu1,\
             tyoll_virta,tyot_virta,tyot_virta_ansiosid,tyot_virta_tm,\
-            unemp_dur,unemp_lastdur = self.episodestats.load_simdistribs(filename)
+            unemp_dur,unemp_lastdur,unemp_basis_distrib = self.episodestats.load_simdistribs(filename)
 
         self.plot_simstat_unemp_all(100*mean_unempratio,unempratio = True,fig=fig,ax=ax[1,0])
         self.plot_tyolldistribs_both(unemp_distrib1,tyoll_distrib1,max = 2.5,figname = figname,fig=fig,ax=ax[1,1],kuva1=False,kuva2=False,kuva3=False,kuva4=True,kyyra=True,
@@ -4697,12 +4844,12 @@ class PlotStats():
         unemp_distrib1,emp_distrib1,unemp_distrib_bu1,\
             tyoll_distrib1,tyoll_distrib_bu1,\
             tyoll_virta1,tyot_virta1,tyot_virta_ansiosid1,tyot_virta_tm1,\
-            unemp_dur1,unemp_lastdur1 = self.episodestats.load_simdistribs(filename)
+            unemp_dur1,unemp_lastdur1,unemp_basis_distrib1 = self.episodestats.load_simdistribs(filename)
 
         unemp_distrib2,emp_distrib2,unemp_distrib_bu2,\
             tyoll_distrib2,tyoll_distrib_bu2,\
             tyoll_virta2,tyot_virta2,tyot_virta_ansiosid2,tyot_virta_tm2,\
-            unemp_dur2,unemp_lastdur2 = self.episodestats.load_simdistribs(filename2)
+            unemp_dur2,unemp_lastdur2,unemp_basis_distrib2 = self.episodestats.load_simdistribs(filename2)
 
         #print('Keskikestot käytettyjen ansiosidonnaisten päivärahojen mukaan')
         #self.plot_compare_unemp_durdistribs(unemp_dur1,unemp_dur2,unemp_lastdur1,unemp_lastdur2,label1 = label1,label2 = label2)
@@ -4716,6 +4863,34 @@ class PlotStats():
         if figname is not None:
             plt.savefig(figname+'fig7.pdf')
 
+    def plot_simfig_unempbasis(self,filename,grayscale = False,figname = None,ax = None,fig = None):
+        '''
+        Compare unemp basis against observation
+        '''
+
+        if grayscale:
+            plt.style.use('grayscale')
+            plt.rcParams['figure.facecolor'] = 'white' # Or any suitable colour...
+
+        unemp_distrib1,emp_distrib1,unemp_distrib_bu1,\
+            tyoll_distrib1,tyoll_distrib_bu1,\
+            tyoll_virta,tyot_virta,tyot_virta_ansiosid,tyot_virta_tm,\
+            unemp_dur,unemp_lastdur,unemp_basis_distrib = self.episodestats.load_simdistribs(filename)
+
+        nofig = False
+        if fig is None:
+            nofig = True
+            fig,ax = plt.subplots(1,1)
+
+        self.plot_unempbasis_distrib(unemp_basis_distrib,figname = None,ax=ax,fig=fig) # ax = ax[1],
+        fig.subplots_adjust(wspace=0.9)
+        #add_label(ax)
+
+        if nofig:
+            if figname is not None:
+                    plt.savefig(figname, format = 'pdf')
+                    
+            plt.show()
 
     def plot_simstat_workforce_stack(self,empstate,figname = None):
         empstate_ratio = 100*self.episodestats.empstate/self.episodestats.alive
@@ -5027,12 +5202,12 @@ class PlotStats():
         unemp_distrib1,emp_distrib1,unemp_distrib_bu1,\
             tyoll_distrib1,tyoll_distrib_bu1,\
             tyoll_virta1,tyot_virta1,tyot_virta_ansiosid1,tyot_virta_tm1,\
-            unemp_dur1,unemp_lastdur1 = self.episodestats.load_simdistribs(filename)
+            unemp_dur1,unemp_lastdur1,unemp_basis_distrib1 = self.episodestats.load_simdistribs(filename)
 
         unemp_distrib2,emp_distrib2,unemp_distrib_bu2,\
             tyoll_distrib2,tyoll_distrib_bu2,\
             tyoll_virta2,tyot_virta2,tyot_virta_ansiosid2,tyot_virta_tm2,\
-            unemp_dur2,unemp_lastdur2 = self.episodestats.load_simdistribs(filename2)
+            unemp_dur2,unemp_lastdur2,unemp_basis_distrib2 = self.episodestats.load_simdistribs(filename2)
 
         #print('Keskikestot käytettyjen ansiosidonnaisten päivärahojen mukaan')
         self.plot_compare_unemp_durdistribs(unemp_dur1,unemp_dur2,unemp_lastdur1,unemp_lastdur2,label1 = label1,label2 = label2)

@@ -53,7 +53,10 @@ class EpisodeStats():
         self.labels = self.lab.get_output_labels(lang)
 
         self.complexmodels = set([4,5,6,7,8,9,10,11,104])
+        self.minimalmodels = set([0,101])
+        self.ptmodels = set([5,6,7,8,9,10,11])
         self.recentmodels = set([6,7,8,9,10,11])
+        self.savings_models = set([101,102,103,104])
 
         #print('save_pop',self.save_pop)
         #print('episodestats, lang',lang)
@@ -153,7 +156,7 @@ class EpisodeStats():
         self.dynprog = dynprog
         self.gini_coef = None
 
-        if self.version in set([0,101]):
+        if self.version in self.minimalmodels:
             self.n_groups = 1
         else:
             self.n_groups = 6
@@ -294,7 +297,7 @@ class EpisodeStats():
         self.average_discounted_reward=None
         self.average_undiscounted_reward=None
         self.rewards_computed=False
-        if self.version in set([101,102,104]):
+        if self.version in self.savings_models:
             self.infostats_savings = np.zeros((self.n_time,self.n_pop),dtype=float)
             self.sav_actions = np.zeros((self.n_time,self.n_pop),dtype=float)
 
@@ -501,7 +504,7 @@ class EpisodeStats():
         self.infostats_kassanjasen += cc.infostats_kassanjasen
         self.infostats_equivalent_income += cc.infostats_equivalent_income
         self.infostats_alv += cc.infostats_alv
-        if self.version in set([101,102,104]):
+        if self.version in self.savings_models:
             self.infostats_savings = np.append(self.infostats_savings[:,:self.n_pop],cc.infostats_savings[:,:cc.n_pop],axis=1)
             self.sav_actions = np.append(self.sav_actions[:,:self.n_pop],cc.sav_actions[:,:cc.n_pop],axis=1)
 
@@ -2448,7 +2451,7 @@ class EpisodeStats():
         _ = f.create_dataset('infostats_alv', data=self.infostats_alv, dtype=ftype,compression="gzip", compression_opts=9)
         _ = f.create_dataset('stat_unemp_after_ra', data=self.stat_unemp_after_ra, dtype=ftype,compression="gzip", compression_opts=9)
         
-        if self.version in set([101,104]):
+        if self.version in self.savings_models:
             _ = f.create_dataset('infostats_savings', data=self.infostats_savings, dtype=ftype,compression="gzip", compression_opts=9)
             _ = f.create_dataset('sav_actions', data=self.sav_actions, dtype=ftype,compression="gzip", compression_opts=9)
 
@@ -2457,7 +2460,7 @@ class EpisodeStats():
             _ = f.create_dataset('infostats_yksinhuoltaja', data=self.infostats_yksinhuoltaja,  dtype=ftype,compression="gzip", compression_opts=9)
             _ = f.create_dataset('infostats_lapsiperheita', data=self.infostats_lapsiperheita,  dtype=ftype,compression="gzip", compression_opts=9)
 
-        if self.version in set([5,6,7,8,9,10,11]):
+        if self.version in self.ptmodels:
             _ = f.create_dataset('infostats_pt_act', data=self.infostats_pt_act,  dtype=int,compression="gzip", compression_opts=9)
         
         _ = f.create_dataset('initial_reward', data=self.initial_reward,  dtype=ftype)
@@ -2927,25 +2930,75 @@ class EpisodeStats():
 
         print('cross-sections',df)
 
+    def prep_ginidata(self):
+        '''
+        painota perheiden tulot
+        '''
+        data = np.empty(self.n_time,self.n_pop)
+        n_fam = np.zeros(self.n_time)
+
+
+        for t in range(0,self.n_time):
+            for k in range(0,self.n_pop,2):
+                if self.infostats_pop_puoliso[t,n]>0:
+                    if self.popempstate[t,k] != 15 and self.popempstate[t,k+1] != 15:
+                        paino = 1.0 + 0.5 + 0.3 * self.infostats_pop_children_under18[t,k]
+                        data[t,n_fam] = (self.infostats_poptulot_netto[t,k]+self.infostats_poptulot_netto[t,k+1])/paino
+                        n_fam[t] += 1
+                    else:
+                        if self.popempstate[t,k+1] != 15:
+                            paino = 1.0 + 0.3 * self.infostats_pop_children_under18[t,k]
+                            data[t,n_fam] = (self.infostats_poptulot_netto[t,k+1])/paino
+                            n_fam[t] += 1
+                        else:
+                            paino = 1.0 + 0.3 * self.infostats_pop_children_under18[t,k]
+                            data[t,n_fam] = (self.infostats_poptulot_netto[t,k])/paino
+                            n_fam[t] += 1
+                else:
+                    if self.popempstate[t,k+1] != 15:
+                        paino = 1.0 + 0.3 * self.infostats_pop_children_under18[t,k]
+                        data[t,n_fam] = (self.infostats_poptulot_netto[t,k+1])/paino
+                        n_fam[t] += 1
+                    if self.popempstate[t,k] != 15:
+                        paino = 1.0 + 0.3 * self.infostats_pop_children_under18[t,k]
+                        data[t,n_fam] = (self.infostats_poptulot_netto[t,k])/paino
+                        n_fam[t] += 1
+
+        return n_fam,data
+    
+    def reprep_ginidata(self,n_fam,data):
+        '''
+        Tee 2d-taulukosta jono
+        '''
+        data2 = ma.ravel(data).compressed()
+        return data2
+        
+    def comp_gini_v3(self):
+        '''
+        Laske Gini-kerroin populaatiolle kotitalouksien tuloista. Toimiiko?
+        '''
+        n_fam,data = self.prep_ginidata()
+        data2 = self.reprep_ginidata(n_fam,data)
+        income = ma.sort(data2,axis=None)
+
+        n=len(income)
+        L = np.arange(1,n+1,1)
+        A = np.sum(L*income)/np.sum(income)
+        G = 2*A/n-(n+1)/n
+        G *= 100
+
+        return G        
+
 
     def comp_gini(self):
         '''
         Laske Gini-kerroin populaatiolle
         '''
-        if False:
-            income = np.sort(self.infostats_tulot_netto,axis=None)
-        else:
-            alivemask = self.get_alivemask()
-            #alivemask=(self.popempstate[:-1,:] ==self.env.get_mortstate())
-            netto=ma.array(self.infostats_poptulot_netto[:-1,:],mask=alivemask[:-1,:])
-            income=ma.sort(netto,axis=None).compressed()
+        alivemask = self.get_alivemask()
+        netto=ma.array(self.infostats_poptulot_netto[:-1,:],mask=alivemask[:-1,:])
+        income=ma.sort(netto,axis=None).compressed()
 
         n=len(income)
-        #L = np.arange(n+1,1,-1)
-        #A = np.sum(L*income)/np.sum(income)
-        #G=(n+1-2*A)/n
-        
-        # v2
         L = np.arange(1,n+1,1)
         A = np.sum(L*income)/np.sum(income)
         G = 2*A/n-(n+1)/n
@@ -3926,6 +3979,10 @@ class EpisodeStats():
         return ulkopuolella_m[::skip],ulkopuolella_n[::skip],tyovoimassa_m,tyovoimassa_n
 
     def get_muut(self,skip=4,show=False,csv=None):
+        def get_apu(datax,skip=4):
+            retu = datax[::skip]
+            retu[0,:] = datax[1,:]
+            return retu
         '''
         Laskee vanhempainvapaalla olevien määrän outsider-mallia (Excel) varten, ilman työvoimassa olevia vanhempainvapailla olevia
         '''
@@ -3944,18 +4001,20 @@ class EpisodeStats():
         svpaivaraha_n = np.sum(self.gempstate[:,14,3:6],axis=1)[:,None]/alive
 
         if show:
-            m,n=muut_m[::skip],muut_n[::skip]
+            #m,n=muut_m[::skip],muut_n[::skip]
+            m,n=get_apu(muut_m,skip),get_apu(muut_n,skip)
             print('muut_m=[',end='')
-            for k in range(1,53):
+            for k in range(0,53):
                 print('{},'.format(m[k,0]),end='')
             print(']')
             print('muut_n=[',end='')
-            for k in range(1,53):
+            for k in range(0,53):
                 print('{},'.format(n[k,0]),end='')
             print(']')
-            m,n=opisk_m[::skip],opisk_n[::skip]
+            #m,n=opisk_m[::skip],opisk_n[::skip]
+            m,n=get_apu(opisk_m,skip),get_apu(opisk_n,skip)
             print('opisk_m=[',end='')
-            for k in range(1,53):
+            for k in range(0,53):
                 print('{},'.format(m[k,0]),end='')
             print(']')
             print('opisk_n=[',end='')
@@ -3977,34 +4036,36 @@ class EpisodeStats():
         #    ulkopuolella_m[0] = w0[]
 
         if show:
-            m,n=ulkopuolella_m[::skip],ulkopuolella_n[::skip]
+            #m,n=ulkopuolella_m[::skip],ulkopuolella_n[::skip]
+            m,n=get_apu(ulkopuolella_m,skip),get_apu(ulkopuolella_n,skip)
             print('ulkopuolella_m=[',end='')
-            for k in range(1,42):
+            for k in range(0,42):
                 print('{},'.format(m[k,0]),end='')
             print(']')
             print('ulkopuolella_n=[',end='')
-            for k in range(1,42):
+            for k in range(0,42):
                 print('{},'.format(n[k,0]),end='')
             print(']')
-            m,n=tyovoimassa_m[::skip],tyovoimassa_n[::skip]
+            #m,n=tyovoimassa_m[::skip],tyovoimassa_n[::skip]
+            m,n=get_apu(tyovoimassa_m,skip),get_apu(tyovoimassa_n,skip)
             print('tyovoimassa_m=[',end='')
-            for k in range(1,42):
+            for k in range(0,42):
                 print('{},'.format(m[k,0]),end='')
             print(']')
             print('tyovoimassa_n=[',end='')
-            for k in range(1,42):
+            for k in range(0,42):
                 print('{},'.format(n[k,0]),end='')
             print(']')
             
         if csv is not None:
             n=muut_m[::skip].shape[0]
             x = np.linspace(self.min_age,self.min_age+n-1,n).reshape(-1,1)
-            df = pd.DataFrame(np.hstack([x,muut_m[::skip],muut_n[::skip],opisk_m[::skip],opisk_n[::skip],svpaivaraha_m[::skip],svpaivaraha_n[::skip],
-                ulkopuolella_m[::skip],ulkopuolella_n[::skip],tyovoimassa_m[::skip],tyovoimassa_n[::skip],svpaivaraha_m[::skip],svpaivaraha_n[::skip]]), 
+            df = pd.DataFrame(np.hstack([x,get_apu(muut_m,skip),get_apu(muut_n,skip),get_apu(opisk_m,skip),get_apu(opisk_n,skip),get_apu(svpaivaraha_m,skip),get_apu(svpaivaraha_n,skip),
+                get_apu(ulkopuolella_m,skip),get_apu(ulkopuolella_n,skip),get_apu(tyovoimassa_m,skip),get_apu(tyovoimassa_n,skip),get_apu(svpaivaraha_m,skip),get_apu(svpaivaraha_n,skip)]), 
                 columns = ['ikä','muut_m','muut_n','opisk_m','opisk_n','svpaivaraha_m','svpaivaraha_n','vv_ulkopuolella_m','vv_ulkopuolella_n','vv_tyovoimassa_m','vv_tyovoimassa_n','sv_tyovoimassa_m','sv_tyovoimassa_n'])
             df.to_csv(csv, sep=";", decimal=",",index=False)
         
-        return muut_m[::skip],muut_n[::skip]
+        return get_apu(muut_m,skip),get_apu(muut_n,skip)
 
     def comp_L2error(self):
 
@@ -4506,6 +4567,40 @@ class EpisodeStats():
                             prev_trans=t
 
         return tyoll_distrib,tyoll_distrib_bu
+    
+
+    def comp_unempbasis_distribs(self,popempstate=None,popunemprightleft=None,ansiosid=True,putki=True,tyott=True,max_age=70):
+        '''
+        computes the disribution of employment and unemployment spells
+        '''
+        unemp_distrib=[]
+        unempset=[]
+
+        if putki:
+            unempset.append(4)
+        if ansiosid:
+            unempset.append(0)
+        if tyott:
+            unempset=[0,4]
+
+        if popempstate is None or popunemprightleft is None:
+            popempstate=self.popempstate
+            popunemprightleft=self.popunemprightleft
+
+        unempset=set(unempset)
+
+        for k in range(self.n_pop):
+            prev_state=popempstate[0,k]
+            prev_trans=0
+            for t in range(1,self.n_time):
+                age=self.min_age+t*self.timestep
+                if age<=max_age:
+                    if self.popempstate[t,k]!=prev_state:
+                        if prev_state not in unempset and popempstate[t,k] in unempset:
+                            unemp_distrib.append(self.infostats_unempwagebasis_acc[t,k])
+                    prev_state=popempstate[t,k]
+
+        return unemp_distrib
 
     def comp_empdistribs(self,popempstate=None,popunemprightleft=None,putki=True,tmtuki=True,laaja=False,outsider=False,ansiosid=True,tyott=False,max_age=100):
         '''
@@ -4564,6 +4659,8 @@ class EpisodeStats():
         '''
         Työttömien siirtyminen pois työttömyydestä ensimmäistä kertaa
         jakauma
+
+        mikä ero?
         '''
         unemp_distrib=[]
         unemp_distrib_bu=[]

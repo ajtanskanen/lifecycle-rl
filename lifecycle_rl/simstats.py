@@ -113,8 +113,9 @@ class SimStats(EpisodeStats):
         emp_htv[0,:]=htv_ika[:,0]
         
         if include_distrib:
-            unemp_distrib,emp_distrib,unemp_distrib_bu = self.comp_empdistribs(ansiosid=True,tmtuki=True,putki=True,outsider=False,max_age=max_age)
-            tyoll_distrib,tyoll_distrib_bu = self.comp_tyollistymisdistribs(ansiosid=True,tmtuki=True,putki=True,outsider=False,max_age=max_age)
+            unemp_distrib,emp_distrib,unemp_distrib_bu = self.comp_empdistribs(ansiosid=True,tmtuki=False,putki=True,outsider=False,max_age=max_age)
+            unemp_basis_distrib = self.comp_unempbasis_distribs(ansiosid=True,putki=True,max_age=max_age)
+            tyoll_distrib,tyoll_distrib_bu = self.comp_tyollistymisdistribs(ansiosid=True,tmtuki=False,putki=True,outsider=False,max_age=max_age)
         else:
             unemp_distrib,emp_distrib,unemp_distrib_bu = [],[],[]
             tyoll_distrib,tyoll_distrib_bu = [],[]
@@ -130,7 +131,6 @@ class SimStats(EpisodeStats):
             tyot_virta_ansiosid[0,:]=tyot_virta_ansiosid0[:,0]
             tyot_virta_tm[0,:]=tyot_virta_tm0[:,0]
         
-        if include_distrib:
             unemp_dur0=self.comp_unemp_durations(return_q=False)
             unemp_lastdur0=self.comp_unemp_durations_v2(return_q=False)
             unemp_dur[0,:,:]=unemp_dur0[:,:]
@@ -204,14 +204,15 @@ class SimStats(EpisodeStats):
                 if include_distrib:
                     unemp_distrib2,emp_distrib2,unemp_distrib_bu2 = self.comp_empdistribs(ansiosid=True,tmtuki=True,putki=True,outsider=False,max_age=max_age)
                     tyoll_distrib2,tyoll_distrib_bu2 = self.comp_tyollistymisdistribs(ansiosid=True,tmtuki=True,putki=True,outsider=False,max_age=max_age)
+                    unemp_basis_distrib2 = self.comp_unempbasis_distribs(ansiosid=True,putki=True,max_age=max_age)
 
                     unemp_distrib.extend(unemp_distrib2)
+                    unemp_basis_distrib.extend(unemp_basis_distrib2)
                     emp_distrib.extend(emp_distrib2)
                     unemp_distrib_bu.extend(unemp_distrib_bu2)
                     tyoll_distrib.extend(tyoll_distrib2)
                     tyoll_distrib_bu.extend(tyoll_distrib_bu2)
             
-                if include_distrib:
                     # virrat työllisyyteen ja työttömyyteen
                     tyoll_virta0,tyot_virta0 = self.comp_virrat(ansiosid=True,tmtuki=True,putki=True,outsider=False)
                     tyoll_virta_ansiosid0,tyot_virta_ansiosid0 = self.comp_virrat(ansiosid=True,tmtuki=False,putki=True,outsider=False)
@@ -222,7 +223,6 @@ class SimStats(EpisodeStats):
                     tyot_virta_ansiosid[i,:] = tyot_virta_ansiosid0[:,0]
                     tyot_virta_tm[i,:] = tyot_virta_tm0[:,0]
 
-                if include_distrib:
                     unemp_dur0=self.comp_unemp_durations(return_q=False)
                     unemp_lastdur0=self.comp_unemp_durations_v2(return_q=False)
                     unemp_dur[i,:,:]=unemp_dur0[:,:]
@@ -254,7 +254,8 @@ class SimStats(EpisodeStats):
                             unemp_dur,unemp_lastdur,agg_netincome,agg_equivalent_netincome,\
                             budget,participants,htv_budget,\
                             alives,agg_empstate,agg_alives,agg_tyottomyysaste,emp_tyottomyysaste,\
-                            pt_agg,pt_agegroup,galives,agg_galives,gemps,agg_gempstate)
+                            pt_agg,pt_agegroup,galives,agg_galives,gemps,agg_gempstate,\
+                            unemp_basis_distrib)
                     
         #if not singlefile:
         #    # save the best
@@ -350,7 +351,8 @@ class SimStats(EpisodeStats):
                         tyoll_virta,tyot_virta,tyot_virta_ansiosid,tyot_virta_tm,\
                         unemp_dur,unemp_lastdur,agg_netincome,agg_equivalent_netincome,budget,participants,htv_budget,\
                         alives,agg_empstate,agg_alives,agg_tyottomyysaste,emp_tyottomyysaste,pt_agg,pt_agegroup,\
-                        galives,agg_galives,gempstate,agg_gempstate):
+                        galives,agg_galives,gempstate,agg_gempstate,\
+                        unemp_basis_distrib):
         f = h5py.File(filename, 'w')
         dset = f.create_dataset('agg_discounted_rew', data=agg_discounted_rew, dtype='float64')
         dset = f.create_dataset('agg_htv', data=agg_htv, dtype='float64')
@@ -368,6 +370,7 @@ class SimStats(EpisodeStats):
         dset = f.create_dataset('unemp_distrib', data=unemp_distrib, dtype='float64')
         dset = f.create_dataset('emp_distrib', data=emp_distrib, dtype='float64')
         dset = f.create_dataset('unemp_distrib_bu', data=unemp_distrib_bu, dtype='float64')
+        dset = f.create_dataset('unemp_basis_distrib', data=unemp_basis_distrib, dtype='float64')
         dset = f.create_dataset('tyoll_distrib', data=tyoll_distrib, dtype='float64')
         dset = f.create_dataset('tyoll_distrib_bu', data=tyoll_distrib_bu, dtype='float64')
         dset = f.create_dataset('tyoll_virta', data=tyoll_virta, dtype='float64')
@@ -500,13 +503,17 @@ class SimStats(EpisodeStats):
             unemp_lastdur = f['unemp_lastdur'][()]
         else:
             unemp_lastdur=np.zeros((1,5,5))
+        if 'unemp_basis_distrib' in f:
+            unemp_basis_distrib = f['unemp_basis_distrib'][()]
+        else:
+            unemp_basis_distrib = np.zeros((self.n_time,self.n_pop))
 
         f.close()
 
         return unemp_distrib,emp_distrib,unemp_distrib_bu,\
                tyoll_distrib,tyoll_distrib_bu,\
                tyoll_virta,tyot_virta,tyot_virta_ansiosid,tyot_virta_tm,\
-               unemp_dur,unemp_lastdur
+               unemp_dur,unemp_lastdur,unemp_basis_distrib
 
     def comp_aggkannusteet(self,ben,min_salary=0,max_salary=6000,step_salary=50,n=None,savefile=None):
         n_salary=int((max_salary-min_salary)/step_salary)+1
