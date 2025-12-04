@@ -1402,8 +1402,8 @@ class Empstats():
             q[self.labels['eläkkeellä']]=1_111_032 # 18-79, työvoimatutkimus, ETK: 1243767
             q[self.labels['työssä 63+']]=69_669 # ETK 2020
             q[self.labels['palkansaajia']]=2_204_000 # TK
-            q[self.labels['ansiosidonnaisella']]=118_615  # Kelan tilasto 31.12.2018 # vuoden aikana 339 680
-            q[self.labels['tmtuella']]=189_780  # Kelan tilasto 31.12.2018 # vuoden aikana 268 254
+            q[self.labels['ansiosidonnaisella']]=118_615  # Kelan tilasto 31.12.2018 
+            q[self.labels['tmtuella']]=217_068  # Kelan tilasto 2025
             q[self.labels['isyysvapaalla']]=59_640 # Kelan tilasto 2018
             q[self.labels['kotihoidontuella']]=95_759 # saajia Kelan tilasto 2018
             q[self.labels['työkyvyttömyyseläke']]=198_762
@@ -1424,7 +1424,8 @@ class Empstats():
             q[self.labels['eläkkeellä']]=1_111_032 # 18-79, työvoimatutkimus, ETK: 1243767
             q[self.labels['työssä 63+']]=83_356 # ETK 2020
             q[self.labels['palkansaajia']]=2_204_000 # TK
-            q[self.labels['ansiosidonnaisella']]=116_972+27_157  # Kelan tilasto 31.12.2018
+            q[self.labels['ansiosidonnaisella']]=121_367  # Kelan tilasto 27.11.2025
+            q[self.labels['tmtuella']]=208_570  # Kelan tilasto 2025
             q[self.labels['isyysvapaalla']]=58_409 # Kelan tilasto 2019
             q[self.labels['kotihoidontuella']]=89_662 # saajia Kelan tilasto 2019
             q[self.labels['työkyvyttömyyseläke']]=195_316
@@ -1445,8 +1446,8 @@ class Empstats():
             q[self.labels['työssä ja eläkkeellä']]=31_000 # ETK 2020
             q[self.labels['eläkkeellä']]=1_111_032 # 18-79, työvoimatutkimus, ETK: 1243767
             q[self.labels['palkansaajia']]=2_204_000 # TK
-            q[self.labels['ansiosidonnaisella']]=116_972+27_157  # Kelan tilasto 31.12.2018
-            q[self.labels['tmtuella']]=189_780  # Kelan tilasto 31.12.2018
+            q[self.labels['ansiosidonnaisella']]=193_265	  # Kelan tilasto 2025
+            q[self.labels['tmtuella']]=247_385  # Kelan tilasto 2025
             q[self.labels['isyysvapaalla']]=58_409 # Kelan tilasto 2020
             q[self.labels['kotihoidontuella']]=86_611 # saajia Kelan tilasto 2020
             q[self.labels['työkyvyttömyyseläke']]=191_597
@@ -1462,13 +1463,13 @@ class Empstats():
             q[self.labels['aikuisia']] = aikuisia
             q[self.labels['työikäisiä 18-62']]= d1862 # 3_094_252 * h_to_v # väestörakenne, statfin, 18-62
             q[self.labels['lapsia']] = lapsia
-            q[self.labels['työllisiä']]=2_377_126  # TK, työssäkäynti # 2_528_000 # TK
+            q[self.labels['työllisiä']]=2_377_126  # TK, työssäkäynti # # TK
             q[self.labels['työssä ja eläkkeellä']]=31_000 # ETK 2020
             q[self.labels['eläkkeellä']]=1_111_032 # 18-79, työvoimatutkimus, ETK: 1243767
             q[self.labels['työssä 63+']]=94_968 # ETK 2020
             q[self.labels['palkansaajia']]=2_204_000 # TK
-            q[self.labels['ansiosidonnaisella']]=116_972+27_157  # Kelan tilasto 31.12.2018 # vuoden aikana 355 729
-            q[self.labels['tmtuella']]=189_780  # Kelan tilasto 31.12.2018
+            q[self.labels['ansiosidonnaisella']]=128_593  # Kelan tilasto 2025
+            q[self.labels['tmtuella']]=199_581  # Kelan tilasto 2025
             q[self.labels['isyysvapaalla']]=58_170	 # Kelan tilasto 2021
             q[self.labels['kotihoidontuella']]=82_385 # saajia Kelan tilasto 2021
             q[self.labels['työkyvyttömyyseläke']]=185_991 # ETK 
@@ -1484,13 +1485,13 @@ class Empstats():
             q[self.labels['aikuisia']] = aikuisia
             q[self.labels['työikäisiä 18-62']]= d1862 # 3_104_296 * h_to_v # väestörakenne, statfin, 18-62
             q[self.labels['lapsia']] = lapsia
-            q[self.labels['työllisiä']]=2_423_548 # TK, työssäkäynti # 2_528_000 # TK
+            q[self.labels['työllisiä']]=2_423_548 # TK, työssäkäynti 
             q[self.labels['työssä ja eläkkeellä']]=31_000 # ETK 2020
-            q[self.labels['eläkkeellä']]=1_111_032 # 18-79, työvoimatutkimus, ETK: 1243767
+            q[self.labels['eläkkeellä']]=1_111_032 # 18-79, työvoimatutkimus, ETK: 1 243 767
             q[self.labels['työssä 63+']]=103_394 # TK työssäkäynti
             q[self.labels['palkansaajia']]=2_204_000 # TK
-            q[self.labels['ansiosidonnaisella']]=116_972+27_157  # Kelan tilasto 31.12.2018
-            q[self.labels['tmtuella']]=189_780  # Kelan tilasto 31.12.2018
+            q[self.labels['ansiosidonnaisella']]=109_309  # Kelan tilasto 2025
+            q[self.labels['tmtuella']]=191_287  # Kelan tilasto 2025
             q[self.labels['isyysvapaalla']]=61_655	 # Kelan tilasto 2022
             q[self.labels['kotihoidontuella']]=79_878 # saajia Kelan tilasto 2022
             q[self.labels['työkyvyttömyyseläke']]=180_819  # ETK
@@ -1513,8 +1514,8 @@ class Empstats():
             q[self.labels['vanhuuseläkkeellä']]=1_061_711 # 18-79, ETK: 1240551            
             q[self.labels['työssä 63+']]=113_388 # TK työssäkäynti, 2023
             q[self.labels['palkansaajia']]=2_204_000 # TK
-            q[self.labels['ansiosidonnaisella']]=116_972+27_157  # Kelan tilasto 31.12.2018
-            q[self.labels['tmtuella']]=189_780  # Kelan tilasto 31.12.2018
+            q[self.labels['ansiosidonnaisella']]=130_869  # Kelan tilasto 2025
+            q[self.labels['tmtuella']]=196_894  # Kelan tilasto 2025
             q[self.labels['isyysvapaalla']]=61_960 # Kelan tilasto 2023
             q[self.labels['kotihoidontuella']]=71_550 # saajia Kelan tilasto 2024
             q[self.labels['työkyvyttömyyseläke']]=178_052   # ETK
@@ -1536,8 +1537,8 @@ class Empstats():
             q[self.labels['eläkkeellä']]=1_111_032 # 18-79, työvoimatutkimus, ETK: 1243767
             q[self.labels['työssä 63+']]=103_394 # ETK 2020
             q[self.labels['palkansaajia']]=2_204_000 # TK
-            q[self.labels['ansiosidonnaisella']]=116_972+27_157  # Kelan tilasto 31.12.2018
-            q[self.labels['tmtuella']]=189_780  # Kelan tilasto 31.12.2018
+            q[self.labels['ansiosidonnaisella']]=124_084	  # Kelan tilasto 2025
+            q[self.labels['tmtuella']]=209_984  # Kelan tilasto 2025
             q[self.labels['isyysvapaalla']]=65_092 # Kelan tilasto 2018
             q[self.labels['kotihoidontuella']]=62_919 # saajia Kelan tilasto 2024
             q[self.labels['työkyvyttömyyseläke']]=175_669   # ETK
@@ -1557,7 +1558,7 @@ class Empstats():
             q[self.labels['työssä ja eläkkeellä']]=31_000 # ETK 2020
             q[self.labels['työssä 63+']]=103_394 # ETK 2020
             q[self.labels['palkansaajia']]=2_204_000 # TK
-            q[self.labels['ansiosidonnaisella']]=116_972+27_157  # Kelan tilasto 31.12.2018
+            q[self.labels['ansiosidonnaisella']]=124_084	  # Kelan tilasto 2025
             q[self.labels['tmtuella']]=189_780  # Kelan tilasto 31.12.2018
             q[self.labels['isyysvapaalla']]=59_640 # Kelan tilasto 2018
             q[self.labels['kotihoidontuella']]=79_880 # saajia Kelan tilasto 2018
@@ -1578,7 +1579,7 @@ class Empstats():
             q[self.labels['työssä ja eläkkeellä']]=31_000 # ETK 2020
             q[self.labels['työssä 63+']]=103_394 # ETK 2020
             q[self.labels['palkansaajia']]=2_204_000 # TK
-            q[self.labels['ansiosidonnaisella']]=116_972+27_157  # Kelan tilasto 31.12.2018
+            q[self.labels['ansiosidonnaisella']]=124_084	  # Kelan tilasto 2025
             q[self.labels['tmtuella']]=189_780  # Kelan tilasto 31.12.2018
             q[self.labels['isyysvapaalla']]=59_640 # Kelan tilasto 2018
             q[self.labels['kotihoidontuella']]=79_880 # saajia Kelan tilasto 2018
@@ -2436,3 +2437,18 @@ class Empstats():
             [5.30000e+01, 0.00000e+00],
             [5.40000e+01, 2.00000e+00]])
 
+    def get_reempt_data(self):
+
+        # exit rate kyyrä ja pesola (2019)
+        x_kyyra = (np.array([ 13.,  26.,  39.,  52.,  65.,  78.,  91., 104., 117., 130.]))*5/21.5/12
+        y_kyyra =np.array([0.4839454 , 0.38065915, 0.30236521, 0.28661407, 0.25400715, 0.22479255, 0.23189427, 0.27568799, 0.15755385, 0.11960807])
+
+        # exit rate Korplea
+        x_korpela = (np.array([ 13.,  26.,  39.,  52.,  65.,  78.,  91., 104., 117., 130.]))*5/21.5/12
+        y_korpela =np.array([0.49958705, 0.41401094, 0.27543074, 0.17505567, 0.20015082,0.26644122, 0.31987234, 0.16057378, 0.18221992, 0.21903784])
+
+        # job rate Korplea
+        x_korpela2 = (np.array([ 13.,  26.,  39.,  52.,  65.,  78.,  91., 104., 117., 130.]))*5/21.5/12
+        y_korpela2 =np.array([0.31687424, 0.25103138, 0.21882637, 0.12202941, 0.10988931, 0.09760329, 0.10500084, 0.11543548, 0.11946684, 0.0853002 ])
+
+        return x_kyyra,y_kyyra,x_korpela,y_korpela,x_korpela2,y_korpela2

@@ -112,10 +112,14 @@ class SimStats(EpisodeStats):
         emp_tyottomat_osuus[0,:]=tyottomien_osuus[:,0]
         emp_htv[0,:]=htv_ika[:,0]
         
+        include_ansiosid = True
+        include_tmtuki = False
+        include_putki = True
+
         if include_distrib:
-            unemp_distrib,emp_distrib,unemp_distrib_bu = self.comp_empdistribs(ansiosid=True,tmtuki=False,putki=True,outsider=False,max_age=max_age)
-            unemp_basis_distrib = self.comp_unempbasis_distribs(ansiosid=True,putki=True,max_age=max_age)
-            tyoll_distrib,tyoll_distrib_bu = self.comp_tyollistymisdistribs(ansiosid=True,tmtuki=False,putki=True,outsider=False,max_age=max_age)
+            unemp_distrib,emp_distrib,unemp_distrib_bu = self.comp_empdistribs_v2(ansiosid=include_ansiosid,tmtuki=include_tmtuki,putki=include_putki,outsider=False,max_age=max_age)
+            unemp_basis_distrib = self.comp_unempbasis_distribs_v2(ansiosid=include_ansiosid,putki=True,max_age=max_age)
+            tyoll_distrib,tyoll_distrib_bu = self.comp_tyollistymisdistribs(ansiosid=include_ansiosid,tmtuki=include_tmtuki,putki=include_putki,outsider=False,max_age=max_age)
         else:
             unemp_distrib,emp_distrib,unemp_distrib_bu = [],[],[]
             tyoll_distrib,tyoll_distrib_bu = [],[]
@@ -202,9 +206,9 @@ class SimStats(EpisodeStats):
                 emp_htv[i,:] = htv_ika[:,0]
 
                 if include_distrib:
-                    unemp_distrib2,emp_distrib2,unemp_distrib_bu2 = self.comp_empdistribs(ansiosid=True,tmtuki=True,putki=True,outsider=False,max_age=max_age)
-                    tyoll_distrib2,tyoll_distrib_bu2 = self.comp_tyollistymisdistribs(ansiosid=True,tmtuki=True,putki=True,outsider=False,max_age=max_age)
-                    unemp_basis_distrib2 = self.comp_unempbasis_distribs(ansiosid=True,putki=True,max_age=max_age)
+                    unemp_distrib2,emp_distrib2,unemp_distrib_bu2 = self.comp_empdistribs_v2(ansiosid=include_ansiosid,tmtuki=include_tmtuki,putki=include_putki,outsider=False,max_age=max_age)
+                    tyoll_distrib2,tyoll_distrib_bu2 = self.comp_tyollistymisdistribs_v2(ansiosid=include_ansiosid,tmtuki=include_tmtuki,putki=include_putki,outsider=False,max_age=max_age)
+                    unemp_basis_distrib2 = self.comp_unempbasis_distribs(ansiosid=include_ansiosid,putki=True,max_age=max_age)
 
                     unemp_distrib.extend(unemp_distrib2)
                     unemp_basis_distrib.extend(unemp_basis_distrib2)

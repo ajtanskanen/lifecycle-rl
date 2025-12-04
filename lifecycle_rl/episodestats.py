@@ -4568,6 +4568,58 @@ class EpisodeStats():
 
         return tyoll_distrib,tyoll_distrib_bu
     
+    def comp_tyollistymisdistribs_v2(self,popempstate=None,popunemprightleft=None,putki=True,tmtuki=True,laaja=False,outsider=False,ansiosid=True,tyott=False,max_age=100):
+        '''
+        Laskee työllistyneiden osuuden eri aikoina
+        '''
+        tyoll_distrib=[]
+        tyoll_distrib_bu=[]
+        unempset=[]
+
+        if tmtuki:
+            unempset.append(13)
+        if outsider:
+            unempset.append(11)
+        if putki:
+            unempset.append(4)
+        if ansiosid:
+            unempset.append(0)
+        if tyott:
+            unempset=[0,4,13]
+
+        if laaja:
+            unempset=[0,4,11,13]
+
+        empset=set([1,10])
+        unempset=set(unempset)
+
+        if popempstate is None or popunemprightleft is None:
+            popempstate=self.popempstate
+            popunemprightleft=self.popunemprightleft
+
+        for k in range(self.n_pop):
+            prev_state=popempstate[0,k]
+            prev_trans=0
+            passed = False
+            for t in range(1,self.n_time):
+                age=self.min_age+t*self.timestep
+                if age<=max_age:
+                    if popempstate[t,k]!=prev_state:
+                        if prev_state in unempset and popempstate[t,k] in empset:
+                            tyoll_distrib.append((t-prev_trans)*self.timestep)
+                            tyoll_distrib_bu.append(popunemprightleft[t,k])
+                            prev_state=popempstate[t,k]
+                            prev_trans=t
+                        else: # some other state
+                            prev_state=popempstate[t,k]
+                            prev_trans=t
+
+                        if popempstate[t,k] in empset:
+                            passed = True
+                        else:
+                            passed = False
+
+        return tyoll_distrib,tyoll_distrib_bu
 
     def comp_unempbasis_distribs(self,popempstate=None,popunemprightleft=None,ansiosid=True,putki=True,tyott=True,max_age=70):
         '''
@@ -4681,38 +4733,51 @@ class EpisodeStats():
         if laaja:
             unempset=[0,4,11,13]
 
+        unempset_large = set([0,4,13])
+
         if popempstate is None or popunemprightleft is None:
             popempstate=self.popempstate
             popunemprightleft=self.popunemprightleft
 
         empset=set([1,10])
+        empset_large=set([1,5,6,10])
         unempset=set(unempset)
 
+        full_set = set([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14])
+        not_unempset_large = full_set - unempset_large
+        not_unempset = full_set - unempset
+
         for k in range(self.n_pop):
-            prev_state=popempstate[0,k]
-            prev_trans=0
+            prev_state = popempstate[0,k]
+            prev_trans = 0
+            start_unemp = False
             for t in range(1,self.n_time):
-                age=self.min_age+t*self.timestep
-                passed=False
-                if age<=max_age:
-                    if popunemprightleft[t,k]>=filter:
-                        passed=True
-                    
-                    if self.popempstate[t,k]!=prev_state:
-                        if prev_state in unempset and popempstate[t,k] not in unempset:
-                            if passed:
-                                unemp_distrib.append((t-prev_trans)*self.timestep)
-                                unemp_distrib_bu.append(popunemprightleft[t,k])
-                                passed=False
-                                prev_state=popempstate[t,k]
-                                prev_trans=t
-                        elif prev_state in empset and popempstate[t,k] not in unempset:
+                age = self.min_age+t*self.timestep
+                if age <= max_age:                    
+                    if self.popempstate[t,k] != prev_state:
+                        if prev_state in unempset and popempstate[t,k] in not_unempset_large:
+                            unemp_distrib.append((t-prev_trans)*self.timestep)
+                            unemp_distrib_bu.append(popunemprightleft[t,k])
+                            prev_state = popempstate[t,k]
+                            prev_trans = t
+                            start_unemp = False
+                        elif prev_state in unempset and popempstate[t,k] in unempset_large:
+                            start_unemp = True
+                        elif start_unemp and prev_state in unempset_large and popempstate[t,k] in not_unempset and popempstate[t,k] in unempset_large:
+                            unemp_distrib.append((t-prev_trans)*self.timestep)
+                            unemp_distrib_bu.append(popunemprightleft[t,k])
+                            prev_state = popempstate[t,k]
+                            prev_trans = t
+                            start_unemp = False
+                        elif prev_state in empset and popempstate[t,k] in not_unempset_large:
                             emp_distrib.append((t-prev_trans)*self.timestep)
-                            prev_state=popempstate[t,k]
-                            prev_trans=t
+                            prev_state = popempstate[t,k]
+                            prev_trans = t
+                            start_unemp = False
                         else: # some other state
-                            prev_state=popempstate[t,k]
-                            prev_trans=t
+                            prev_state = popempstate[t,k]
+                            prev_trans = t
+                            start_unemp = False
 
         return unemp_distrib,emp_distrib,unemp_distrib_bu        
 

@@ -137,6 +137,7 @@ class Lifecycle():
                 'startage': self.startage,
                 'investment': self.include_investment,
                 'retage70': self.retage70,
+                'eak70': self.eak70,
                 'wealth': self.include_wealth,
                 'year': self.year,
                 'r_mean': self.r_mean,
@@ -307,6 +308,7 @@ class Lifecycle():
         self.library = 0
         self.processes = 10
         self.retage70 = 0
+        self.eak70 = True
         
         self.random_returns=False
         self.r_mean=0.0
@@ -330,6 +332,9 @@ class Lifecycle():
             elif key=='retage70':
                 if value is not None:
                     self.retage70=value
+            elif key=='eak70':
+                if value is not None:
+                    self.eak70=value
             elif key=='processes':
                 if value is not None:
                     self.processes=value

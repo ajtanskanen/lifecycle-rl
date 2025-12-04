@@ -142,15 +142,14 @@ class PlotStats():
             else:
                 q_stat = cc.episodestats.comp_budget(scale = True)
 
-            df1 = pd.DataFrame.from_dict(q,orient = 'index',columns = ['e/y'])
+            df1 = pd.DataFrame.from_dict(q,orient = 'index',columns = ['me/y'])
+            df1.loc[:,'me/y'] = df1.loc[:,'me/y'] / 1_000_000
             df2 = pd.DataFrame.from_dict(q_stat,orient = 'index',columns = [cctext])
-            df = self.compare_df(df1,df2,cctext1 = selftext+'e/y',cctext2 = cctext,cctext2_new = cctext)
-            #df = df1.copy()
-            #df[cctext] = df2[cctext]
-            #df['diff'] = df1['e/v']-df2[cctext]
+            df2.loc[:,cctext] = df2.loc[:,cctext] / 1_000_000
+            df = self.compare_df(df1,df2,cctext1 = selftext+'me/y',cctext2 = cctext,cctext2_new = cctext)
 
             print('Rahavirrat skaalattuna väestötasolle')
-            print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.2f"))
+            print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))
 
             q = self.episodestats.comp_participants(scale = True,lkm = False)
             q_lkm = self.episodestats.comp_participants(scale = True,lkm = True)
@@ -193,6 +192,7 @@ class PlotStats():
             df[self.output_labels['diff (py)']] = df['estimate (py)']-df[self.output_labels['toteuma (py)']]
 
             print('Henkilöitä tiloissa skaalattuna väestötasolle')
+            #converted = to_millions_table(df)
             print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))    
 
     def compare_disab(self,cc = None, xstart = None,xend = None, label1 = 'toteuma',label2='self',figname=None,ax=None):
@@ -407,6 +407,8 @@ class PlotStats():
             print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.2f"))
 
         self.plot_unemp_after_ra()
+        unemp_basis_distrib = self.episodestats.comp_unempbasis_distribs(ansiosid=True,putki=True)
+        self.plot_unempbasis_distrib(unemp_basis_distrib,figname = None) # ax = ax[1],
 
         if self.version in self.complex_models:
             print('Lisäpäivillä on {:.0f} henkilöä'.format(self.count_putki()))
@@ -840,7 +842,7 @@ class PlotStats():
 
 
     def plot_tyolldistribs_both(self,emp_distrib1,tyoll_distrib1,max = 10,figname = None,emp_distrib2 = None,
-                                tyoll_distrib2 = None,label1 = '',label2 = ' ',ax=None,fig=None,kyyra=False,
+                                tyoll_distrib2 = None,label1 = '',label2 = ' ',ax=None,fig=None,kyyra=True,
                                 kuva1=True,kuva2=True,kuva3=True,kuva4=False):
         '''
         Tulostaa työllistymisaikajakauman
@@ -853,21 +855,16 @@ class PlotStats():
         scaled_tyoll1,x2_1 = np.histogram(tyoll_distrib1,x)
 
         jaljella = np.cumsum(scaled0_1[::-1])[::-1] # jäljellä olevien summa
-        scaled1 = scaled1/jaljella
-        jaljella_tyoll1 = np.cumsum(scaled0_1[::-1])[::-1] # jäljellä olevien summa
-        scaled_tyoll1 = scaled_tyoll1/jaljella_tyoll1
+        scaled1 = scaled0_1/jaljella
+        #jaljella_tyoll1 = np.cumsum(scaled0_1[::-1])[::-1] # jäljellä olevien summa
 
-        # exit rate kyyrä ja pesola (2019)
-        x_kyyra = (np.array([ 13.,  26.,  39.,  52.,  65.,  78.,  91., 104., 117., 130.]))*5/21.5/12
-        y_kyyra =np.array([0.4839454 , 0.38065915, 0.30236521, 0.28661407, 0.25400715, 0.22479255, 0.23189427, 0.27568799, 0.15755385, 0.11960807])
+        print(jaljella)
+        print(scaled0_1)
+        print(scaled_tyoll1)
 
-        # exit rate Korplea
-        x_korpela = (np.array([ 13.,  26.,  39.,  52.,  65.,  78.,  91., 104., 117., 130.]))*5/21.5/12
-        y_korpela =np.array([0.49958705, 0.41401094, 0.27543074, 0.17505567, 0.20015082,0.26644122, 0.31987234, 0.16057378, 0.18221992, 0.21903784])
+        scaled_tyoll1 = scaled_tyoll1/jaljella #_tyoll1
 
-        # job rate Korplea
-        x_korpela2 = (np.array([ 13.,  26.,  39.,  52.,  65.,  78.,  91., 104., 117., 130.]))*5/21.5/12
-        y_korpela2 =np.array([0.31687424, 0.25103138, 0.21882637, 0.12202941, 0.10988931, 0.09760329, 0.10500084, 0.11543548, 0.11946684, 0.0853002 ])
+        x_kyyra,y_kyyra,x_korpela,y_korpela,x_korpela2,y_korpela2 = self.empstats.get_reempt_data()
 
         if emp_distrib2 is not None:
             scaled0_2,x0_2 = np.histogram(emp_distrib2,x)
@@ -916,6 +913,11 @@ class PlotStats():
             plt.ylim(0,0.8)
             if figname is not None:
                 plt.savefig(figname+'tyolldistribs_v2.'+self.figformat, format = self.figformat)
+
+            if kyyra:
+                ax.plot(x_kyyra,y_kyyra,'--',label='Kyyrä & Pesola')
+                ax.plot(x_korpela,y_korpela,'-.',label='Korpela exit')
+
             if fig is None:
                 plt.show()
 
@@ -934,7 +936,8 @@ class PlotStats():
 
             if kyyra:
                 ax.plot(x_kyyra,y_kyyra,'--',label='Kyyrä & Pesola')
-                #ax.plot(x_korpela,y_korpela,'-.',label='Korpela')
+                ax.plot(x_korpela,y_korpela,'-.',label='Korpela')
+                ax.plot(x_korpela2,y_korpela2,'-.',label='Korpela job')
 
             if emp_distrib2 is not None:
                 ax.plot(x2_2[1:-1],scaled_tyoll2[1:],label = label2)
@@ -971,7 +974,7 @@ class PlotStats():
                 plt.show()      
 
 
-    def plot_tyolldistribs_both_bu(self,emp_distrib,tyoll_distrib,max = 2,emp_distrib2 = None,tyoll_distrib2 = None,label1 = '',label2 = ' 2'):
+    def plot_tyolldistribs_both_bu(self,emp_distrib1,tyoll_distrib1,max = 2,emp_distrib2 = None,tyoll_distrib2 = None,label1 = '',label2 = ' 2',kyyra=True):
         '''
         plots proportion of those moved out of unemployment
         '''
@@ -986,6 +989,8 @@ class PlotStats():
         scaled1 = scaled1/jaljella1
         jaljella_tyoll1 = np.cumsum(scaled0_1[::-1])[::-1] # jäljellä olevien summa
         scaled_tyoll1 = scaled_tyoll1/jaljella_tyoll1
+
+        x_kyyra,y_kyyra,x_korpela,y_korpela,x_korpela2,y_korpela2 = self.empstats.get_reempt_data()
 
         if emp_distrib2 is not None:
             scaled0_2,x0_2 = np.histogram(emp_distrib2,x)
@@ -1011,13 +1016,14 @@ class PlotStats():
         ax.legend(bbox_to_anchor = (1.05, 1), loc = 2, borderaxespad = 0.)
         ax.set_ylabel('pois siirtyneiden osuus')
 
+
         plt.xlim(-max,0)
         #plt.ylim(0,0.8)
         plt.show()
 
     def plot_compare_tyolldistribs(self,emp_distrib1,tyoll_distrib1,emp_distrib2,
                 tyoll_distrib2,tyollistyneet = True,max = 3,label1 = 'perus',label2 = 'vaihtoehto',
-                figname = None):
+                figname = None,kyyra=True):
         max_time = 50
         nn_time = int(np.round((max_time)*self.inv_timestep))+1
         x = np.linspace(0,max_time,nn_time)
@@ -1040,6 +1046,8 @@ class PlotStats():
         else:
             scaled2,x2 = np.histogram(tyoll_distrib2,x)
 
+        x_kyyra,y_kyyra,x_korpela,y_korpela,x_korpela2,y_korpela2 = self.empstats.get_reempt_data()
+
         jaljella2 = np.cumsum(scaled02[::-1])[::-1] # jäljellä olevien summa
         scaled2 = scaled2/jaljella2
 
@@ -1053,6 +1061,11 @@ class PlotStats():
         ax.plot(x2[1:-1],scaled2[1:],label = label2)
         ax.plot(x1[1:-1],scaled1[1:],label = label1)
         #ax.legend(bbox_to_anchor = (1.05, 1), loc = 2, borderaxespad = 0.)
+        if kyyra:
+            ax.plot(x_kyyra,y_kyyra,'--',label='Kyyrä & Pesola')
+            #ax.plot(x_korpela,y_korpela,'-.',label='Korpela exit')
+            ax.plot(x_korpela2,y_korpela2,'-.',label='Korpela job')
+
         ax.legend()
         plt.xlim(0,max)
         plt.gca().set_ylim(bottom = 0)
@@ -1401,7 +1414,7 @@ class PlotStats():
         ax.set_xlabel(self.labels['unemp duration'])
         ax.set_ylabel(self.labels['probability'])
 
-        ax.plot(xv1[1:-1],scaled[1:])
+        ax.plot(xv1[1:-1],scaled1[1:])
         if unemp_distrib2 is not None:
             ax.plot(xv2[1:-1],scaled2[1:])
         plt.xlim(-max,0)
@@ -2302,13 +2315,12 @@ class PlotStats():
         plt.show()
 
 
-    def plot_unemp_shares(self,ax=None,empstate=None):
+    def plot_unemp_shares(self,ax=None,empstate=None,alive=None,legend_infig=True):
         if empstate is None:
             empstate_ratio = 100*self.episodestats.empstate/self.episodestats.alive
         else:
-            empstate_ratio = 100*empstate/self.episodestats.alive
-        print(empstate_ratio)
-        self.plot_states(empstate_ratio,ylabel = 'Osuus tilassa [%]',onlyunemp = True,stack = True,ax=ax)
+            empstate_ratio = 100*empstate/alive
+        self.plot_states(empstate_ratio,ylabel = 'Osuus tilassa [%]',onlyunemp = True,stack = True,ax=ax,legend_infig=legend_infig,end_at=70,show_legend=False)
 
     def plot_gender_emp(self,grayscale = False,figname = None,cc = None,diff = None,label1 = '',label2 = '',ax=None):
         if ax is None:
@@ -2898,9 +2910,15 @@ class PlotStats():
         self.plot_states(np.mean(self.episodestats.stat_wage_reduction_g[:,:,0:3],axis = 2),ylabel = 'wage-reduction tilassa, naiset',stack = False,emp = True)
         self.plot_states(np.mean(self.episodestats.stat_wage_reduction_g[:,:,3:6],axis = 2),ylabel = 'wage-reduction tilassa, miehet',stack = False,emp = True)
 
-    def plot_distrib(self,label = '',plot_emp = False,plot_bu = False,ansiosid = False,tmtuki = False,putki = False,outsider = False,max_age = 500,laaja = False,max = 4,figname = None):
-        unemp_distrib,emp_distrib,unemp_distrib_bu = self.episodestats.comp_empdistribs(ansiosid = ansiosid,tmtuki = tmtuki,putki = putki,outsider = outsider,max_age = max_age,laaja = laaja)
-        tyoll_distrib,tyoll_distrib_bu = self.episodestats.comp_tyollistymisdistribs(ansiosid = ansiosid,tmtuki = tmtuki,putki = putki,outsider = outsider,max_age = max_age,laaja = laaja)
+    def plot_distrib(self,label = '',plot_emp = False,plot_bu = False,ansiosid = False,tmtuki = False,putki = False,outsider = False,max_age = 500,laaja = False,max = 4,
+                     figname = None,v2=False):
+        
+        if v2:
+            unemp_distrib,emp_distrib,unemp_distrib_bu = self.episodestats.comp_empdistribs_v2(ansiosid = ansiosid,tmtuki = tmtuki,putki = putki,outsider = outsider,max_age = max_age,laaja = laaja)
+            tyoll_distrib,tyoll_distrib_bu = self.episodestats.comp_tyollistymisdistribs_v2(ansiosid = ansiosid,tmtuki = tmtuki,putki = putki,outsider = outsider,max_age = max_age,laaja = laaja)
+        else:
+            unemp_distrib,emp_distrib,unemp_distrib_bu = self.episodestats.comp_empdistribs(ansiosid = ansiosid,tmtuki = tmtuki,putki = putki,outsider = outsider,max_age = max_age,laaja = laaja)
+            tyoll_distrib,tyoll_distrib_bu = self.episodestats.comp_tyollistymisdistribs(ansiosid = ansiosid,tmtuki = tmtuki,putki = putki,outsider = outsider,max_age = max_age,laaja = laaja)
 
         print(label)
         if plot_emp:
@@ -4285,24 +4303,7 @@ class PlotStats():
         if figname is not None:
             plt.savefig(figname+'tyottomyysaste.'+self.figformat, format = self.figformat)
         if fig is None:
-            plt.show()
-
-        #fig,ax = plt.subplots()
-        #ax.set_xlabel(self.labels['age'])
-        #ax.set_ylabel(ylabeli)
-        #if tyovoimatutkimus:
-        #    ax.plot(x,unempratio_stat_tvt,label = self.labels['havainto']+',työvoimatutkimus')
-        #    ax.plot(x,unempratio_stat_tkt,label = self.labels['havainto']+',työssäkäyntitutkimus')
-        #else:
-        #    ax.plot(x,unempratio_stat_tkt,label = self.labels['havainto'])
-        #ax.legend()
-        #if grayscale:
-        #    pal = sns.light_palette("black", 8, reverse = True)
-        #else:
-        #    pal = sns.color_palette("hls", self.n_employment)  # hls, husl, cubehelix
-        #ax.stackplot(x,ratio,colors = pal) #,label = self.labels['malli'])
-        #ax.plot(x,tyottomyysaste)
-        #plt.show()
+            plt.show() 
     
     def sel_subset(self,df,subset):
         if subset==0:
@@ -4365,24 +4366,26 @@ class PlotStats():
         s_emp = np.std(emp_tyolliset_osuus,axis = 0)
         m_best = emp_tyolliset_osuus[best_emp,:]
 
-        if True:
-            q_stat = self.empstats.stat_participants(lkm = False)
-            q_days = self.empstats.stat_days()
-            df3 = pd.DataFrame.from_dict(q_days,orient = 'index',columns = ['htv_tot'])
-            df_htv = htv_budget.copy()
-            df_htv[self.output_labels['toteuma (htv)']] = df3['htv_tot']
-            df_htv[self.output_labels['diff (htv)']] = df_htv['htv']-df_htv[self.output_labels['toteuma (htv)']]
+        q_stat = self.empstats.stat_participants(lkm = False)
+        q_days = self.empstats.stat_days()
+        df3 = pd.DataFrame.from_dict(q_days,orient = 'index',columns = ['htv_tot'])
+        df_htv = htv_budget.copy()
+        df_htv[self.output_labels['toteuma (htv)']] = df3['htv_tot']
+        df_htv[self.output_labels['diff (htv)']] = df_htv['htv']-df_htv[self.output_labels['toteuma (htv)']]
 
-            df_lkm = participants.copy()
-            df2 = pd.DataFrame.from_dict(q_stat,orient = 'index',columns = ['toteuma'])
-            df_lkm[self.output_labels['toteuma (#)']] = df2['toteuma']
-            df_lkm[self.output_labels['diff (#)']] = df_lkm['lkm']-df_lkm[self.output_labels['toteuma (#)']]
+        df_lkm = participants.copy()
+        df2 = pd.DataFrame.from_dict(q_stat,orient = 'index',columns = ['toteuma'])
+        df_lkm[self.output_labels['toteuma (#)']] = df2['toteuma']
+        df_lkm[self.output_labels['diff (#)']] = df_lkm['lkm']-df_lkm[self.output_labels['toteuma (#)']]
 
-            q_stat = self.empstats.stat_budget()
-            cctext = 'budget'
-            df4 = budget.copy() # pd.DataFrame.from_dict(budget,orient = 'index',columns = ['e/y'])
-            df5 = pd.DataFrame.from_dict(q_stat,orient = 'index',columns = [cctext])
-            df_budget = self.compare_df(df4,df5,cctext1 = 'e/v',cctext2 = cctext,cctext2_new = cctext)
+        q_stat = self.empstats.stat_budget()
+        cctext = 'budget'
+        df4 = budget.copy() # pd.DataFrame.from_dict(budget,orient = 'index',columns = ['e/y'])
+        #df4.loc[:,'e/v'] /= 1_000_000
+        df5 = pd.DataFrame.from_dict(q_stat,orient = 'index',columns = [cctext])
+        #df5.loc[:,'e/v'] /= 1_000_000
+
+        df_budget = self.compare_df(df4,df5,cctext1 = 'e/v',cctext2 = cctext,cctext2_new = cctext)
         
         print(self.sel_subset(df_budget,0).to_latex())
         print(self.sel_subset(df_budget,2).to_latex())
@@ -4612,7 +4615,8 @@ class PlotStats():
             agg_tyottomyysaste,emp_tyottomyysaste,pt_agg,pt_agegroup,galives,agg_galives,gempstate,agg_gempstate = \
             self.episodestats.load_simstats(filename)
 
-        self.plot_unemp_shares(ax=ax[1],empstate=agg_empstate)
+        fig.subplots_adjust(hspace=0.3)
+        self.plot_unemp_shares(ax=ax[1],empstate=agg_empstate,alive=agg_alives,legend_infig=True)
         add_label(ax)
 
         if figname is not None:
