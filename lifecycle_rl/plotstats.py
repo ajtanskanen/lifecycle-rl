@@ -18,7 +18,6 @@ import seaborn as sns
 import json
 import ast
 from scipy.stats import norm
-#import locale
 from tabulate import tabulate
 import pandas as pd
 import scipy.optimize
@@ -134,32 +133,83 @@ class PlotStats():
         df['diff'] = df[cctext1_new]-df[cctext2_new]
         return df
 
-    def compare_against(self,cc = None,cctext = 'toteuma',selftext = ''):
+    def compare_df3(self,df1,df2,df3,cctext1 = 'Baseline',cctext1_new = None,cctext2 = 'Model A e/v',cctext2_new = None,cctext3 = 'Model B e/v',cctext3_new = None):
+        if cctext1_new is None:
+            cctext1_new = cctext1
+        if cctext2_new is None:
+            cctext2_new = cctext2
+        if cctext3_new is None:
+            cctext3_new = cctext3
+
+        df = pd.DataFrame(columns=[cctext1_new,cctext2_new,cctext3_new])
+        df[cctext2_new] = df2[cctext2]-df1[cctext1]
+        df[cctext3_new] = df3[cctext3]-df1[cctext1]
+        df[cctext1_new] = df1[cctext1]
+
+        return df
+    
+    def compare_df4(self,df1,df2,df3,df4,cctext1 = 'Baseline',cctext1_new = None,cctext2 = 'Model A e/v',cctext2_new = None,cctext3 = 'Model B e/v',cctext3_new = None,cctext4 = 'Model C e/v',cctext4_new = None):
+        if cctext1_new is None:
+            cctext1_new = cctext1
+        if cctext2_new is None:
+            cctext2_new = cctext2
+        if cctext3_new is None:
+            cctext3_new = cctext3
+        if cctext4_new is None:
+            cctext4_new = cctext4
+
+        df = pd.DataFrame(columns=[cctext1_new,cctext2_new,cctext3_new,cctext4_new])
+        df[cctext2_new] = df2[cctext2]-df1[cctext1]
+        df[cctext3_new] = df3[cctext3]-df1[cctext1]
+        df[cctext4_new] = df4[cctext4]-df1[cctext1]
+        df[cctext1_new] = df1[cctext1]
+
+        return df    
+
+    def compare_against(self,cc = None,cctext = 'toteuma',selftext = '',gender=False,g=0,grayscale = False):
         if self.version in self.complex_models:
-            q = self.episodestats.comp_budget(scale = True)
-            if cc is None:
-                q_stat = self.empstats.stat_budget()
+            if gender:
+                if g == 0:
+                    gname = 'Miehet'
+                else:
+                    gname = 'Naiset'
+                print('Comparison of genders:'+gname)
             else:
-                q_stat = cc.episodestats.comp_budget(scale = True)
+                q = self.episodestats.comp_budget(scale = True)
+                if cc is None:
+                    q_stat = self.empstats.stat_budget()
+                else:
+                    q_stat = cc.episodestats.comp_budget(scale = True)
 
-            df1 = pd.DataFrame.from_dict(q,orient = 'index',columns = ['me/y'])
-            df1.loc[:,'me/y'] = df1.loc[:,'me/y'] / 1_000_000
-            df2 = pd.DataFrame.from_dict(q_stat,orient = 'index',columns = [cctext])
-            df2.loc[:,cctext] = df2.loc[:,cctext] / 1_000_000
-            df = self.compare_df(df1,df2,cctext1 = selftext+'me/y',cctext2 = cctext,cctext2_new = cctext)
+                df1 = pd.DataFrame.from_dict(q,orient = 'index',columns = [selftext+'me/y'])
+                df1.loc[:,selftext+'me/y'] = df1.loc[:,selftext+'me/y'] / 1_000_000
+                df2 = pd.DataFrame.from_dict(q_stat,orient = 'index',columns = [cctext])
+                df2.loc[:,cctext] = df2.loc[:,cctext] / 1_000_000
+                df = self.compare_df(df1,df2,cctext1 = selftext+'me/y',cctext2 = cctext,cctext2_new = cctext)
 
-            print('Rahavirrat skaalattuna väestötasolle')
-            print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))
+                print('Rahavirrat skaalattuna väestötasolle')
+                print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))
 
-            q = self.episodestats.comp_participants(scale = True,lkm = False)
-            q_lkm = self.episodestats.comp_participants(scale = True,lkm = True)
+            if gender:
+                q = self.episodestats.comp_participants_by_sex(scale = True,lkm = False,g = g)
+                q_lkm = self.episodestats.comp_participants_by_sex(scale = True,lkm = True,g = g)
+            else:
+                q = self.episodestats.comp_participants(scale = True,lkm = False)
+                q_lkm = self.episodestats.comp_participants(scale = True,lkm = True)
 
             if cc is None:
-                q_stat = self.empstats.stat_participants(scale = True,lkm = True)
+                if gender:
+                    q_stat = self.empstats.comp_participants_by_sex(scale = True,lkm = True,g = g)
+                else:
+                    q_stat = self.empstats.stat_participants(scale = True,lkm = True)
                 q_days = self.empstats.stat_days()
             else:
-                q_stat = cc.episodestats.comp_participants(scale = True,lkm = True)
-                q_days = cc.episodestats.comp_participants(scale = True,lkm = False)
+                if gender:
+                    q_stat = cc.episodestats.comp_participants_by_sex(scale = True,lkm = True,g = g)
+                    q_days = cc.episodestats.comp_participants_by_sex(scale = True,lkm = False,g = g)
+                else:
+                    q_stat = cc.episodestats.comp_participants(scale = True,lkm = True)
+                    q_days = cc.episodestats.comp_participants(scale = True,lkm = False)
 
             df1 = pd.DataFrame.from_dict(q,orient = 'index',columns = ['estimate (py)'])
             df2 = pd.DataFrame.from_dict(q_days,orient = 'index',columns = [cctext+' (py)'])
@@ -194,6 +244,170 @@ class PlotStats():
             print('Henkilöitä tiloissa skaalattuna väestötasolle')
             #converted = to_millions_table(df)
             print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))    
+
+    def compare_against_gender(self,cc = None,cctext = 'toteuma',selftext = 'base',grayscale = False,to_latex=False):
+        '''
+        compare_against_genders - compares how gender variables change in a reform.
+        
+        :param self: the first lifecycle class
+        :param cc: the second lifecycle class
+        :param cctext: name of cc
+        :param selftext: name of self
+        :param grayscale: plot figures in grayscale or not
+
+        '''
+        q_men = self.episodestats.comp_participants_by_sex(scale = True,lkm = False,g = 0)
+        q_women = self.episodestats.comp_participants_by_sex(scale = True,lkm = False,g = 1)
+        q_lkm_men = self.episodestats.comp_participants_by_sex(scale = True,lkm = True,g = 0)
+        q_lkm_women = self.episodestats.comp_participants_by_sex(scale = True,lkm = True,g = 1)
+
+        if cc is None:
+            q_stat_men = self.empstats.comp_participants_by_sex(scale = True,lkm = True,g = 0)
+            q_stat_women = self.empstats.comp_participants_by_sex(scale = True,lkm = True,g = 0)
+            q_days_men = self.empstats.stat_days()
+            q_days_women = self.empstats.stat_days()
+        else:
+            q_stat_men = cc.episodestats.comp_participants_by_sex(scale = True,lkm = True,g = 0)
+            q_stat_women = cc.episodestats.comp_participants_by_sex(scale = True,lkm = True,g = 1)
+            q_days_men = cc.episodestats.comp_participants_by_sex(scale = True,lkm = False,g = 0)
+            q_days_women = cc.episodestats.comp_participants_by_sex(scale = True,lkm = False,g = 1)
+
+        df1_men = pd.DataFrame.from_dict(q_men,orient = 'index',columns = [selftext+' men (py)'])
+        df2_men = pd.DataFrame.from_dict(q_days_men,orient = 'index',columns = [cctext+' men (py)'])
+        df1_women = pd.DataFrame.from_dict(q_women,orient = 'index',columns = [selftext+' women (py)'])
+        df2_women = pd.DataFrame.from_dict(q_days_women,orient = 'index',columns = [cctext+' women (py)'])
+        df4_men = pd.DataFrame.from_dict(q_lkm_men,orient = 'index',columns = [selftext+' men (#)'])
+        df4_women = pd.DataFrame.from_dict(q_lkm_women,orient = 'index',columns = [selftext+' women (#)'])
+        df5_men = pd.DataFrame.from_dict(q_stat_men,orient = 'index',columns = [cctext+' men (#)'])
+        df5_women = pd.DataFrame.from_dict(q_stat_women,orient = 'index',columns = [cctext+' women (#)'])
+
+        df = pd.DataFrame() #df1_men.copy()
+        df['diff men (py)'] = df1_men[selftext+' men (py)']-df2_men[cctext+' men (py)']
+        df['diff women (py)'] = df1_women[selftext+' women (py)']-df2_women[cctext+' women (py)']
+
+        print('Henkilövuosia töissä väestötasolla')
+        if to_latex:
+            print(df.to_latex(float_format="{:,.0f}".format))
+        else:
+            print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))
+
+        df = df1_men.copy()
+        df[cctext+' m (py)'] = df2_men[cctext+' men (py)']
+        df[selftext+' w (py)'] = df1_women[selftext+' women (py)']
+        df[cctext+' w (py)'] = df2_women[cctext+' women (py)']
+
+        print('Henkilövuosia töissä väestötasolla')
+        if to_latex:
+            print(df.to_latex(float_format="{:,.0f}".format))
+        else:
+            print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))
+        df = pd.DataFrame() #df4.copy()
+        df['diff men (#)'] = df4_men[selftext+' men (#)']-df5_men[cctext+' men (#)']
+        df['diff women (#)'] = df4_women[selftext+' women (#)']-df5_women[cctext+' women (#)']
+        print('Henkilöiden lkm tiloissa väestötasolla')
+        if to_latex:
+            print(df.to_latex(float_format="{:.0f}".format))
+        else:
+            print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))
+        
+        df = df4_men.copy()
+        df[cctext+' m (#)'] = df5_men[cctext+' men (#)']
+        df[selftext+' w (#)'] = df4_women[selftext+' women (#)']
+        df[cctext+' w (#)'] = df5_women[cctext+' women (#)']
+        print('Henkilöiden lkm tiloissa väestötasolla')
+        if to_latex:
+            print(df.to_latex(float_format="{:,.0f}".format))
+        else:
+            print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))
+
+        q_men = self.episodestats.comp_budget(scale = True,gender=True,g=0)
+        q_women = self.episodestats.comp_budget(scale = True,gender=True,g=1)
+        q_cc_men = cc.episodestats.comp_budget(scale = True,gender=True,g=0)
+        q_cc_women = cc.episodestats.comp_budget(scale = True,gender=True,g=1)
+        df1_men = pd.DataFrame.from_dict(q_men,orient = 'index',columns = [selftext+' men (e)'])
+        df2_men = pd.DataFrame.from_dict(q_cc_men,orient = 'index',columns = [cctext+' men (e)'])
+        df1_women = pd.DataFrame.from_dict(q_women,orient = 'index',columns = [selftext+' women (e)'])
+        df2_women = pd.DataFrame.from_dict(q_cc_women,orient = 'index',columns = [cctext+' women (e)'])
+
+        df1_men.loc[:,selftext+' men (e)'] = df1_men.loc[:,selftext+' men (e)'] / 1_000_000
+        df2_men.loc[:,cctext+' men (e)'] = df2_men.loc[:,cctext+' men (e)'] / 1_000_000
+        df1_women.loc[:,selftext+' women (e)'] = df1_women.loc[:,selftext+' women (e)'] / 1_000_000
+        df2_women.loc[:,cctext+' women (e)'] = df2_women.loc[:,cctext+' women (e)'] / 1_000_000
+        
+        df = df1_men.copy()
+        df[cctext+' m (e)'] = df2_men[cctext+' men (e)']
+        df[selftext+' w (e)'] = df1_women[selftext+' women (e)']
+        df[cctext+' w (e)'] = df2_women[cctext+' women (e)']
+        print('Budget')
+        if to_latex:
+            print(df.to_latex(float_format="{:,.0f}".format))
+        else:
+            print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))
+
+        df = pd.DataFrame()
+        df['diff men (e)'] = df1_men[selftext+' men (e)']-df2_men[cctext+' men (e)']
+        df['diff women (e)'] = df1_women[selftext+' women (e)']-df2_women[cctext+' women (e)']
+        print('Diff Budget')
+        if to_latex:
+            print(df.to_latex(float_format="{:,.0f}".format))
+        else:
+            print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))
+
+
+    def compare_against3(self,cc,cc3,cc4=None,cctext = 'Model A',cc3text='Model B',cc4text=None,selftext = 'baseline',to_latex = False,grayscale = False):
+        q = self.episodestats.comp_budget(scale = True)
+        q_stat = cc.episodestats.comp_budget(scale = True)
+        q_stat3 = cc3.episodestats.comp_budget(scale = True)
+
+        df1 = pd.DataFrame.from_dict(q,orient = 'index',columns = ['me/y'])
+        df1.loc[:,selftext] = df1.loc[:,'me/y'] / 1_000_000
+        df2 = pd.DataFrame.from_dict(q_stat,orient = 'index',columns = [cctext])
+        df2.loc[:,cctext] = df2.loc[:,cctext] / 1_000_000
+        df3 = pd.DataFrame.from_dict(q_stat3,orient = 'index',columns = [cc3text])
+        df3.loc[:,cc3text] = df3.loc[:,cc3text] / 1_000_000
+        if cc4 is not None:
+            q_stat4 = cc4.episodestats.comp_budget(scale = True)
+            df4 = pd.DataFrame.from_dict(q_stat4,orient = 'index',columns = [cc4text])
+            df4.loc[:,cc4text] = df4.loc[:,cc4text] / 1_000_000
+            df = self.compare_df4(df1,df2,df3,df4,cctext1 = selftext,cctext2 = cctext,cctext3 = cc3text,cctext4=cc4text)
+        else:
+            df = self.compare_df3(df1,df2,df3,cctext1 = selftext,cctext2 = cctext,cctext3 = cc3text)
+
+        print('Rahavirrat skaalattuna väestötasolle')
+        if to_latex:
+            print(self.sel_subset(df,7).to_latex())
+            print(self.sel_subset(df,8).to_latex())
+        else:
+            print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))
+
+        q = self.episodestats.comp_participants(scale = True,lkm = False)
+        q_lkm = self.episodestats.comp_participants(scale = True,lkm = True)
+
+        q_stat = cc.episodestats.comp_participants(scale = True,lkm = True)
+        q_days = cc.episodestats.comp_participants(scale = True,lkm = False)
+        q_stat3 = cc3.episodestats.comp_participants(scale = True,lkm = True)
+        q_days3 = cc3.episodestats.comp_participants(scale = True,lkm = False)
+
+        df1 = pd.DataFrame.from_dict(q,orient = 'index',columns = [selftext+' (py)'])
+        df2 = pd.DataFrame.from_dict(q_days,orient = 'index',columns = [cctext+' (py)'])
+        df3 = pd.DataFrame.from_dict(q_days3,orient = 'index',columns = [cc3text+' (py)'])
+        df4 = pd.DataFrame.from_dict(q_lkm,orient = 'index',columns = [selftext+' (#)'])
+        df5 = pd.DataFrame.from_dict(q_stat,orient = 'index',columns = [cctext+' (#)'])
+        df6 = pd.DataFrame.from_dict(q_stat3,orient = 'index',columns = [cc3text+' (#)'])
+
+        df = self.compare_df3(df1,df2,df3,cctext1 = selftext+' (py)',cctext2 = cctext+' (py)',cctext3 = cc3text+' (py)')        
+        print('Henkilövuosia töissä väestötasolla')
+        if to_latex:
+            print(self.sel_subset(df,6).to_latex())
+        else:
+            print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))
+
+        df = self.compare_df3(df4,df5,df6,cctext1 = selftext+' (#)',cctext2 = cctext+' (#)',cctext3 = cc3text+' (#)')        
+        print('Henkilöiden lkm tiloissa väestötasolla')
+        if to_latex:
+            print(self.sel_subset(df,6).to_latex())
+        else:
+            print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f")) 
 
     def compare_disab(self,cc = None, xstart = None,xend = None, label1 = 'toteuma',label2='self',figname=None,ax=None):
         # fig,ax = plt.subplots()
@@ -314,7 +528,6 @@ class PlotStats():
 
         print_html('<h2>Tilastot</h2>')
 
-        #tic = timeit.default_timer()
         emp_htv2 = np.sum(self.episodestats.emp_htv,axis = 1)
 
         tyoll_osuus1,htv_osuus1,tyot_osuus1,kokotyo_osuus1,osatyo_osuus1 = \
@@ -405,10 +618,10 @@ class PlotStats():
             keskikesto = self.episodestats.comp_unemp_durations_v2()
             df = pd.DataFrame.from_dict(keskikesto,orient = 'index',columns = ['0-6 m','6-12 m','12-18 m','18-24 m','yli 24 m'])
             print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.2f"))
+            unemp_basis_distrib = self.episodestats.comp_unempbasis_distribs(ansiosid=True,putki=True)
+            self.plot_unempbasis_distrib(unemp_basis_distrib,figname = None) # ax = ax[1],
 
         self.plot_unemp_after_ra()
-        unemp_basis_distrib = self.episodestats.comp_unempbasis_distribs(ansiosid=True,putki=True)
-        self.plot_unempbasis_distrib(unemp_basis_distrib,figname = None) # ax = ax[1],
 
         if self.version in self.complex_models:
             print('Lisäpäivillä on {:.0f} henkilöä'.format(self.count_putki()))
@@ -858,9 +1071,9 @@ class PlotStats():
         scaled1 = scaled0_1/jaljella
         #jaljella_tyoll1 = np.cumsum(scaled0_1[::-1])[::-1] # jäljellä olevien summa
 
-        print(jaljella)
-        print(scaled0_1)
-        print(scaled_tyoll1)
+        #print(jaljella)
+        #print(scaled0_1)
+        #print(scaled_tyoll1)
 
         scaled_tyoll1 = scaled_tyoll1/jaljella #_tyoll1
 
@@ -1175,11 +1388,49 @@ class PlotStats():
         n = self.episodestats.n_pop
         
         # 2018
-        palkat_ika_miehet = 12.5*np.array([2039.15,2256.56,2339.01,2489.09,2571.40,2632.58,2718.03,2774.21,2884.89,2987.55,3072.40,3198.48,3283.81,3336.51,3437.30,3483.45,3576.67,3623.00,3731.27,3809.58,3853.66,3995.90,4006.16,4028.60,4104.72,4181.51,4134.13,4157.54,4217.15,4165.21,4141.23,4172.14,4121.26,4127.43,4134.00,4093.10,4065.53,4063.17,4085.31,4071.25,4026.50,4031.17,4047.32,4026.96,4028.39,4163.14,4266.42,4488.40,4201.40,4252.15,4443.96,3316.92,3536.03,3536.03])
-        palkat_ika_naiset = 12.5*np.array([2058.55,2166.68,2223.96,2257.10,2284.57,2365.57,2443.64,2548.35,2648.06,2712.89,2768.83,2831.99,2896.76,2946.37,2963.84,2993.79,3040.83,3090.43,3142.91,3159.91,3226.95,3272.29,3270.97,3297.32,3333.42,3362.99,3381.84,3342.78,3345.25,3360.21,3324.67,3322.28,3326.72,3326.06,3314.82,3303.73,3302.65,3246.03,3244.65,3248.04,3223.94,3211.96,3167.00,3156.29,3175.23,3228.67,3388.39,3457.17,3400.23,3293.52,2967.68,2702.05,2528.84,2528.84])
+        if self.year in [2018]:
+            palkat_ika_miehet = 12.5*np.array([2039.15,2256.56,2339.01,2489.09,2571.40,2632.58,2718.03,2774.21,2884.89,2987.55,3072.40,3198.48,3283.81,3336.51,3437.30,3483.45,3576.67,3623.00,3731.27,3809.58,3853.66,3995.90,4006.16,4028.60,4104.72,4181.51,4134.13,4157.54,4217.15,4165.21,4141.23,4172.14,4121.26,4127.43,4134.00,4093.10,4065.53,4063.17,4085.31,4071.25,4026.50,4031.17,4047.32,4026.96,4028.39,4163.14,4266.42,4488.40,4201.40,4252.15,4443.96,3316.92,3536.03,3536.03])
+            palkat_ika_naiset = 12.5*np.array([2058.55,2166.68,2223.96,2257.10,2284.57,2365.57,2443.64,2548.35,2648.06,2712.89,2768.83,2831.99,2896.76,2946.37,2963.84,2993.79,3040.83,3090.43,3142.91,3159.91,3226.95,3272.29,3270.97,3297.32,3333.42,3362.99,3381.84,3342.78,3345.25,3360.21,3324.67,3322.28,3326.72,3326.06,3314.82,3303.73,3302.65,3246.03,3244.65,3248.04,3223.94,3211.96,3167.00,3156.29,3175.23,3228.67,3388.39,3457.17,3400.23,3293.52,2967.68,2702.05,2528.84,2528.84])
+            interpol = False
+        elif self.year in [2019]:
+            palkat_ika_miehet = 12.5*np.array([2339.01,2489.09,2571.40,2632.58,2718.03,2774.21,2884.89,2987.55,3072.40,3198.48,3283.81,3336.51,3437.30,3483.45,3576.67,3623.00,3731.27,3809.58,3853.66,3995.90,4006.16,4028.60,4104.72,4181.51,4134.13,4157.54,4217.15,4165.21,4141.23,4172.14,4121.26,4127.43,4134.00,4093.10,4065.53,4063.17,4085.31,4071.25,4026.50,4031.17,4047.32,4026.96,4028.39,4163.14,4266.42,4488.40,4201.40,4252.15,4443.96,3316.92,3536.03,3536.03])
+            palkat_ika_naiset = 12.5*np.array([2223.96,2257.10,2284.57,2365.57,2443.64,2548.35,2648.06,2712.89,2768.83,2831.99,2896.76,2946.37,2963.84,2993.79,3040.83,3090.43,3142.91,3159.91,3226.95,3272.29,3270.97,3297.32,3333.42,3362.99,3381.84,3342.78,3345.25,3360.21,3324.67,3322.28,3326.72,3326.06,3314.82,3303.73,3302.65,3246.03,3244.65,3248.04,3223.94,3211.96,3167.00,3156.29,3175.23,3228.67,3388.39,3457.17,3400.23,3293.52,2967.68,2702.05,2528.84,2528.84])
+            interpol = False
+        elif self.year in [2020]:
+            palkat_ika_miehet=12.5*np.array([2090.10,2308.40,2346.80,2572.00,2624.90,2701.40,2766.50,2857.20,2967.90,3047.20,3156.70,3263.20,3334.20,3435.00,3556.90,3608.20,3665.50,3766.00,3819.00,3875.40,3957.00,4041.70,4138.00,4204.10,4253.20,4269.10,4323.20,4365.50,4345.50,4344.30,4417.40,4351.20,4315.00,4274.00,4300.90,4270.40,4250.50,4251.80,4223.40,4217.80,4170.30,4222.10,4178.20,4124.20,4208.80,4221.40,4362.80,4223.30,4386.80,4299.30,3844.90,3565.00,3919.70,3161.20]) #,3206.10,3405.60,3315.40,4280.90])
+            palkat_ika_naiset=12.5*np.array([2046.60,2167.40,2304.80,2228.20,2291.90,2373.10,2473.10,2566.50,2682.50,2737.60,2832.80,2881.40,2934.20,2974.10,3042.60,3105.40,3155.90,3220.50,3253.20,3313.10,3373.10,3450.20,3472.80,3557.10,3566.80,3613.20,3667.60,3649.50,3653.90,3582.90,3595.60,3559.00,3550.10,3547.80,3530.30,3543.60,3534.80,3520.40,3511.90,3455.80,3443.00,3432.40,3396.00,3392.40,3368.70,3345.60,3479.20,3524.60,3540.90,3293.00,2903.10,2783.70,2573.50,2798.30]) #,2704.10,3117.20,3341.90
+            interpol = False
+        elif self.year in [2021]:
+            x0 = [18,22.5,27.5,32.5,37.5,42.5,47.5,52.5,57.5,62.5,65]
+            y0_men = [2482,2824,3441,3846,4182,4472,4712,4705,4538,4400,4401]
+            y0_women = [2482,2824,3441,3846,4182,4472,4712,4705,4538,4400,4401]
+            interpol = True
+        elif self.year in [2022]:
+            x0 = [18,22.5,27.5,32.5,37.5,42.5,47.5,52.5,57.5,62.5,65]
+            y0_men = [2482,2824,3441,3846,4182,4472,4712,4705,4538,4400,4401]
+            y0_women = [2482,2824,3441,3846,4182,4472,4712,4705,4538,4400,4401]
+            interpol = True
+        elif self.year in [2023]:
+            x0 = [18,22.5,27.5,32.5,37.5,42.5,47.5,52.5,57.5,62.5,65]
+            y0_men = [2482,2824,3441,3846,4182,4472,4712,4705,4538,4400,4401]
+            y0_women = [2482,2824,3441,3846,4182,4472,4712,4705,4538,4400,4401]
+            interpol = True
+        elif self.year in [2024]:
+            x0 = [18,22.5,27.5,32.5,37.5,42.5,47.5,52.5,57.5,62.5,65]
+            y0_men = [2400,2899,3604,4143,4629,5019,5398,5466,5323,5157,5049]
+            y0_women = [2523,2771,3303,3565,3767,4007,4165,4143,4018,3922,3885]
+            interpol = True
+        elif self.year in [2025]:
+            x0 = [18,22.5,27.5,32.5,37.5,42.5,47.5,52.5,57.5,62.5,65]
+            y0_men = [2482,2824,3441,3846,4182,4472,4712,4705,4538,4400,4401]
+            y0_women = [2482,2824,3441,3846,4182,4472,4712,4705,4538,4400,4401]
+            interpol = True
 
-        #palkat_ika_miehet = 12.5*np.array([2339.01,2489.09,2571.40,2632.58,2718.03,2774.21,2884.89,2987.55,3072.40,3198.48,3283.81,3336.51,3437.30,3483.45,3576.67,3623.00,3731.27,3809.58,3853.66,3995.90,4006.16,4028.60,4104.72,4181.51,4134.13,4157.54,4217.15,4165.21,4141.23,4172.14,4121.26,4127.43,4134.00,4093.10,4065.53,4063.17,4085.31,4071.25,4026.50,4031.17,4047.32,4026.96,4028.39,4163.14,4266.42,4488.40,4201.40,4252.15,4443.96,3316.92,3536.03,3536.03])
-        #palkat_ika_naiset = 12.5*np.array([2223.96,2257.10,2284.57,2365.57,2443.64,2548.35,2648.06,2712.89,2768.83,2831.99,2896.76,2946.37,2963.84,2993.79,3040.83,3090.43,3142.91,3159.91,3226.95,3272.29,3270.97,3297.32,3333.42,3362.99,3381.84,3342.78,3345.25,3360.21,3324.67,3322.28,3326.72,3326.06,3314.82,3303.73,3302.65,3246.03,3244.65,3248.04,3223.94,3211.96,3167.00,3156.29,3175.23,3228.67,3388.39,3457.17,3400.23,3293.52,2967.68,2702.05,2528.84,2528.84])
+        if interpol:
+            x = np.arange(18,72)
+            palkat_ika_miehet = np.interp(x,x0,y0_men)*12.5
+            palkat_ika_naiset = np.interp(x,x0,y0_women)*12.5
+    
         #g_r = [0.77,1.0,1.23]
         data_range = np.arange(self.min_age,self.max_age)
 
@@ -1192,6 +1443,7 @@ class PlotStats():
         sal65 = np.zeros((n,1))
         sal = np.zeros((n,self.max_age))
 
+        # palkkajakaumat vuodelta 2018
         p = np.arange(700,17500,100)*12.5
         palkka20 = np.array([10.3,5.6,4.5,14.2,7.1,9.1,22.8,22.1,68.9,160.3,421.6,445.9,501.5,592.2,564.5,531.9,534.4,431.2,373.8,320.3,214.3,151.4,82.3,138.0,55.6,61.5,45.2,19.4,32.9,13.1,9.6,7.4,12.3,12.5,11.5,5.3,2.4,1.6,1.2,1.2,14.1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
         palkka25 = np.array([12.4,11.3,30.2,4.3,28.5,20.3,22.5,23.7,83.3,193.0,407.9,535.0,926.5,1177.1,1540.9,1526.4,1670.2,1898.3,1538.8,1431.5,1267.9,1194.8,1096.3,872.6,701.3,619.0,557.2,465.8,284.3,291.4,197.1,194.4,145.0,116.7,88.7,114.0,56.9,57.3,55.0,25.2,24.4,20.1,25.2,37.3,41.4,22.6,14.1,9.4,6.3,7.5,8.1,9.0,4.0,3.4,5.4,4.1,5.2,1.0,2.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
@@ -1216,7 +1468,7 @@ class PlotStats():
         for k in range(self.episodestats.n_pop):
             g = int(self.episodestats.infostats_group[k])
             for t in range(self.n_time-2):
-                if self.episodestats.popempstate[t,k] in {1}: # 9,8,10
+                if self.episodestats.popempstate[t,k] in {1,9}: # 9,8,10
                     wage = self.episodestats.infostats_pop_wage[t,k]/self.timestep
                     salx[t] = salx[t]+wage
                     saln[t] = saln[t]+1
@@ -1277,18 +1529,20 @@ class PlotStats():
         kuva2(sal65,65,m65)
 
         data_range = np.arange(self.min_age,self.max_age+1)
+        data_range_72 = np.arange(self.min_age,72)
         plt.plot(data_range,ma.mean(wdata[::4,:],axis = 1),label = 'malli alive')
         plt.plot(data_range,ma.mean(wdata2[::4,:],axis = 1),label = 'malli not ret')
         plt.plot(data_range,salx[::4],label = 'malli töissä')
-        data_range_72 = np.arange(self.min_age,72)
         plt.plot(data_range_72,0.5*palkat_ika_miehet+0.5*palkat_ika_naiset,label = 'data')
         plt.legend()
         plt.show()
 
-        plt.plot(data_range,salx_m[::4],label = 'malli töissä miehet')
-        plt.plot(data_range,salx_f[::4],label = 'malli töissä naiset')
-        plt.plot(data_range_72,palkat_ika_miehet,label = 'data miehet')
-        plt.plot(data_range_72,palkat_ika_naiset,label = 'data naiset')
+        plt.plot(data_range,salx_m[1::4],label = 'LCM men')
+        plt.plot(data_range,salx_f[1::4],label = 'LCM women')
+        plt.plot(data_range_72,palkat_ika_miehet,label = 'data men')
+        plt.plot(data_range_72,palkat_ika_naiset,label = 'data women')
+        plt.xlabel('Age [y]')
+        plt.ylabel('Wage [e/y]')
         plt.legend()
         plt.show()
         
@@ -1603,7 +1857,7 @@ class PlotStats():
         pink = 100*self.episodestats.infostats_pinkslip/np.maximum(1,self.episodestats.empstate)
         self.plot_states(pink,'Karenssittomien osuus tilassa [%]',stack = False,unemp = True,add_student = False)
 
-        print([np.max((self.episodestats.infostats_pinkslip/np.maximum(1,self.episodestats.empstate))[:,k]) for k in range(self.n_groups)])
+        #print([np.max((self.episodestats.infostats_pinkslip/np.maximum(1,self.episodestats.empstate))[:,k]) for k in range(self.n_groups)])
 
     def plot_student(self):
         x = np.linspace(self.min_age,self.max_age,self.n_time)
@@ -1817,6 +2071,11 @@ class PlotStats():
         if self.episodestats.save_pop:
             h, edges = self.episodestats.comp_children_hist()
             plt.title('Lapsia per kotitalous')
+            plt.bar(edges[:-1], h)
+            plt.show()
+
+            h, edges = self.episodestats.comp_children_age_hist()
+            plt.title('Lapsia per kotitalous 40 vuoden iässä')
             plt.bar(edges[:-1], h)
             plt.show()
 
@@ -2785,9 +3044,9 @@ class PlotStats():
         if name is None:
             name = 'state '+str(state)
         siirtyneet_ratio = self.episodestats.siirtyneet_det[:,:,state]/self.episodestats.alive*100
-        self.plot_states(siirtyneet_ratio,ylabel = f'Siirtyneet {name} tilasta',stack = True,
+        self.plot_states(siirtyneet_ratio,ylabel = f'Siirtyneet {name} tilaan',stack = True,
                         yminlim = 0,ymaxlim = min(100,1.1*np.nanmax(np.cumsum(siirtyneet_ratio,1))))
-        self.plot_states(siirtyneet_ratio,ylabel = f'Siirtyneet {name} tilasta',stack = True,
+        self.plot_states(siirtyneet_ratio,ylabel = f'Siirtyneet {name} tilaan',stack = True,
                         yminlim = 0,ymaxlim = 1,normalize = True)
 
     def plot_moved_from(self,state,name=None):
@@ -2806,24 +3065,27 @@ class PlotStats():
         pysyneet_ratio = self.episodestats.pysyneet/self.episodestats.alive*100
         self.plot_states(pysyneet_ratio,ylabel = 'Pysyneet tilassa',stack = True,
                         yminlim = 0,ymaxlim = min(100,1.1*np.nanmax(np.cumsum(pysyneet_ratio,1))))
-        self.plot_moved_to(1,'työssä')
+        self.plot_moved_to(1,'työssä (tila 1)')
         self.plot_moved_to(0,'työtön (tila 0)')
         self.plot_moved_from(0,'työtön (tila 0)')
         self.plot_moved_from(13,'tm-tuki (tila 13)')
         self.plot_moved_to(13,'tm-tuki (tila 13)')
         self.plot_moved_to(10,'osa-aikatyö')
-        self.plot_moved_to(11,'outsider')
-        self.plot_moved_from(11,'outsider')
-        self.plot_moved_from(12,'opiskelija')
-        self.plot_moved_to(12,'opiskelija')
-        self.plot_moved_to(14,'sv-päiväraha')
-        self.plot_moved_from(14,'sv-päiväraha')
-        self.plot_moved_to(2,'vanhuuseläke')
+        #self.plot_moved_to(11,'outsider')
+        #self.plot_moved_from(11,'outsider')
+        #self.plot_moved_from(12,'opiskelija')
+        #self.plot_moved_to(12,'opiskelija')
+        self.plot_moved_to(14,'sv-päiväraha (tila 14)')
+        self.plot_moved_from(14,'sv-päiväraha (tila 14)')
+        self.plot_moved_to(2,'vanhuuseläke (tila 2)')
+        self.plot_moved_to(5,'äitiysvapaa (tila 5)')
+        self.plot_moved_from(5,'äitiysvapaa (tila 5)')
         self.plot_moved_from(7,'kotihoidontuki')
-        self.plot_moved_from(8,'ve+oatyö')
-        self.plot_moved_from(9,'ve+työ')
-        self.plot_moved_from(4,'putki')
-        self.plot_moved_to(4,'putki')
+        self.plot_moved_to(7,'kotihoidontuki')
+        #self.plot_moved_from(8,'ve+oatyö')
+        #self.plot_moved_from(9,'ve+työ')
+        #self.plot_moved_from(4,'putki')
+        #self.plot_moved_to(4,'putki')
 
     def plot_ave_stay(self):
         self.plot_states(self.episodestats.time_in_state,ylabel = 'Ka kesto tilassa',stack = False)
@@ -2920,7 +3182,7 @@ class PlotStats():
             unemp_distrib,emp_distrib,unemp_distrib_bu = self.episodestats.comp_empdistribs(ansiosid = ansiosid,tmtuki = tmtuki,putki = putki,outsider = outsider,max_age = max_age,laaja = laaja)
             tyoll_distrib,tyoll_distrib_bu = self.episodestats.comp_tyollistymisdistribs(ansiosid = ansiosid,tmtuki = tmtuki,putki = putki,outsider = outsider,max_age = max_age,laaja = laaja)
 
-        print(label)
+        #print(label)
         if plot_emp:
             self.plot_empdistribs(emp_distrib)
         if plot_bu:
@@ -3443,315 +3705,6 @@ class PlotStats():
             self.load_sim(load)
 
         self.plot_results(figname = figname,grayscale = grayscale)
-
-    def compare_with(self,cc2,label1 = 'perus',label2 = 'vaihtoehto',grayscale = True,figname = None,dash = False,palette_EK = True):
-        if grayscale:
-            plt.style.use('grayscale')
-            plt.rcParams['figure.facecolor'] = 'white' # Or any suitable colour...
-
-        if palette_EK:
-            csfont,pal = setup_EK_fonts()
-        else:
-            csfont = {}
-
-        diff_emp = self.episodestats.empstate/self.episodestats.alive-cc2.episodestats.empstate/cc2.episodestats.alive
-        diff_emp = diff_emp*100
-        x = np.linspace(self.min_age,self.max_age,self.n_time)
-        real1 = self.episodestats.comp_presentvalue()
-        real2 = cc2.episodestats.comp_presentvalue()
-        mean_real1 = np.mean(real1,axis = 1)
-        mean_real2 = np.mean(real2,axis = 1)
-        initial1 = np.mean(real1[1,:])
-        initial2 = np.mean(real2[1,:])
-
-        self.compare_disab(cc = cc2, xstart = None,xend = None, label1 = label1,label2 = label2,figname=figname)
-
-        self.plot_wage_reduction_compare(cc2,label1=label1,label2=label2)
-
-        if self.episodestats.save_pop:
-            rew1 = self.episodestats.comp_total_reward(discounted = True)
-            rew2 = cc2.episodestats.comp_total_reward(discounted = True)
-            net1,eqnet1 = self.episodestats.comp_total_netincome()
-            net2,eqnet2 = cc2.episodestats.comp_total_netincome()
-
-            print(f'{label1} reward {rew1} netincome {net1:.2f} eq {eqnet1:.3f} initial {initial1}')
-            print(f'{label2} reward {rew2} netincome {net2:.2f} eq {eqnet2:.3f} initial {initial2}')
-
-        gini1 = self.episodestats.comp_gini()
-        gini2 = cc2.episodestats.comp_gini()
-        print(f'Gini coefficient is {label1} {gini1:.3f} vs {label2} {gini2:.3f} ')
-
-        if self.minimal>0:
-            s = 20
-            e = 70
-        else:
-            s = 21
-            e = 60 #63.5
-
-        emp_htv1 = np.sum(cc2.episodestats.emp_htv,axis = 1)
-        emp_htv2 = np.sum(self.episodestats.emp_htv,axis = 1)
-
-        tyoll_osuus1,htv_osuus1,tyot_osuus1,kokotyo_osuus1,osatyo_osuus1 = \
-            self.episodestats.comp_employed_ratio(self.episodestats.empstate,emp_htv = emp_htv1)
-        tyoll_osuus2,htv_osuus2,tyot_osuus2,kokotyo_osuus2,osatyo_osuus2 = \
-            cc2.episodestats.comp_employed_ratio(cc2.episodestats.empstate,emp_htv = emp_htv2)
-        htv1,tyolliset1,tyottomat1,osatyolliset1,kokotyolliset1,tyollaste1,osatyolaste1,kokotyolaste1,tyottomyys_aste1 = \
-            self.episodestats.comp_tyollisyys_stats(self.episodestats.empstate,scale_time = True,start = s,end = e,emp_htv = emp_htv1,agegroups = False)
-        htv2,tyolliset2,tyottomat2,osatyolliset2,kokotyolliset2,tyollaste2,osatyolaste2,kokotyolaste2,tyottomyys_aste2 = \
-            cc2.episodestats.comp_tyollisyys_stats(cc2.episodestats.empstate,scale_time = True,start = s,end = e,emp_htv = emp_htv2,agegroups = False)
-
-        tyollaste1 = tyollaste1*100
-        tyollaste2 = tyollaste2*100
-        tyotaste1 = self.episodestats.comp_unemp_stats_agg(per_pop = False)*100
-        tyotaste2 = cc2.episodestats.comp_unemp_stats_agg(per_pop = False)*100
-        tyovoimatutk_tyollaste = self.empstats.get_tyollisyysaste_tyovoimatutkimus(self.year)
-        tyovoimatutk_tytaste = self.empstats.get_tyottomyysaste_tyovoimatutkimus(self.year)
-        tyossakayntitutk_tyollaste = self.empstats.get_tyollisyysaste_tyossakayntitutkimus(self.year)
-        tyossakayntitutk_tytaste = self.empstats.get_tyottomyysaste_tyossakayntitutkimus(self.year)
-        print('\nSic! Työllisyysaste vastaa työvoimatilaston laskutapaa!')
-        print(f'Työllisyysaste1 {s}-{e}: {tyollaste1:.2f}% (työvoimatutkimus {tyovoimatutk_tyollaste:.2f}%)')
-        print(f'Työllisyysaste2 {s}-{e}: {tyollaste2:.2f}% (työvoimatutkimus {tyovoimatutk_tyollaste:.2f}%)')
-        print(f'Työttömyysaste1 {s}-{e}: {tyotaste1:.2f}% (työvoimatutkimus {tyovoimatutk_tytaste:.2f}%)')
-        print(f'Työttömyysaste2 {s}-{e}: {tyotaste2:.2f}% (työvoimatutkimus {tyovoimatutk_tytaste:.2f}%)')
-
-
-        htv1_full,tyolliset1_full,tyottomat1_full,osata1_full,kokota1_full,tyollaste1_full,osatyo_osuus1_full,kokotyo_osuus1_full,tyot_osuus1_full,tyot_aste1 = \
-            self.episodestats.comp_tyollisyys_stats(self.episodestats.empstate,scale_time = True,start = 18,end = 75,emp_htv = emp_htv1,agegroups = True)
-        htv2_full,tyolliset2_full,tyottomat2_full,osata2_full,kokota2_full,tyollaste2_full,osatyo_osuus2_full,kokotyo_osuus2_full,tyot_osuus2_full,tyot_aste2 = \
-            cc2.episodestats.comp_tyollisyys_stats(cc2.episodestats.empstate,scale_time = True,start = 18,end = 75,emp_htv = emp_htv2,agegroups = True)
-        haj1 = self.episodestats.comp_uncertainty(self.episodestats.empstate,emp_htv = emp_htv1)
-        haj2 = cc2.episodestats.comp_uncertainty(cc2.episodestats.empstate,emp_htv = emp_htv2)
-
-        ansiosid_osuus1,tm_osuus1 = self.episodestats.comp_unemployed_detailed(self.episodestats.empstate)
-        ansiosid_osuus2,tm_osuus2 = cc2.episodestats.comp_unemployed_detailed(cc2.episodestats.empstate)
-        #khh_osuus1 = self.episodestats.comp_kht(self.episodestats.empstate)
-        #khh_osuus2 = self.episodestats.comp_kht(cc2.empstate)
-
-        #self.episodestats.comp_employment_stats()
-        #cc2.episodestats.comp_employment_stats()
-
-        self.compare_against(cc = cc2,cctext = label2)
-
-#         q1 = self.episodestats.comp_budget(scale = True)
-#         q2 = cc2.comp_budget(scale = True)
-#         
-#         df1 = pd.DataFrame.from_dict(q1,orient = 'index',columns = [label1])
-#         df2 = pd.DataFrame.from_dict(q2,orient = 'index',columns = ['one'])
-#         df = df1.copy()
-#         df[label2] = df2['one']
-#         df['diff'] = df1[label1]-df2['one']
-
-        fig,ax = plt.subplots()
-        ax.plot(x[1:self.n_time],mean_real1[1:self.n_time]-mean_real2[1:self.n_time],label = label1+'-'+label2)
-        ax.legend()
-        ax.set_xlabel(self.labels['age'])
-        ax.set_ylabel('real diff')
-        plt.show()
-
-        fig,ax = plt.subplots()
-        c1 = self.episodestats.comp_cumurewstate()
-        c2 = cc2.episodestats.comp_cumurewstate()
-        ax.plot(x,c1,label = label1)
-        ax.plot(x,c2,label = label2)
-        ax.legend()
-        ax.set_xlabel('rev age')
-        ax.set_ylabel('rew')
-        plt.show()
-
-        fig,ax = plt.subplots()
-        ax.plot(x,c1-c2,label = label1+'-'+label2)
-        ax.legend()
-        ax.set_xlabel('rev age')
-        ax.set_ylabel('rew diff')
-        plt.show()
-
-        if dash:
-            ls = '--'
-        else:
-            ls = None
-
-        lineplot(x,100*tyollaste1_full,y2 = 100*tyollaste2_full,xlim = [20,75],ylim = [0,100],label = label1,label2 = label2,xlabel = self.labels['age'],ylabel = self.labels['tyollisyysaste %'],selite = True,figname = figname+'emp.'+self.figformat)
-
-        self.plot_gender_emp(cc = cc2,diff = False,label1 = label1,label2 = label2)
-        self.plot_gender_emp(cc = cc2,diff = True,label1 = label1,label2 = label2)
-
-        fig,ax = plt.subplots()
-        ax.set_xlabel(self.labels['age'])
-        ax.set_ylabel(self.labels['diff osuus'])
-        #print(tyot_osuus1.shape,tyot_osuus2.shape,kokotyo_osuus1.shape,kokotyo_osuus2.shape,osatyo_osuus1.shape,osatyo_osuus2.shape,tyolliset1.shape,tyolliset2.shape,htv_osuus1.shape,htv_osuus2.shape)
-        ax.plot(x,100*(tyot_osuus1_full-tyot_osuus2_full),label = 'unemployment')
-        ax.plot(x,100*(kokotyo_osuus1_full-kokotyo_osuus2_full),label = 'fulltime work')
-        if self.version in self.complex_models:
-            ax.plot(x,100*(osatyo_osuus1_full-osatyo_osuus2_full),label = 'osa-aikatyö')
-            ax.plot(x,100*(tyollaste1_full-tyollaste2_full),label = 'työ yhteensä')
-        ax.legend()
-        plt.show()
-
-        fig,ax = plt.subplots()
-        ax.set_xlabel(self.labels['age'])
-        ax.set_ylabel(self.labels['diff määrissä'])
-        #print(tyot_osuus1.shape,tyot_osuus2.shape,kokotyo_osuus1.shape,kokotyo_osuus2.shape,osatyo_osuus1.shape,osatyo_osuus2.shape,tyolliset1.shape,tyolliset2.shape,htv_osuus1.shape,htv_osuus2.shape)
-        ax.plot(x,100*(tyottomat1_full-tyottomat2_full),label = 'unemployment')
-        ax.plot(x,100*(kokota1_full-kokota2_full),label = 'fulltime work')
-        if self.version in self.complex_models:
-            ax.plot(x,100*(osata1_full-osata2_full),label = 'osa-aikatyö')
-            ax.plot(x,100*(tyolliset1_full-tyolliset2_full),label = 'työ yhteensä')
-            ax.plot(x,100*(htv1_full-htv2_full),label = 'htv yhteensä')
-        ax.legend()
-        plt.show()        
-
-        fig,ax = plt.subplots()
-        ax.set_xlabel(self.labels['age'])
-        ax.set_ylabel(self.labels['tyottomyysaste'])
-        ax.plot(x,100*tyot_osuus1_full,label = label1)
-        ax.plot(x,100*tyot_osuus2_full,ls = ls,label = label2)
-        ax.legend()
-        if figname is not None:
-            plt.savefig(figname+'unemp.'+self.figformat, format = self.figformat)
-        plt.show()
-
-        if self.minimal<0:
-            fig,ax = plt.subplots()
-            ax.set_xlabel(self.labels['age'])
-            ax.set_ylabel('Kotihoidontuki [%]')
-            #ax.plot(x,100*khh_osuus1,label = label1)
-            #ax.plot(x,100*khh_osuus2,ls = ls,label = label2)
-            ax.set_ylim([0,100])
-            ax.legend()
-            if figname is not None:
-                plt.savefig(figname+'kht.'+self.figformat, format = self.figformat)
-            plt.show()
-
-        fig,ax = plt.subplots()
-        ax.set_xlabel(self.labels['age'])
-        ax.set_ylabel('Osatyö [%]')
-        ax.plot(x,100*osatyo_osuus1_full,label = label1)
-        ax.plot(x,100*osatyo_osuus2_full,ls = ls,label = label2)
-        ax.set_ylim([0,100])
-        ax.legend()
-        if figname is not None:
-            plt.savefig(figname+'osatyo_osuus.'+self.figformat, format = self.figformat)
-        plt.show()
-
-        fig,ax = plt.subplots()
-        ax.set_xlabel(self.labels['age'])
-        ax.set_ylabel(self.labels['diff osuus'])
-        ax.plot(x,100*ansiosid_osuus2,ls = ls,label = 'ansiosid. työttömyys, '+label2)
-        ax.plot(x,100*ansiosid_osuus1,label = 'ansiosid. työttömyys, '+label1)
-        ax.plot(x,100*tm_osuus2,ls = ls,label = 'tm-tuki, '+label2)
-        ax.plot(x,100*tm_osuus1,label = 'tm-tuki, '+label1)
-        ax.legend()
-        plt.show()
-
-        if self.language== 'English':
-            print('Influence on employment of {:.0f}-{:.0f} years old approx. {:.0f} man-years and {:.0f} employed'.format(s,e,htv1-htv2,tyolliset1-tyolliset2))
-            print('- full-time {:.0f}-{:.0f} y olds {:.0f} employed ({:.0f} vs {:.0f})'.format(s,e,(kokotyolliset1-kokotyolliset2),kokotyolliset1,kokotyolliset2))
-            print('- part-time {:.0f}-{:.0f} y olds {:.0f} employed ({:.0f} vs {:.0f})'.format(s,e,(osatyolliset1-osatyolliset2),osatyolliset1,osatyolliset2))
-            print('Employed {:.0f} vs {:.0f} man-years'.format(htv1,htv2))
-            print('Influence on employment rate for {:.0f}-{:.0f} y olds {:.2f} % ({:.2f} vs {:.2f})'.format(s,e,(tyollaste1-tyollaste2)*100,tyollaste1*100,tyollaste2*100))
-            print('- full-time {:.0f}-{:.0f} y olds {:.2f} % ({:.2f} vs {:.2f})'.format(s,e,(kokota1-kokota2)*100,kokota1*100,kokota2*100))
-            print('- part-time {:.0f}-{:.0f} y olds {:.2f} % ({:.2f} vs {:.2f})'.format(s,e,(osata1-osata2)*100,osata1*100,osata2*100))
-        else:
-            print('Työllisyysvaikutus {:.0f}-{:.0f}-vuotiaisiin noin {:.0f} htv ja {:.0f} työllistä'.format(s,e,htv1-htv2,tyolliset1-tyolliset2))
-            print('- kokoaikaisiin {:.0f}-{:.0f}-vuotiailla noin {:.0f} työllistä ({:.0f} vs {:.0f})'.format(s,e,(kokotyolliset1-kokotyolliset2),kokotyolliset1,kokotyolliset2))
-            print('- osa-aikaisiin {:.0f}-{:.0f}-vuotiailla noin {:.0f} työllistä ({:.0f} vs {:.0f})'.format(s,e,(osatyolliset1-osatyolliset2),osatyolliset1,osatyolliset2))
-            print(f'Työllisiä {s:.0f}-{e:.0f} -vuotiaissa: {htv1:.0f} vs {htv2:.0f} htv')
-            print('Työllisyysastevaikutus {:.0f}-{:.0f}-vuotiailla noin {:.2f} prosenttia ({:.2f} vs {:.2f})'.format(s,e,(tyollaste1-tyollaste2),tyollaste1,tyollaste2))
-            print('- kokoaikaisiin {:.0f}-{:.0f}-vuotiailla noin {:.2f} prosenttia ({:.2f} vs {:.2f})'.format(s,e,(kokotyolaste1-kokotyolaste2)*100,kokotyolaste2*100,kokotyolaste2*100))
-            print('- osa-aikaisiin {:.0f}-{:.0f}-vuotiailla noin {:.2f} prosenttia ({:.2f} vs {:.2f})'.format(s,e,(osatyolaste1-osatyolaste2)*100,osatyolaste1*100,osatyolaste2*100))
-
-        self.episodestats.comp_employment_stats()
-        cc2.episodestats.comp_employment_stats()
-        if self.minimal>0:
-            unemp_htv1 = np.nansum(self.episodestats.demogstates[:,0])
-            unemp_htv2 = np.nansum(cc2.episodestats.demogstates[:,0])
-            e_unemp_htv1 = np.nansum(self.episodestats.demogstates[:,0])
-            e_unemp_htv2 = np.nansum(cc2.episodestats.demogstates[:,0])
-            tm_unemp_htv1 = np.nansum(self.episodestats.demogstates[:,0])*0
-            tm_unemp_htv2 = np.nansum(cc2.episodestats.demogstates[:,0])*0
-            f_unemp_htv1 = np.nansum(self.episodestats.demogstates[:,0])*0
-            f_unemp_htv2 = np.nansum(cc2.episodestats.demogstates[:,0])*0
-        else:
-            unemp_htv1 = np.nansum(self.episodestats.demogstates[:,0]+self.episodestats.demogstates[:,4]+self.episodestats.demogstates[:,13])
-            unemp_htv2 = np.nansum(cc2.episodestats.demogstates[:,0]+cc2.episodestats.demogstates[:,4]+cc2.episodestats.demogstates[:,13])
-            e_unemp_htv1 = np.nansum(self.episodestats.demogstates[:,0])
-            e_unemp_htv2 = np.nansum(cc2.episodestats.demogstates[:,0])
-            tm_unemp_htv1 = np.nansum(self.episodestats.demogstates[:,13])
-            tm_unemp_htv2 = np.nansum(cc2.episodestats.demogstates[:,13])
-            f_unemp_htv1 = np.nansum(self.episodestats.demogstates[:,4])
-            f_unemp_htv2 = np.nansum(cc2.episodestats.demogstates[:,4])
-
-        # epävarmuus
-        delta = 1.96*1.0/np.sqrt(self.episodestats.n_pop)
-
-        if self.language== 'English':
-            print('Työttömyysvaikutus noin {:.0f} htv'.format(unemp_htv1-unemp_htv2))
-            print('- ansiosidonnaiseen noin {:.0f} htv ({:.0f} vs {:.0f})'.format((e_unemp_htv1-e_unemp_htv2),e_unemp_htv1,e_unemp_htv2))
-            print('- tm-tukeen {:.0f} työllistä ({:.0f} vs {:.0f})'.format((tm_unemp_htv1-tm_unemp_htv2),tm_unemp_htv1,tm_unemp_htv2))
-            print('- putkeen {:.0f} työllistä ({:.0f} vs {:.0f})'.format((f_unemp_htv1-f_unemp_htv2),f_unemp_htv1,f_unemp_htv2))
-            print('Uncertainty in employment rates {:.4f}, std {:.4f}'.format(delta,haj1))
-        else:
-            print('Työttömyysvaikutus {:.0f} htv'.format(unemp_htv1-unemp_htv2))
-            print('- ansiosidonnaiseen {:.0f} htv ({:.0f} vs {:.0f})'.format((e_unemp_htv1-e_unemp_htv2),e_unemp_htv1,e_unemp_htv2))
-            print('- tm-tukeen {:.0f} työllistä ({:.0f} vs {:.0f})'.format((tm_unemp_htv1-tm_unemp_htv2),tm_unemp_htv1,tm_unemp_htv2))
-            print('- putkeen {:.0f} työllistä ({:.0f} vs {:.0f})'.format((f_unemp_htv1-f_unemp_htv2),f_unemp_htv1,f_unemp_htv2))
-            print('epävarmuus työllisyysasteissa {:.4f}%, hajonta {:.4f}%'.format(100*delta,haj1))
-
-        if self.episodestats.save_pop:
-            unemp_distrib,emp_distrib,unemp_distrib_bu = self.episodestats.comp_empdistribs(ansiosid = True,tmtuki = True,putki = True,outsider = False)
-            tyoll_distrib,tyoll_distrib_bu = self.episodestats.comp_tyollistymisdistribs(ansiosid = True,tmtuki = True,putki = True,outsider = False)
-            unemp_distrib2,emp_distrib2,unemp_distrib_bu2 = cc2.episodestats.comp_empdistribs(ansiosid = True,tmtuki = True,putki = True,outsider = False)
-            tyoll_distrib2,tyoll_distrib_bu2 = cc2.episodestats.comp_tyollistymisdistribs(ansiosid = True,tmtuki = True,putki = True,outsider = False)
-
-            self.plot_compare_empdistribs(emp_distrib,emp_distrib2,label1 = label1,label2 = label2)
-            if self.language== 'English':
-                print('Jakauma ansiosidonnainen+tmtuki+putki, no max age')
-            else:
-                print('Jakauma ansiosidonnainen+tmtuki+putki, no max age')
-            self.plot_compare_unempdistribs(unemp_distrib,unemp_distrib2,label1 = label1,label2 = label2)
-            self.plot_compare_unempdistribs(unemp_distrib,unemp_distrib2,label1 = label1,label2 = label2,logy = False)
-            self.plot_compare_unempdistribs(unemp_distrib,unemp_distrib2,label1 = label1,label2 = label2,logy = False,diff = True)
-            self.plot_compare_tyolldistribs(unemp_distrib,tyoll_distrib,unemp_distrib2,tyoll_distrib2,tyollistyneet = False,label1 = label1,label2 = label2)
-            self.plot_compare_tyolldistribs(unemp_distrib,tyoll_distrib,unemp_distrib2,tyoll_distrib2,tyollistyneet = True,label1 = label1,label2 = label2)
-
-            unemp_distrib,emp_distrib,unemp_distrib_bu = self.episodestats.comp_empdistribs(ansiosid = True,tmtuki = True,putki = True,outsider = False,max_age = 54)
-            tyoll_distrib,tyoll_distrib_bu = self.episodestats.comp_tyollistymisdistribs(ansiosid = True,tmtuki = True,putki = True,outsider = False,max_age = 54)
-            unemp_distrib2,emp_distrib2,unemp_distrib_bu2 = cc2.episodestats.comp_empdistribs(ansiosid = True,tmtuki = True,putki = True,outsider = False,max_age = 54)
-            tyoll_distrib2,tyoll_distrib_bu2 = cc2.episodestats.comp_tyollistymisdistribs(ansiosid = True,tmtuki = True,putki = True,outsider = False,max_age = 54)
-
-            self.plot_compare_empdistribs(emp_distrib,emp_distrib2,label1 = label1,label2 = label2)
-            if self.language== 'English':
-                print('Jakauma ansiosidonnainen+tmtuki+putki, max age 54')
-            else:
-                print('Jakauma ansiosidonnainen+tmtuki+putki, max age 54')
-            self.plot_compare_unempdistribs(unemp_distrib,unemp_distrib2,label1 = label1,label2 = label2)
-            self.plot_compare_tyolldistribs(unemp_distrib,tyoll_distrib,unemp_distrib2,tyoll_distrib2,tyollistyneet = False,label1 = label1,label2 = label2)
-            self.plot_compare_tyolldistribs(unemp_distrib,tyoll_distrib,unemp_distrib2,tyoll_distrib2,tyollistyneet = True,label1 = label1,label2 = label2)
-
-        if self.episodestats.save_pop:
-            print(label2)
-            keskikesto = self.episodestats.comp_unemp_durations(return_q = False)
-            self.plot_unemp_durdistribs(keskikesto)
-
-            print(label1)
-            keskikesto = cc2.episodestats.comp_unemp_durations(return_q = False)
-            self.plot_unemp_durdistribs(keskikesto)
-
-            tyoll_virta,tyot_virta = self.episodestats.comp_virrat(ansiosid = True,tmtuki = True,putki = True,outsider = False)
-            tyoll_virta2,tyot_virta2 = cc2.episodestats.comp_virrat(ansiosid = True,tmtuki = True,putki = True,outsider = False)
-            self.plot_compare_virrat(tyoll_virta,tyoll_virta2,virta_label = 'Työllisyys',label1 = label1,label2 = label2)
-            self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time = 40,max_time = 64,virta_label = 'Työttömyys',label1 = label1,label2 = label2)
-            self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time = 55,max_time = 64,virta_label = 'Työttömyys',label1 = label1,label2 = label2)
-
-            tyoll_virta,tyot_virta = self.episodestats.comp_virrat(ansiosid = True,tmtuki = False,putki = True,outsider = False)
-            tyoll_virta2,tyot_virta2 = cc2.episodestats.comp_virrat(ansiosid = True,tmtuki = False,putki = True,outsider = False)
-            self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time = 40,max_time = 64,virta_label = 'ei-tm-Työttömyys',label1 = label1,label2 = label2)
-            self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time = 55,max_time = 64,virta_label = 'ei-tm-Työttömyys',label1 = label1,label2 = label2)
-
-            tyoll_virta,tyot_virta = self.episodestats.comp_virrat(ansiosid = False,tmtuki = True,putki = True,outsider = False)
-            tyoll_virta2,tyot_virta2 = cc2.episodestats.comp_virrat(ansiosid = False,tmtuki = True,putki = True,outsider = False)
-            self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time = 40,max_time = 64,virta_label = 'tm-Työttömyys',label1 = label1,label2 = label2)
-            self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time = 55,max_time = 64,virta_label = 'tm-Työttömyys',label1 = label1,label2 = label2)
 
     def compare_simfig_no8(self,cc2,label1 = 'perus',label2 = 'vaihtoehto',grayscale = True,figname = None,dash = False,palette_EK = True):
         if grayscale:
@@ -4326,46 +4279,42 @@ class PlotStats():
                       'aikuisia','lapsia','pareja','yksinhuoltajia','lapsiperheitä'] # 'ovella'
         elif subset==5:
             list_ben=['tyotulosumma','tyotulosumma osa-aika','tyotulosumma kokoaika','etuusmeno','verot+maksut+alv','nettotulot']
+        elif subset==6:
+            list_ben=['työssä 63+','työssä ja eläkkeellä','työllisiä 18-62','työllisiä','osaaikatyössä','kokoaikatyössä','työkyvyttömyyseläkkeellä']
+        elif subset==7:
+            list_ben=['tyotulosumma','tyotulosumma eielakkeella','tyotulosumma, eläkkeellä','tyotulosumma osa-aika','tyotulosumma kokoaika','etuusmeno','valtionvero','kunnallisvero','alv',
+                      'ptel','tyottomyysvakuutusmaksu','tyoelakemaksu','sairausvakuutusmaksu','verot+maksut+alv+ta','julkinen talous, netto']
+        elif subset==8:
+            list_ben=['tyottomyyspvraha','asumistuki','sairauspaivaraha','toimeentulotuki','tyokyvyttomyyselakemeno','vanhuuselakemeno','osittainenvanhuuselakemeno',
+                      'tyoelakemeno','kansanelakemeno','takuuelakemeno','etuusmeno']
+
         list_ben_eng=[self.output_labels[x] for x in list_ben]
         df2 = df.loc[list_ben_eng]
         df2 = df2.style.format(decimal='.', thousands=',', precision=0)
 
         return df2
 
-    def plot_simtables(self,filename,grayscale = False,figname = None,cc2 = None, title='baseline'):
-        agg_htv,agg_tyoll,agg_rew,agg_discounted_rew,emp_tyolliset,emp_tyolliset_osuus,\
-            emp_tyottomat,emp_tyottomat_osuus,emp_htv,emps,best_rew,\
-            best_emp,emps,agg_netincome,agg_equivalent_netincome,budget,participants,htv_budget,\
-            alives,agg_empstate,agg_alives,agg_tyottomyysaste,emp_tyottomyysaste,pt_agg,pt_agegroup,\
-            galives,agg_galives,gempstate,agg_gempstate\
-                = self.episodestats.load_simstats(filename)
+    def plot_restables(self,filename,grayscale = False,figname = None,cc2 = None, title='baseline'):
+        '''
+        tuota tuloksia IME LCM-paperia varten
+        '''
+        q = self.episodestats.comp_participants(scale = True)
+        q_stat = self.empstats.stat_participants(lkm = False)
+        q_days = self.empstats.stat_days()
+        df1 = pd.DataFrame.from_dict(q,orient = 'index',columns = ['estimate (py)'])
+        df2 = pd.DataFrame.from_dict(q_stat,orient = 'index',columns = ['toteuma'])
+        df3 = pd.DataFrame.from_dict(q_days,orient = 'index',columns = ['htv_tot'])
 
-        mean_htv,mean_tyoll,h_mean,m_mean,diff_htv,mean_rew,um_mean,m_mean,std_htv,h_std,mean_unempratio \
-            = self.episodestats.get_simstats(filename,use_mean = True)
-        median_htv,median_tyoll,h_median,m_median,median_rew,um_median,std_tyoll,s_tyoll,median_unempratio \
-            = self.episodestats.get_simstats(filename,use_mean = False)
-
-        if self.version>0:
-            print('lisäpäivillä on {:.0f} henkilöä'.format(self.episodestats.count_putki_dist(emps)))
+        df = df1.copy()
+        df[self.output_labels['toteuma (#)']] = df2['toteuma']
+        df[self.output_labels['toteuma (py)']] = df3['htv_tot']
+        df[self.output_labels['diff (py)']] = df['estimate (py)']-df[self.output_labels['toteuma (py)']]
+        print(self.sel_subset(df,6).to_latex())
 
         if grayscale:
             plt.style.use('grayscale')
             plt.rcParams['figure.facecolor'] = 'white' # Or any suitable colour...
-
-        diff_htv = agg_htv-mean_htv
-        diff_tyoll = agg_tyoll-median_tyoll
-        mean_discounted_rew = np.mean(agg_discounted_rew)
-        mean_netincome = np.mean(agg_netincome)
-        mean_equi_netincome = np.mean(agg_equivalent_netincome)
-
-        print(f'Mean undiscounted reward {mean_rew}')
-        print(f'Mean discounted reward {mean_discounted_rew}')
-        print(f'Mean net income {mean_netincome} mean equivalent net income {mean_equi_netincome}')
         
-        m_median = np.median(emp_tyolliset_osuus,axis = 0)
-        s_emp = np.std(emp_tyolliset_osuus,axis = 0)
-        m_best = emp_tyolliset_osuus[best_emp,:]
-
         q_stat = self.empstats.stat_participants(lkm = False)
         q_days = self.empstats.stat_days()
         df3 = pd.DataFrame.from_dict(q_days,orient = 'index',columns = ['htv_tot'])
@@ -4394,6 +4343,57 @@ class PlotStats():
         print(self.sel_subset(df_lkm,4).to_latex())
         print(self.sel_subset(df_htv,3).to_latex())
         print(df_budget)
+
+    def compare_restables(self,filename,filename2,figname=None,label1='rev',label2='baseline',grayscale=False):                
+        if grayscale:
+            plt.style.use('grayscale')
+            plt.rcParams['figure.facecolor'] = 'white' # Or any suitable colour...
+        
+            q = self.episodestats.comp_budget(scale = True)
+            if cc is None:
+                q_stat = self.empstats.stat_budget()
+            else:
+                q_stat = cc.episodestats.comp_budget(scale = True)
+
+            df1 = pd.DataFrame.from_dict(q,orient = 'index',columns = ['me/y'])
+            df1.loc[:,'me/y'] = df1.loc[:,'me/y'] / 1_000_000
+            df2 = pd.DataFrame.from_dict(q_stat,orient = 'index',columns = [cctext])
+            df2.loc[:,cctext] = df2.loc[:,cctext] / 1_000_000
+            df = self.compare_df(df1,df2,cctext1 = selftext+'me/y',cctext2 = cctext,cctext2_new = cctext)
+
+            print('Rahavirrat skaalattuna väestötasolle')
+            print(self.sel_subset(df,5).to_latex())
+            #print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))
+
+            q = self.episodestats.comp_participants(scale = True,lkm = False)
+            q_lkm = self.episodestats.comp_participants(scale = True,lkm = True)
+
+            if cc is None:
+                q_stat = self.empstats.stat_participants(scale = True,lkm = True)
+                q_days = self.empstats.stat_days()
+            else:
+                q_stat = cc.episodestats.comp_participants(scale = True,lkm = True)
+                q_days = cc.episodestats.comp_participants(scale = True,lkm = False)
+
+            df1 = pd.DataFrame.from_dict(q,orient = 'index',columns = ['estimate (py)'])
+            df2 = pd.DataFrame.from_dict(q_days,orient = 'index',columns = [cctext+' (py)'])
+            df4 = pd.DataFrame.from_dict(q_lkm,orient = 'index',columns = ['estimate (#)'])
+            df5 = pd.DataFrame.from_dict(q_stat,orient = 'index',columns = [cctext+' (#)'])
+
+            df = df1.copy()
+            df[cctext+' (py)'] = df2[cctext+' (py)']
+            df['diff (py)'] = df['estimate (py)']-df[cctext+' (py)']
+
+            print('Henkilövuosia töissä väestötasolla')
+            print(self.sel_subset(df,5).to_latex())
+            #print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))
+
+            df = df4.copy()
+            df[cctext+' (#)'] = df5[cctext+' (#)']
+            df['diff (#)'] = df['estimate (#)']-df[cctext+' (#)']
+            print('Henkilöiden lkm tiloissa väestötasolla')
+            print(self.sel_subset(df,6).to_latex())
+            #print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))
 
     def plot_simstats(self,filename,grayscale = False,figname = None,cc2 = None):
         agg_htv,agg_tyoll,agg_rew,agg_discounted_rew,emp_tyolliset,emp_tyolliset_osuus,\
@@ -5292,3 +5292,297 @@ class PlotStats():
 
         print('suhde 18-63',np.nanmean(suhde[18-18:63-18]))
         print('suhde',np.nanmean(suhde))
+
+    def compare_with(self,cc2,label1 = 'perus',label2 = 'vaihtoehto',grayscale = True,figname = None,dash = False,palette_EK = True,to_latex=False):
+        if grayscale:
+            plt.style.use('grayscale')
+            plt.rcParams['figure.facecolor'] = 'white' # Or any suitable colour...
+
+        if palette_EK:
+            csfont,pal = setup_EK_fonts()
+        else:
+            csfont = {}
+
+        diff_emp = self.episodestats.empstate/self.episodestats.alive-cc2.episodestats.empstate/cc2.episodestats.alive
+        diff_emp = diff_emp*100
+        x = np.linspace(self.min_age,self.max_age,self.n_time)
+        real1 = self.episodestats.comp_presentvalue()
+        real2 = cc2.episodestats.comp_presentvalue()
+        mean_real1 = np.mean(real1,axis = 1)
+        mean_real2 = np.mean(real2,axis = 1)
+        initial1 = np.mean(real1[1,:])
+        initial2 = np.mean(real2[1,:])
+
+        self.compare_disab(cc = cc2, xstart = None,xend = None, label1 = label1,label2 = label2,figname=figname)
+
+        self.plot_wage_reduction_compare(cc2,label1=label1,label2=label2)
+
+        if self.episodestats.save_pop:
+            rew1 = self.episodestats.comp_total_reward(discounted = True)
+            rew2 = cc2.episodestats.comp_total_reward(discounted = True)
+            net1,eqnet1 = self.episodestats.comp_total_netincome()
+            net2,eqnet2 = cc2.episodestats.comp_total_netincome()
+
+            print(f'{label1} reward {rew1} netincome {net1:.2f} eq {eqnet1:.3f} initial {initial1}')
+            print(f'{label2} reward {rew2} netincome {net2:.2f} eq {eqnet2:.3f} initial {initial2}')
+
+        gini1 = self.episodestats.comp_gini()
+        gini2 = cc2.episodestats.comp_gini()
+        print(f'Gini coefficient is {label1} {gini1:.3f} vs {label2} {gini2:.3f} ')
+
+        if self.minimal>0:
+            s = 20
+            e = 70
+        else:
+            s = 21
+            e = 60 #63.5
+
+        emp_htv1 = np.sum(cc2.episodestats.emp_htv,axis = 1)
+        emp_htv2 = np.sum(self.episodestats.emp_htv,axis = 1)
+
+        tyoll_osuus1,htv_osuus1,tyot_osuus1,kokotyo_osuus1,osatyo_osuus1 = \
+            self.episodestats.comp_employed_ratio(self.episodestats.empstate,emp_htv = emp_htv1)
+        tyoll_osuus2,htv_osuus2,tyot_osuus2,kokotyo_osuus2,osatyo_osuus2 = \
+            cc2.episodestats.comp_employed_ratio(cc2.episodestats.empstate,emp_htv = emp_htv2)
+        htv1,tyolliset1,tyottomat1,osatyolliset1,kokotyolliset1,tyollaste1,osatyolaste1,kokotyolaste1,tyottomyys_aste1 = \
+            self.episodestats.comp_tyollisyys_stats(self.episodestats.empstate,scale_time = True,start = s,end = e,emp_htv = emp_htv1,agegroups = False)
+        htv2,tyolliset2,tyottomat2,osatyolliset2,kokotyolliset2,tyollaste2,osatyolaste2,kokotyolaste2,tyottomyys_aste2 = \
+            cc2.episodestats.comp_tyollisyys_stats(cc2.episodestats.empstate,scale_time = True,start = s,end = e,emp_htv = emp_htv2,agegroups = False)
+
+        tyollaste1 = tyollaste1*100
+        tyollaste2 = tyollaste2*100
+        tyotaste1 = self.episodestats.comp_unemp_stats_agg(per_pop = False)*100
+        tyotaste2 = cc2.episodestats.comp_unemp_stats_agg(per_pop = False)*100
+        tyovoimatutk_tyollaste = self.empstats.get_tyollisyysaste_tyovoimatutkimus(self.year)
+        tyovoimatutk_tytaste = self.empstats.get_tyottomyysaste_tyovoimatutkimus(self.year)
+        tyossakayntitutk_tyollaste = self.empstats.get_tyollisyysaste_tyossakayntitutkimus(self.year)
+        tyossakayntitutk_tytaste = self.empstats.get_tyottomyysaste_tyossakayntitutkimus(self.year)
+        print('\nSic! Työllisyysaste vastaa työvoimatilaston laskutapaa!')
+        print(f'Työllisyysaste1 {s}-{e}: {tyollaste1:.2f}% (työvoimatutkimus {tyovoimatutk_tyollaste:.2f}%)')
+        print(f'Työllisyysaste2 {s}-{e}: {tyollaste2:.2f}% (työvoimatutkimus {tyovoimatutk_tyollaste:.2f}%)')
+        print(f'Työttömyysaste1 {s}-{e}: {tyotaste1:.2f}% (työvoimatutkimus {tyovoimatutk_tytaste:.2f}%)')
+        print(f'Työttömyysaste2 {s}-{e}: {tyotaste2:.2f}% (työvoimatutkimus {tyovoimatutk_tytaste:.2f}%)')
+
+        htv1_full,tyolliset1_full,tyottomat1_full,osata1_full,kokota1_full,tyollaste1_full,osatyo_osuus1_full,kokotyo_osuus1_full,tyot_osuus1_full,tyot_aste1 = \
+            self.episodestats.comp_tyollisyys_stats(self.episodestats.empstate,scale_time = True,start = 18,end = 75,emp_htv = emp_htv1,agegroups = True)
+        htv2_full,tyolliset2_full,tyottomat2_full,osata2_full,kokota2_full,tyollaste2_full,osatyo_osuus2_full,kokotyo_osuus2_full,tyot_osuus2_full,tyot_aste2 = \
+            cc2.episodestats.comp_tyollisyys_stats(cc2.episodestats.empstate,scale_time = True,start = 18,end = 75,emp_htv = emp_htv2,agegroups = True)
+        haj1 = self.episodestats.comp_uncertainty(self.episodestats.empstate,emp_htv = emp_htv1)
+        haj2 = cc2.episodestats.comp_uncertainty(cc2.episodestats.empstate,emp_htv = emp_htv2)
+
+        ansiosid_osuus1,tm_osuus1 = self.episodestats.comp_unemployed_detailed(self.episodestats.empstate)
+        ansiosid_osuus2,tm_osuus2 = cc2.episodestats.comp_unemployed_detailed(cc2.episodestats.empstate)
+
+        self.compare_against(cc = cc2,cctext = label2,selftext = label1)
+
+        fig,ax = plt.subplots()
+        ax.plot(x[1:self.n_time],mean_real1[1:self.n_time]-mean_real2[1:self.n_time],label = label1+'-'+label2)
+        ax.legend()
+        ax.set_xlabel(self.labels['age'])
+        ax.set_ylabel('real diff')
+        plt.show()
+
+        fig,ax = plt.subplots()
+        c1 = self.episodestats.comp_cumurewstate()
+        c2 = cc2.episodestats.comp_cumurewstate()
+        ax.plot(x,c1,label = label1)
+        ax.plot(x,c2,label = label2)
+        ax.legend()
+        ax.set_xlabel('rev age')
+        ax.set_ylabel('rew')
+        plt.show()
+
+        fig,ax = plt.subplots()
+        ax.plot(x,c1-c2,label = label1+'-'+label2)
+        ax.legend()
+        ax.set_xlabel('rev age')
+        ax.set_ylabel('rew diff')
+        plt.show()
+
+        if dash:
+            ls = '--'
+        else:
+            ls = None
+
+        lineplot(x,100*tyollaste1_full,y2 = 100*tyollaste2_full,xlim = [20,75],ylim = [0,100],label = label1,label2 = label2,xlabel = self.labels['age'],ylabel = self.labels['tyollisyysaste %'],selite = True,figname = figname+'emp.'+self.figformat)
+
+        self.plot_gender_emp(cc = cc2,diff = False,label1 = label1,label2 = label2)
+        self.plot_gender_emp(cc = cc2,diff = True,label1 = label1,label2 = label2)
+
+        fig,ax = plt.subplots()
+        ax.set_xlabel(self.labels['age'])
+        ax.set_ylabel(self.labels['diff osuus'])
+        #print(tyot_osuus1.shape,tyot_osuus2.shape,kokotyo_osuus1.shape,kokotyo_osuus2.shape,osatyo_osuus1.shape,osatyo_osuus2.shape,tyolliset1.shape,tyolliset2.shape,htv_osuus1.shape,htv_osuus2.shape)
+        ax.plot(x,100*(tyot_osuus1_full-tyot_osuus2_full),label = 'unemployment')
+        ax.plot(x,100*(kokotyo_osuus1_full-kokotyo_osuus2_full),label = 'fulltime work')
+        if self.version in self.complex_models:
+            ax.plot(x,100*(osatyo_osuus1_full-osatyo_osuus2_full),label = 'osa-aikatyö')
+            ax.plot(x,100*(tyollaste1_full-tyollaste2_full),label = 'työ yhteensä')
+        ax.legend()
+        plt.show()
+
+        fig,ax = plt.subplots()
+        ax.set_xlabel(self.labels['age'])
+        ax.set_ylabel(self.labels['diff määrissä'])
+        #print(tyot_osuus1.shape,tyot_osuus2.shape,kokotyo_osuus1.shape,kokotyo_osuus2.shape,osatyo_osuus1.shape,osatyo_osuus2.shape,tyolliset1.shape,tyolliset2.shape,htv_osuus1.shape,htv_osuus2.shape)
+        ax.plot(x,100*(tyottomat1_full-tyottomat2_full),label = 'unemployment')
+        ax.plot(x,100*(kokota1_full-kokota2_full),label = 'fulltime work')
+        if self.version in self.complex_models:
+            ax.plot(x,100*(osata1_full-osata2_full),label = 'osa-aikatyö')
+            ax.plot(x,100*(tyolliset1_full-tyolliset2_full),label = 'työ yhteensä')
+            ax.plot(x,100*(htv1_full-htv2_full),label = 'htv yhteensä')
+        ax.legend()
+        plt.show()        
+
+        fig,ax = plt.subplots()
+        ax.set_xlabel(self.labels['age'])
+        ax.set_ylabel(self.labels['tyottomyysaste'])
+        ax.plot(x,100*tyot_osuus1_full,label = label1)
+        ax.plot(x,100*tyot_osuus2_full,ls = ls,label = label2)
+        ax.legend()
+        if figname is not None:
+            plt.savefig(figname+'unemp.'+self.figformat, format = self.figformat)
+        plt.show()
+
+        if self.minimal<0:
+            fig,ax = plt.subplots()
+            ax.set_xlabel(self.labels['age'])
+            ax.set_ylabel('Kotihoidontuki [%]')
+            #ax.plot(x,100*khh_osuus1,label = label1)
+            #ax.plot(x,100*khh_osuus2,ls = ls,label = label2)
+            ax.set_ylim([0,100])
+            ax.legend()
+            if figname is not None:
+                plt.savefig(figname+'kht.'+self.figformat, format = self.figformat)
+            plt.show()
+
+        fig,ax = plt.subplots()
+        ax.set_xlabel(self.labels['age'])
+        ax.set_ylabel('Osatyö [%]')
+        ax.plot(x,100*osatyo_osuus1_full,label = label1)
+        ax.plot(x,100*osatyo_osuus2_full,ls = ls,label = label2)
+        ax.set_ylim([0,100])
+        ax.legend()
+        if figname is not None:
+            plt.savefig(figname+'osatyo_osuus.'+self.figformat, format = self.figformat)
+        plt.show()
+
+        fig,ax = plt.subplots()
+        ax.set_xlabel(self.labels['age'])
+        ax.set_ylabel(self.labels['diff osuus'])
+        ax.plot(x,100*ansiosid_osuus2,ls = ls,label = 'ansiosid. työttömyys, '+label2)
+        ax.plot(x,100*ansiosid_osuus1,label = 'ansiosid. työttömyys, '+label1)
+        ax.plot(x,100*tm_osuus2,ls = ls,label = 'tm-tuki, '+label2)
+        ax.plot(x,100*tm_osuus1,label = 'tm-tuki, '+label1)
+        ax.legend()
+        plt.show()
+
+        if self.language== 'English':
+            print('Influence on employment of {:.0f}-{:.0f} years old approx. {:.0f} man-years and {:.0f} employed'.format(s,e,htv1-htv2,tyolliset1-tyolliset2))
+            print('- full-time {:.0f}-{:.0f} y olds {:.0f} employed ({:.0f} vs {:.0f})'.format(s,e,(kokotyolliset1-kokotyolliset2),kokotyolliset1,kokotyolliset2))
+            print('- part-time {:.0f}-{:.0f} y olds {:.0f} employed ({:.0f} vs {:.0f})'.format(s,e,(osatyolliset1-osatyolliset2),osatyolliset1,osatyolliset2))
+            print('Employed {:.0f} vs {:.0f} man-years'.format(htv1,htv2))
+            print('Influence on employment rate for {:.0f}-{:.0f} y olds {:.2f} % ({:.2f} vs {:.2f})'.format(s,e,(tyollaste1-tyollaste2)*100,tyollaste1*100,tyollaste2*100))
+            print('- full-time {:.0f}-{:.0f} y olds {:.2f} % ({:.2f} vs {:.2f})'.format(s,e,(kokota1-kokota2)*100,kokota1*100,kokota2*100))
+            print('- part-time {:.0f}-{:.0f} y olds {:.2f} % ({:.2f} vs {:.2f})'.format(s,e,(osata1-osata2)*100,osata1*100,osata2*100))
+        else:
+            print('Työllisyysvaikutus {:.0f}-{:.0f}-vuotiaisiin noin {:.0f} htv ja {:.0f} työllistä'.format(s,e,htv1-htv2,tyolliset1-tyolliset2))
+            print('- kokoaikaisiin {:.0f}-{:.0f}-vuotiailla noin {:.0f} työllistä ({:.0f} vs {:.0f})'.format(s,e,(kokotyolliset1-kokotyolliset2),kokotyolliset1,kokotyolliset2))
+            print('- osa-aikaisiin {:.0f}-{:.0f}-vuotiailla noin {:.0f} työllistä ({:.0f} vs {:.0f})'.format(s,e,(osatyolliset1-osatyolliset2),osatyolliset1,osatyolliset2))
+            print(f'Työllisiä {s:.0f}-{e:.0f} -vuotiaissa: {htv1:.0f} vs {htv2:.0f} htv')
+            print('Työllisyysastevaikutus {:.0f}-{:.0f}-vuotiailla noin {:.2f} prosenttia ({:.2f} vs {:.2f})'.format(s,e,(tyollaste1-tyollaste2),tyollaste1,tyollaste2))
+            print('- kokoaikaisiin {:.0f}-{:.0f}-vuotiailla noin {:.2f} prosenttia ({:.2f} vs {:.2f})'.format(s,e,(kokotyolaste1-kokotyolaste2)*100,kokotyolaste2*100,kokotyolaste2*100))
+            print('- osa-aikaisiin {:.0f}-{:.0f}-vuotiailla noin {:.2f} prosenttia ({:.2f} vs {:.2f})'.format(s,e,(osatyolaste1-osatyolaste2)*100,osatyolaste1*100,osatyolaste2*100))
+
+        self.episodestats.comp_employment_stats()
+        cc2.episodestats.comp_employment_stats()
+        if self.minimal>0:
+            unemp_htv1 = np.nansum(self.episodestats.demogstates[:,0])
+            unemp_htv2 = np.nansum(cc2.episodestats.demogstates[:,0])
+            e_unemp_htv1 = np.nansum(self.episodestats.demogstates[:,0])
+            e_unemp_htv2 = np.nansum(cc2.episodestats.demogstates[:,0])
+            tm_unemp_htv1 = np.nansum(self.episodestats.demogstates[:,0])*0
+            tm_unemp_htv2 = np.nansum(cc2.episodestats.demogstates[:,0])*0
+            f_unemp_htv1 = np.nansum(self.episodestats.demogstates[:,0])*0
+            f_unemp_htv2 = np.nansum(cc2.episodestats.demogstates[:,0])*0
+        else:
+            unemp_htv1 = np.nansum(self.episodestats.demogstates[:,0]+self.episodestats.demogstates[:,4]+self.episodestats.demogstates[:,13])
+            unemp_htv2 = np.nansum(cc2.episodestats.demogstates[:,0]+cc2.episodestats.demogstates[:,4]+cc2.episodestats.demogstates[:,13])
+            e_unemp_htv1 = np.nansum(self.episodestats.demogstates[:,0])
+            e_unemp_htv2 = np.nansum(cc2.episodestats.demogstates[:,0])
+            tm_unemp_htv1 = np.nansum(self.episodestats.demogstates[:,13])
+            tm_unemp_htv2 = np.nansum(cc2.episodestats.demogstates[:,13])
+            f_unemp_htv1 = np.nansum(self.episodestats.demogstates[:,4])
+            f_unemp_htv2 = np.nansum(cc2.episodestats.demogstates[:,4])
+
+        # epävarmuus
+        delta = 1.96*1.0/np.sqrt(self.episodestats.n_pop)
+
+        if self.language== 'English':
+            print('Työttömyysvaikutus noin {:.0f} htv'.format(unemp_htv1-unemp_htv2))
+            print('- ansiosidonnaiseen noin {:.0f} htv ({:.0f} vs {:.0f})'.format((e_unemp_htv1-e_unemp_htv2),e_unemp_htv1,e_unemp_htv2))
+            print('- tm-tukeen {:.0f} työllistä ({:.0f} vs {:.0f})'.format((tm_unemp_htv1-tm_unemp_htv2),tm_unemp_htv1,tm_unemp_htv2))
+            print('- putkeen {:.0f} työllistä ({:.0f} vs {:.0f})'.format((f_unemp_htv1-f_unemp_htv2),f_unemp_htv1,f_unemp_htv2))
+            print('Uncertainty in employment rates {:.4f}, std {:.4f}'.format(delta,haj1))
+        else:
+            print('Työttömyysvaikutus {:.0f} htv'.format(unemp_htv1-unemp_htv2))
+            print('- ansiosidonnaiseen {:.0f} htv ({:.0f} vs {:.0f})'.format((e_unemp_htv1-e_unemp_htv2),e_unemp_htv1,e_unemp_htv2))
+            print('- tm-tukeen {:.0f} työllistä ({:.0f} vs {:.0f})'.format((tm_unemp_htv1-tm_unemp_htv2),tm_unemp_htv1,tm_unemp_htv2))
+            print('- putkeen {:.0f} työllistä ({:.0f} vs {:.0f})'.format((f_unemp_htv1-f_unemp_htv2),f_unemp_htv1,f_unemp_htv2))
+            print('epävarmuus työllisyysasteissa {:.4f}%, hajonta {:.4f}%'.format(100*delta,haj1))
+
+        if self.episodestats.save_pop:
+            unemp_distrib,emp_distrib,unemp_distrib_bu = self.episodestats.comp_empdistribs(ansiosid = True,tmtuki = True,putki = True,outsider = False)
+            tyoll_distrib,tyoll_distrib_bu = self.episodestats.comp_tyollistymisdistribs(ansiosid = True,tmtuki = True,putki = True,outsider = False)
+            unemp_distrib2,emp_distrib2,unemp_distrib_bu2 = cc2.episodestats.comp_empdistribs(ansiosid = True,tmtuki = True,putki = True,outsider = False)
+            tyoll_distrib2,tyoll_distrib_bu2 = cc2.episodestats.comp_tyollistymisdistribs(ansiosid = True,tmtuki = True,putki = True,outsider = False)
+
+            self.plot_compare_empdistribs(emp_distrib,emp_distrib2,label1 = label1,label2 = label2)
+            if self.language== 'English':
+                print('Jakauma ansiosidonnainen+tmtuki+putki, no max age')
+            else:
+                print('Jakauma ansiosidonnainen+tmtuki+putki, no max age')
+            self.plot_compare_unempdistribs(unemp_distrib,unemp_distrib2,label1 = label1,label2 = label2)
+            self.plot_compare_unempdistribs(unemp_distrib,unemp_distrib2,label1 = label1,label2 = label2,logy = False)
+            self.plot_compare_unempdistribs(unemp_distrib,unemp_distrib2,label1 = label1,label2 = label2,logy = False,diff = True)
+            self.plot_compare_tyolldistribs(unemp_distrib,tyoll_distrib,unemp_distrib2,tyoll_distrib2,tyollistyneet = False,label1 = label1,label2 = label2)
+            self.plot_compare_tyolldistribs(unemp_distrib,tyoll_distrib,unemp_distrib2,tyoll_distrib2,tyollistyneet = True,label1 = label1,label2 = label2)
+
+            unemp_distrib,emp_distrib,unemp_distrib_bu = self.episodestats.comp_empdistribs(ansiosid = True,tmtuki = True,putki = True,outsider = False,max_age = 54)
+            tyoll_distrib,tyoll_distrib_bu = self.episodestats.comp_tyollistymisdistribs(ansiosid = True,tmtuki = True,putki = True,outsider = False,max_age = 54)
+            unemp_distrib2,emp_distrib2,unemp_distrib_bu2 = cc2.episodestats.comp_empdistribs(ansiosid = True,tmtuki = True,putki = True,outsider = False,max_age = 54)
+            tyoll_distrib2,tyoll_distrib_bu2 = cc2.episodestats.comp_tyollistymisdistribs(ansiosid = True,tmtuki = True,putki = True,outsider = False,max_age = 54)
+
+            self.plot_compare_empdistribs(emp_distrib,emp_distrib2,label1 = label1,label2 = label2)
+            if self.language== 'English':
+                print('Jakauma ansiosidonnainen+tmtuki+putki, max age 54')
+            else:
+                print('Jakauma ansiosidonnainen+tmtuki+putki, max age 54')
+            self.plot_compare_unempdistribs(unemp_distrib,unemp_distrib2,label1 = label1,label2 = label2)
+            self.plot_compare_tyolldistribs(unemp_distrib,tyoll_distrib,unemp_distrib2,tyoll_distrib2,tyollistyneet = False,label1 = label1,label2 = label2)
+            self.plot_compare_tyolldistribs(unemp_distrib,tyoll_distrib,unemp_distrib2,tyoll_distrib2,tyollistyneet = True,label1 = label1,label2 = label2)
+
+        if self.episodestats.save_pop:
+            print(label2)
+            keskikesto = self.episodestats.comp_unemp_durations(return_q = False)
+            self.plot_unemp_durdistribs(keskikesto)
+
+            print(label1)
+            keskikesto = cc2.episodestats.comp_unemp_durations(return_q = False)
+            self.plot_unemp_durdistribs(keskikesto)
+
+            tyoll_virta,tyot_virta = self.episodestats.comp_virrat(ansiosid = True,tmtuki = True,putki = True,outsider = False)
+            tyoll_virta2,tyot_virta2 = cc2.episodestats.comp_virrat(ansiosid = True,tmtuki = True,putki = True,outsider = False)
+            self.plot_compare_virrat(tyoll_virta,tyoll_virta2,virta_label = 'Työllisyys',label1 = label1,label2 = label2)
+            self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time = 40,max_time = 64,virta_label = 'Työttömyys',label1 = label1,label2 = label2)
+            self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time = 55,max_time = 64,virta_label = 'Työttömyys',label1 = label1,label2 = label2)
+
+            tyoll_virta,tyot_virta = self.episodestats.comp_virrat(ansiosid = True,tmtuki = False,putki = True,outsider = False)
+            tyoll_virta2,tyot_virta2 = cc2.episodestats.comp_virrat(ansiosid = True,tmtuki = False,putki = True,outsider = False)
+            self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time = 40,max_time = 64,virta_label = 'ei-tm-Työttömyys',label1 = label1,label2 = label2)
+            self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time = 55,max_time = 64,virta_label = 'ei-tm-Työttömyys',label1 = label1,label2 = label2)
+
+            tyoll_virta,tyot_virta = self.episodestats.comp_virrat(ansiosid = False,tmtuki = True,putki = True,outsider = False)
+            tyoll_virta2,tyot_virta2 = cc2.episodestats.comp_virrat(ansiosid = False,tmtuki = True,putki = True,outsider = False)
+            self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time = 40,max_time = 64,virta_label = 'tm-Työttömyys',label1 = label1,label2 = label2)
+            self.plot_compare_virrat(tyot_virta,tyot_virta2,min_time = 55,max_time = 64,virta_label = 'tm-Työttömyys',label1 = label1,label2 = label2)

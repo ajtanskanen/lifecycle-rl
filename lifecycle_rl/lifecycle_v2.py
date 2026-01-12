@@ -137,6 +137,7 @@ class Lifecycle():
                 'startage': self.startage,
                 'investment': self.include_investment,
                 'retage70': self.retage70,
+                'tulevaaika70': self.tulevaaika70,
                 'eak70': self.eak70,
                 'wealth': self.include_wealth,
                 'year': self.year,
@@ -308,6 +309,7 @@ class Lifecycle():
         self.library = 0
         self.processes = 10
         self.retage70 = 0
+        self.tulevaaika70 = True
         self.eak70 = True
         
         self.random_returns=False
@@ -332,6 +334,9 @@ class Lifecycle():
             elif key=='retage70':
                 if value is not None:
                     self.retage70=value
+            elif key=='tulevaaika70':
+                if value is not None:
+                    self.tulevaaika70=value                    
             elif key=='eak70':
                 if value is not None:
                     self.eak70=value
@@ -730,7 +735,24 @@ class Lifecycle():
 
         compare results obtained another model
         '''
-        self.plotstats.compare_with(cc2,label1=label1,label2=label2,grayscale=grayscale,figname=figname,dash=dash)
+        self.plotstats.compare_with(cc2,label1=label1,label2=label2,grayscale=grayscale,figname=figname,dash=dash,to_latex=False)
+
+    def compare_against(self,cc2,label1='vaihtoehto',label2='perus',figname=None,grayscale=False,gender=False,g=0):
+        '''
+        compare_with
+
+        compare results obtained another model
+        '''
+        self.plotstats.compare_against(cc2,cctext=label1,selftext=label2,grayscale=grayscale,gender=gender,g=g)
+
+    def compare_against_gender(self,cc2,label1='vaihtoehto',label2='perus',figname=None,grayscale=False,to_latex=True):
+        '''
+        compare_with
+
+        compare results obtained another model
+        '''
+        self.plotstats.compare_against_gender(cc2,cctext=label1,selftext=label2,grayscale=grayscale,to_latex=to_latex)
+        
 
     def run_results(self,steps=100,pop=1_000,rlmodel='acktr',twostage=False,
                save='saved/perusmalli',debug=False,simut='simut',results='results/simut_res',

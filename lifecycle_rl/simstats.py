@@ -99,7 +99,6 @@ class SimStats(EpisodeStats):
         agg_tyoll[0]=tyolliset
         agg_tyottomyysaste[0]=kokotyottomyysaste
         agg_discounted_rew[0],agg_rew[0]=self.get_reward()
-        #print(agg_rew[0])
 
         best_rew=agg_rew[0]
         best_emp=0
@@ -172,7 +171,6 @@ class SimStats(EpisodeStats):
                 alives[i,:] = self.alive[:,0]
                 galives[i,:] = self.galive[:,:]
                 agg_discounted_rew[i],agg_rew[i] = self.get_reward()
-                #print(agg_rew[i])
                 
                 if include_distrib:
                     net,equiv = self.comp_total_netincome()
@@ -316,8 +314,6 @@ class SimStats(EpisodeStats):
         diff_tyoll=agg_tyoll-mean_tyoll
         mean_rew = np.mean(agg_rew)
         median_rew = np.median(agg_rew)
-        
-        #print(filename1,emp_tyolliset_osuus)
         
         m_mean=np.mean(emp_tyolliset_osuus,axis=0)
         m_median=np.median(emp_tyolliset_osuus,axis=0)
@@ -582,9 +578,6 @@ class SimStats(EpisodeStats):
                     tva+=tvax
                     osa_tva+=osa_tvax
                     
-                    #print('p={}\np2={}\nold_wage={}\ne={}\ntoe={}\n'.format(p,p2,old_wage,employment_state,toe))
-                    #print('ika={} popp={} old_wage={} e={} toe={}\n'.format(ika,popp,old_wage,employment_state,toe))
-                    
             tqdm_e.update(1)
             tqdm_e.set_description("Pop " + str(popp))
 
@@ -621,6 +614,4 @@ class SimStats(EpisodeStats):
             el[k-1]=dy/dx
             elx[k-1]=x[k]
             
-            #print('{}: {} vs {}'.format(k,(x[k]-x[k-1]),dy))
-        
         return el,elx        
