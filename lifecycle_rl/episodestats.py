@@ -54,6 +54,7 @@ class EpisodeStats():
         self.labels = self.lab.get_output_labels(lang)
 
         self.complexmodels = set([4,5,6,7,8,9,10,11,104])
+        self.undersevenmodels = set([1,2,3,4,5,6,104])
         self.minimalmodels = set([0,101])
         self.ptmodels = set([5,6,7,8,9,10,11])
         self.recentmodels = set([6,7,8,9,10,11])
@@ -4049,7 +4050,7 @@ class EpisodeStats():
         '''
 
         q={}
-        if self.version in set([1,2,3,4,5,6,104]):
+        if self.version in self.undersevenmodels:
             print('version 6')
             demog2=self.empstats.get_demog()
             scalex = np.squeeze(demog2/self.alive*self.timestep)
@@ -4097,7 +4098,7 @@ class EpisodeStats():
                 q[self.labels['opiskelijoita']] = np.sum((emp[:,12]+emp[:,16])*scalex_lkm)
                 q[self.labels['ovella']] = np.sum(np.sum(self.infostats_ove,axis=1)*scalex)
                 q[self.labels['pareja']] = np.sum(np.sum(self.infostats_puoliso,axis=1)*scalex)/2
-        elif self.version in set([7,8,9,10,11]):
+        elif self.version in self.recentmodels:
             demog2=self.empstats.get_demog()
             scalex_lapset = np.squeeze(demog2/self.alive*self.timestep)
             scalex = np.squeeze(demog2/self.alive*self.timestep)
@@ -4327,10 +4328,6 @@ class EpisodeStats():
         alive[:,0] = np.sum(self.galive[:,3:6],1)
         ulkopuolella_n=(np.sum(self.gempstate[:,7,3:6],axis=1)[:,None] )/alive # kht
         tyovoimassa_n = np.sum(self.gempstate[:,5,3:6],axis=1)[:,None]/alive # äitiysvapaa
-
-        #if self.version == 9:
-        #    w0 = self.rates.get_initial_state_weights_v9()
-        #    ulkopuolella_m[0] = w0[]
 
         if show:
             m,n=get_apu(ulkopuolella_m,skip),get_apu(ulkopuolella_n,skip)
@@ -5128,7 +5125,7 @@ class EpisodeStats():
         return tyollisyysaste,osatyoaste,tyottomyysaste,ka_tyottomyysaste        
 
     def comp_workforce_group(self,emp=None,by_age=True,ratio=False):
-        if self.version in set([1,2,3,4,5,6,7,8,9,10,11,104]):
+        if self.version in self.complexmodels:
             if emp is None:
                 employed=self.gempstate[:,1,:]
                 retired=self.gempstate[:,2,:]
@@ -5191,7 +5188,7 @@ class EpisodeStats():
         retired=emp[:,2]
         unemployed=emp[:,0]
 
-        if self.version in set([1,2,3,4,5,6,7,8,9,10,11,104]):
+        if self.version in self.complexmodels:
             disabled=emp[:,3]
             piped=emp[:,4]
             mother=emp[:,5]
@@ -5201,7 +5198,7 @@ class EpisodeStats():
             veosatyo=emp[:,8]
             osatyo=emp[:,10]
             outsider=emp[:,11]
-            student=emp[:,12]+emp[:,16]
+            student=emp[:,12]#+emp[:,16]
             tyomarkkinatuki=emp[:,13]
             sv=emp[:,14]
             if ratio:
@@ -5230,7 +5227,7 @@ class EpisodeStats():
         retired=emp[:,2]
         unemployed=emp[:,0]
 
-        if self.version in set([1,2,3,4,5,6,7,8,9,10,11,104]):
+        if self.version in self.recentmodels:
             disabled=emp[:,3]
             piped=emp[:,4]
             mother=emp[:,5]

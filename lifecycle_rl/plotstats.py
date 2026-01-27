@@ -568,9 +568,6 @@ class PlotStats():
             self.plot_group_emp()
             self.plot_emp_vs_workforce()
             self.plot_workforce()
-            if self.episodestats.save_pop:
-                print_html('<h2>Tekemätön työ</h2>')
-                self.plot_tekematon_tyo()
 
         print_html('<h2>Osa-aika</h2>')
         if self.version in self.recent_models:
@@ -578,48 +575,9 @@ class PlotStats():
             
         if self.version in self.complex_models:
             self.plot_parttime_ratio(figname = figname)
-            
-        if self.version in self.complex_models:
-            print_html('<h2>Ryhmät</h2>')
-            self.plot_outsider()        
-            self.plot_various_groups(figname = figname)
-            self.plot_group_student()
-            ps = self.episodestats.comp_palkkatulo_emp()
-            for k in range(self.n_employment):
-                print(f'Tilassa {k} palkkasumma on {ps[k]:.2f} e')
-
-        if self.version in self.complex_models:
-            print_html('<h2>Lapset ja puolisot</h2>')
-            self.plot_spouse()
-            self.plot_children()
-            self.plot_family()
-            self.plot_parents_in_work()
-            
-        if self.version in self.savings_models:
-            print_html('<h2>Säästöt</h2>')
-            self.plot_savings()
-
-        print_html('<h2>Tulot</h2>')
-        if self.version in self.recent_models:
-            self.plot_tulot()
-            
-        self.plot_sal()
 
         print_html('<h2>Työttömyys</h2>')
         self.plot_toe()
-
-        if self.episodestats.save_pop:
-            print('Keskikestot käytettyjen ansiosidonnaisten päivärahojen mukaan')
-            keskikesto = self.episodestats.comp_unemp_durations()
-            df = pd.DataFrame.from_dict(keskikesto,orient = 'index',columns = ['0-6 m','6-12 m','12-18 m','18-24 m','yli 24 m'])
-            print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.2f"))
-
-            print('Keskikestot viimeisimmän työttömyysjakson mukaan')
-            keskikesto = self.episodestats.comp_unemp_durations_v2()
-            df = pd.DataFrame.from_dict(keskikesto,orient = 'index',columns = ['0-6 m','6-12 m','12-18 m','18-24 m','yli 24 m'])
-            print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.2f"))
-            unemp_basis_distrib = self.episodestats.comp_unempbasis_distribs(ansiosid=True,putki=True)
-            self.plot_unempbasis_distrib(unemp_basis_distrib,figname = None) # ax = ax[1],
 
         self.plot_unemp_after_ra()
 
@@ -634,6 +592,47 @@ class PlotStats():
             self.plot_unemp_shares()
             self.plot_kassanjasen()
             self.plot_pinkslip()
+
+        if self.version in self.complex_models:
+            print_html('<h2>Ryhmät</h2>')
+            self.plot_outsider()        
+            self.plot_various_groups(figname = figname)
+            self.plot_group_student()
+            ps = self.episodestats.comp_palkkatulo_emp()
+            for k in range(self.n_employment):
+                print(f'Tilassa {k} palkkasumma on {ps[k]:.2f} e')
+
+            print_html('<h2>Lapset ja puolisot</h2>')
+            self.plot_spouse()
+            self.plot_children()
+            self.plot_family()
+            self.plot_parents_in_work()
+            if self.episodestats.save_pop:
+                print_html('<h2>Tekemätön työ</h2>')
+                self.plot_tekematon_tyo()
+            
+        if self.version in self.savings_models:
+            print_html('<h2>Säästöt</h2>')
+            self.plot_savings()
+
+        print_html('<h2>Tulot</h2>')
+        if self.version in self.recent_models:
+            self.plot_tulot()
+            
+        self.plot_sal()
+
+        if self.episodestats.save_pop:
+            print('Keskikestot käytettyjen ansiosidonnaisten päivärahojen mukaan')
+            keskikesto = self.episodestats.comp_unemp_durations()
+            df = pd.DataFrame.from_dict(keskikesto,orient = 'index',columns = ['0-6 m','6-12 m','12-18 m','18-24 m','yli 24 m'])
+            print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.2f"))
+
+            print('Keskikestot viimeisimmän työttömyysjakson mukaan')
+            keskikesto = self.episodestats.comp_unemp_durations_v2()
+            df = pd.DataFrame.from_dict(keskikesto,orient = 'index',columns = ['0-6 m','6-12 m','12-18 m','18-24 m','yli 24 m'])
+            print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.2f"))
+            unemp_basis_distrib = self.episodestats.comp_unempbasis_distribs(ansiosid=True,putki=True)
+            self.plot_unempbasis_distrib(unemp_basis_distrib,figname = None) # ax = ax[1],
 
         if self.episodestats.save_pop:
             #self.plot_distrib(label = 'Jakauma ansiosidonnainen+tmtuki+putki, no max age',ansiosid = True,tmtuki = True,putki = True,outsider = False)
@@ -1358,11 +1357,13 @@ class PlotStats():
             ave = np.mean(sal[:m])/12
             palave = np.sum(palkka*p)/12/np.sum(palkka)
             plt.title('{}: ave {:,.2f} vs {:,.2f}'.format(ika,ave,palave))
-            plt.plot(p,palkka/sum(palkka)/2000)
+            #plt.plot(p,palkka/sum(palkka)/2000)
+            plt.plot(p,palkka/sum(palkka)/(p[1]-p[0]),label='data')
+            plt.legend()
             plt.show()
 
         def kuva2(sal,ika,m):
-            plt.hist(sal[:m],bins = 50,density = True)
+            plt.hist(sal[:m],bins = 100,density = True)
             ave = np.mean(sal[:m])/12
             plt.title('{}: ave {}'.format(ika,ave))
             plt.show()
@@ -1371,6 +1372,7 @@ class PlotStats():
             pal = np.cumsum(palkka)/np.sum(palkka)
             m_x,m_y = empirical_cdf(sal[:m])
             plt.plot(m_x,m_y,label = 'malli')
+            print(p.shape,pal.shape)
             plt.plot(p,pal,label = 'havainto')
             plt.title('age {}'.format(ika))
             plt.legend()
@@ -1393,8 +1395,8 @@ class PlotStats():
             palkat_ika_naiset = 12.5*np.array([2058.55,2166.68,2223.96,2257.10,2284.57,2365.57,2443.64,2548.35,2648.06,2712.89,2768.83,2831.99,2896.76,2946.37,2963.84,2993.79,3040.83,3090.43,3142.91,3159.91,3226.95,3272.29,3270.97,3297.32,3333.42,3362.99,3381.84,3342.78,3345.25,3360.21,3324.67,3322.28,3326.72,3326.06,3314.82,3303.73,3302.65,3246.03,3244.65,3248.04,3223.94,3211.96,3167.00,3156.29,3175.23,3228.67,3388.39,3457.17,3400.23,3293.52,2967.68,2702.05,2528.84,2528.84])
             interpol = False
         elif self.year in [2019]:
-            palkat_ika_miehet = 12.5*np.array([2339.01,2489.09,2571.40,2632.58,2718.03,2774.21,2884.89,2987.55,3072.40,3198.48,3283.81,3336.51,3437.30,3483.45,3576.67,3623.00,3731.27,3809.58,3853.66,3995.90,4006.16,4028.60,4104.72,4181.51,4134.13,4157.54,4217.15,4165.21,4141.23,4172.14,4121.26,4127.43,4134.00,4093.10,4065.53,4063.17,4085.31,4071.25,4026.50,4031.17,4047.32,4026.96,4028.39,4163.14,4266.42,4488.40,4201.40,4252.15,4443.96,3316.92,3536.03,3536.03])
-            palkat_ika_naiset = 12.5*np.array([2223.96,2257.10,2284.57,2365.57,2443.64,2548.35,2648.06,2712.89,2768.83,2831.99,2896.76,2946.37,2963.84,2993.79,3040.83,3090.43,3142.91,3159.91,3226.95,3272.29,3270.97,3297.32,3333.42,3362.99,3381.84,3342.78,3345.25,3360.21,3324.67,3322.28,3326.72,3326.06,3314.82,3303.73,3302.65,3246.03,3244.65,3248.04,3223.94,3211.96,3167.00,3156.29,3175.23,3228.67,3388.39,3457.17,3400.23,3293.52,2967.68,2702.05,2528.84,2528.84])
+            palkat_ika_miehet = 12.5*np.array([2339.01,2489.09,2571.40,2632.58,2718.03,2774.21,2884.89,2987.55,3072.40,3198.48,3283.81,3336.51,3437.30,3483.45,3576.67,3623.00,3731.27,3809.58,3853.66,3995.90,4006.16,4028.60,4104.72,4181.51,4134.13,4157.54,4217.15,4165.21,4141.23,4172.14,4121.26,4127.43,4134.00,4093.10,4065.53,4063.17,4085.31,4071.25,4026.50,4031.17,4047.32,4026.96,4028.39,4163.14,4266.42,4488.40,4201.40,4252.15,4443.96,3316.92,3536.03,3536.03,3536.03,3536.03])
+            palkat_ika_naiset = 12.5*np.array([2223.96,2257.10,2284.57,2365.57,2443.64,2548.35,2648.06,2712.89,2768.83,2831.99,2896.76,2946.37,2963.84,2993.79,3040.83,3090.43,3142.91,3159.91,3226.95,3272.29,3270.97,3297.32,3333.42,3362.99,3381.84,3342.78,3345.25,3360.21,3324.67,3322.28,3326.72,3326.06,3314.82,3303.73,3302.65,3246.03,3244.65,3248.04,3223.94,3211.96,3167.00,3156.29,3175.23,3228.67,3388.39,3457.17,3400.23,3293.52,2967.68,2702.05,2528.84,2528.84,2528.84,2528.84])
             interpol = False
         elif self.year in [2020]:
             palkat_ika_miehet=12.5*np.array([2090.10,2308.40,2346.80,2572.00,2624.90,2701.40,2766.50,2857.20,2967.90,3047.20,3156.70,3263.20,3334.20,3435.00,3556.90,3608.20,3665.50,3766.00,3819.00,3875.40,3957.00,4041.70,4138.00,4204.10,4253.20,4269.10,4323.20,4365.50,4345.50,4344.30,4417.40,4351.20,4315.00,4274.00,4300.90,4270.40,4250.50,4251.80,4223.40,4217.80,4170.30,4222.10,4178.20,4124.20,4208.80,4221.40,4362.80,4223.30,4386.80,4299.30,3844.90,3565.00,3919.70,3161.20]) #,3206.10,3405.60,3315.40,4280.90])
@@ -1427,7 +1429,7 @@ class PlotStats():
             interpol = True
 
         if interpol:
-            x = np.arange(18,72)
+            x = np.arange(self.min_age,72)
             palkat_ika_miehet = np.interp(x,x0,y0_men)*12.5
             palkat_ika_naiset = np.interp(x,x0,y0_women)*12.5
     
@@ -1507,13 +1509,13 @@ class PlotStats():
         salx_f = salx_f/np.maximum(1,saln_f)
         salx_m = salx_m/np.maximum(1,saln_m)
         
-        alivemask = self.episodestats.get_alivemask() #(self.episodestats.popempstate== 15).astype(bool)
-        wdata = ma.array(self.episodestats.infostats_pop_wage,mask = alivemask)#.compressed()
+        alivemask = self.episodestats.get_alivemask() 
+        wdata = ma.array(self.episodestats.infostats_pop_wage,mask = alivemask)
 
         workmask = (self.episodestats.popempstate== 2) # ei vanhuuseläkkeellä
-        workmask = ma.mask_or(workmask,self.episodestats.popempstate== 15) # ja ei vanhuuseläkkeellä
+        workmask = ma.mask_or(workmask,self.episodestats.popempstate== 15) # ja ei kuollut
         workmask = ma.mask_or(workmask,self.episodestats.popempstate== 3) # ja ei tk
-        wdata2 = ma.array(self.episodestats.infostats_pop_wage,mask = workmask)#.compressed()
+        wdata2 = ma.array(self.episodestats.infostats_pop_wage,mask = workmask)
             
         cdf_kuva(sal20,20,m20,p,palkka20)
         cdf_kuva(sal25,25,m25,p,palkka25)
@@ -1548,22 +1550,68 @@ class PlotStats():
         
         fig,ax = plt.subplots()
         data_range = np.arange(self.min_age,self.max_age+1)
-        for g in range(self.n_groups):
+        for g in range(3):
             ax.plot(data_range,salgx[::4,g],ls = '--',label = 'malli '+str(g))
         ax.plot(data_range_72,palkat_ika_miehet,label = 'data miehet')
+        ax.legend(bbox_to_anchor = (1.05, 1), loc = 2, borderaxespad = 0.)
+        plt.show()
+
+        fig,ax = plt.subplots()
+        data_range = np.arange(self.min_age,self.max_age+1)
+        for g in range(3,6):
+            ax.plot(data_range,salgx[::4,g],ls = '--',label = 'malli '+str(g))
         ax.plot(data_range_72,palkat_ika_naiset,label = 'data naiset')
         ax.legend(bbox_to_anchor = (1.05, 1), loc = 2, borderaxespad = 0.)
         plt.show()
 
         fig,ax = plt.subplots()
         data_range = np.arange(self.min_age,self.max_age+1)
-        ax.plot(data_range,salgx[::4,0]/salgx[::4,1],ls = '--',label = 'miehet low/mid ')
-        ax.plot(data_range,salgx[::4,2]/salgx[::4,1],ls = '--',label = 'miehet high/mid ')
-        ax.plot(data_range,salgx[::4,3]/salgx[::4,4],ls = '--',label = 'naiset low/mid ')
-        ax.plot(data_range,salgx[::4,5]/salgx[::4,4],ls = '--',label = 'naiset high/mid ')
+        s1 = salgx[:-16:4,0]
+        s2 = salgx[:-16:4,1]
+        s3 = salgx[:-16:4,2]
+        print(s1.shape)
+        ax.plot(data_range[:-4],s1/palkat_ika_miehet,ls = '--',label = 'miehet low ')
+        ax.plot(data_range[:-4],s2/palkat_ika_miehet,ls = '--',label = 'miehet mid ')
+        ax.plot(data_range[:-4],s3/palkat_ika_miehet,ls = '--',label = 'miehet high ')
         x,m1,m2,w1,w2 = self.empstats.stat_wageratio()
         ax.plot(x,m1,ls = '-',label = 'data men low/mid ')
         ax.plot(x,m2,ls = '-',label = 'data men high/mid ')
+        ax.legend(bbox_to_anchor = (1.05, 1), loc = 2, borderaxespad = 0.)
+        plt.title('suhteellinen kehitys')
+        plt.show()
+
+        fig,ax = plt.subplots()
+        data_range = np.arange(self.min_age,self.max_age+1)
+        s1 = salgx[:-16:4,3]
+        s2 = salgx[:-16:4,4]
+        s3 = salgx[:-16:4,5]
+        print(s1.shape)
+        ax.plot(data_range[:-4],s1/palkat_ika_miehet,ls = '--',label = 'naiset low ')
+        ax.plot(data_range[:-4],s2/palkat_ika_miehet,ls = '--',label = 'naiset mid ')
+        ax.plot(data_range[:-4],s3/palkat_ika_miehet,ls = '--',label = 'naiset high ')
+        x,m1,m2,w1,w2 = self.empstats.stat_wageratio()
+        ax.plot(x,m1,ls = '-',label = 'data men low/mid ')
+        ax.plot(x,m2,ls = '-',label = 'data men high/mid ')
+        ax.legend(bbox_to_anchor = (1.05, 1), loc = 2, borderaxespad = 0.)
+        plt.title('suhteellinen kehitys')
+        plt.show()
+
+        fig,ax = plt.subplots()
+        data_range = np.arange(self.min_age,self.max_age+1)
+        ax.plot(data_range,salgx[::4,0]/salgx[::4,1],ls = '--',label = 'miehet low/mid ')
+        ax.plot(data_range,salgx[::4,2]/salgx[::4,1],ls = '--',label = 'miehet high/mid ')
+        x,m1,m2,w1,w2 = self.empstats.stat_wageratio()
+        ax.plot(x,m1,ls = '-',label = 'data men low/mid ')
+        ax.plot(x,m2,ls = '-',label = 'data men high/mid ')
+        ax.legend(bbox_to_anchor = (1.05, 1), loc = 2, borderaxespad = 0.)
+        plt.title('suhteellinen kehitys')
+        plt.show()
+
+        fig,ax = plt.subplots()
+        data_range = np.arange(self.min_age,self.max_age+1)
+        ax.plot(data_range,salgx[::4,3]/salgx[::4,4],ls = '--',label = 'naiset low/mid ')
+        ax.plot(data_range,salgx[::4,5]/salgx[::4,4],ls = '--',label = 'naiset high/mid ')
+        x,m1,m2,w1,w2 = self.empstats.stat_wageratio()
         ax.plot(x,w1,ls = '-',label = 'data women low/mid ')
         ax.plot(x,w2,ls = '-',label = 'data women high/mid ')
         ax.legend(bbox_to_anchor = (1.05, 1), loc = 2, borderaxespad = 0.)
@@ -1651,6 +1699,51 @@ class PlotStats():
                     ax.plot(x2,scaled,label = t)
                 plt.legend()
                 plt.show()
+
+    def setup_group_weights(self):
+        # 15 vuotta täyttänyt väestö koulutusasteen, kunnan, sukupuolen ja ikäryhmän mukaan muuttujina Alue, Ikä, Sukupuoli, Koulutusaste, Tiedot ja Vuosi
+        # miehet naiset
+        # tasot 9,3,4-8 = 9 Ei perusasteen jälkeistä tutkintoa, 3 Toinen aste, 4-8 Toisen asteen jälkeinen tutkinto
+        if self.year == 2018:
+            self.group_weights=np.array([[0.2785,0.4359,0.2856],[0.2553,0.3785,0.3662]]) # miehet, naiset
+        elif self.year == 2019:
+            self.group_weights=np.array([[0.2746,0.4360,0.2894],[0.2496,0.3783,0.3721]]) # miehet, naiset
+        elif self.year == 2020:
+            self.group_weights=np.array([[0.2716,0.4352,0.2932],[0.2443,0.3775,0.3781]]) # miehet, naiset
+        elif self.year == 2021:
+            self.group_weights=np.array([[0.2695,0.4344,0.2961],[0.2397,0.3763,0.3840]]) # miehet, naiset
+        elif self.year == 2022:
+            self.group_weights=np.array([[0.2674,0.4336,0.2989],[0.2350,0.3751,0.3898]]) # miehet, naiset
+        elif self.year == 2023:
+            self.group_weights=np.array([[0.2653,0.4328,0.3018],[0.2304,0.3739,0.3957]]) # miehet, naiset
+        elif self.year == 2024:
+            self.group_weights=np.array([[0.2633,0.4320,0.3047],[0.2257,0.3727,0.4015]]) # miehet, naiset
+        elif self.year == 2025:
+            self.group_weights=np.array([[0.2633,0.4320,0.3047],[0.2257,0.3727,0.4015]]) # miehet, naiset
+        elif self.year == 2026:
+            self.group_weights=np.array([[0.2633,0.4320,0.3047],[0.2257,0.3727,0.4015]]) # miehet, naiset
+        else:
+            print('setup_group_weights: Unknown year ',self.year)
+
+    def plot_active_sby_group(self):
+        fig,ax = plt.subplots()
+
+        self.group_weights = self.setup_group_weights()
+        wgwomen = self.group_weights[1,:]
+        wgmen = self.group_weights[0,:]
+        plt.plot(self.episodestats.gempstate[:,1,0]/wgmen[0],label='group 0')
+        plt.plot(self.episodestats.gempstate[:,1,1]/wgmen[1],label='group 1')
+        plt.plot(self.episodestats.gempstate[:,1,2]/wgmen[2],label='group 2')
+        plt.legend()
+        plt.title('actives in groups men')
+        plt.show()
+        fig,ax = plt.subplots()
+        plt.plot(self.episodestats.gempstate[:,1,3]/wgwomen[0],label='group 3')
+        plt.plot(self.episodestats.gempstate[:,1,4]/wgwomen[1],label='group 4')
+        plt.plot(self.episodestats.gempstate[:,1,5]/wgwomen[2],label='group 5')
+        plt.legend()
+        plt.title('actives in groups women')
+        plt.show()
 
     def plot_unempdistribs_bu(self,unemp_distrib,max = 2.5,unemp_distrib2 = None,label1 = '',label2 = ''):
         max_time = 50
@@ -1746,6 +1839,7 @@ class PlotStats():
         plt.show()
 
         x = np.linspace(self.min_age,self.max_age,self.n_time)
+        #print(x.shape,self.episodestats.gempstate.shape)
         fig,ax = plt.subplots()
         ax.plot(x,100*np.sum(self.episodestats.gempstate[:,5,3:6]+self.episodestats.gempstate[:,6,3:6]+self.episodestats.gempstate[:,7,3:6],1,
             keepdims = True)/np.sum(self.episodestats.galive[:,3:6],1,keepdims = True),label = 'vanhempainvapailla, naiset')
@@ -1775,17 +1869,18 @@ class PlotStats():
         empstate_ratio = 100*self.episodestats.empstate/self.episodestats.alive
         self.plot_states(empstate_ratio,ylabel = ratio_label,parent = True,stack = False)
 
-    def plot_outsider(self,printtaa = True):
+    def plot_outsider(self):
         '''
         plottaa työvoiman ulkopuolella olevat
         mukana ei isyysvapaat, opiskelijat, armeijassa olevat eikä alle 3 kk kestäneet äitiysvpaat
         '''
         x = np.linspace(self.min_age,self.max_age,self.n_time)
+
         fig,ax = plt.subplots()
         outsiders = self.episodestats.empstate[:,11]+self.episodestats.empstate[:,7]
-        ax.plot(x,100*outsiders/self.episodestats.alive[:,0],label = 'työvoiman ulkopuolella, ei opiskelija, sis. kht')
+        ax.plot(x[1:],100*outsiders[1:]/self.episodestats.alive[1:,0],label = 'työvoiman ulkopuolella, ei opiskelija, sis. kht')
         emp_statsratio = 100*self.empstats.outsider_stats()
-        ax.plot(x,emp_statsratio,label = 'havainto')
+        ax.plot(x[1:],emp_statsratio[1:],label = 'havainto')
         ax.set_xlabel(self.labels['age'])
         ax.set_ylabel(self.labels['ratio'])
         ax.legend()
@@ -1804,8 +1899,8 @@ class PlotStats():
         fig,ax = plt.subplots()
         ax.plot(x,100*(self.episodestats.empstate[:,14])/self.episodestats.alive[:,0],
             label = 'sv-päivärahalla')
-        #emp_statsratio = 100*self.empstats.outsider_stats()
-        #ax.plot(x,emp_statsratio,label = 'havainto')
+        ex,emp_statsratio = self.empstats.stats_svpaivaraha()
+        ax.plot(ex,emp_statsratio,label = 'yli 230 pv svpv')
         ax.set_xlabel(self.labels['age'])
         ax.set_ylabel(self.labels['ratio'])
         ax.legend()
@@ -1955,8 +2050,10 @@ class PlotStats():
             x = np.linspace(self.min_age,self.max_age,self.n_time)
             ax.plot(x,osuus,label = leg)
 
-        ax.plot(x,100*self.empstats.disab_stat(g = 1),label = self.labels['havainto, naiset'])
-        ax.plot(x,100*self.empstats.disab_stat(g = 2),label = self.labels['havainto, miehet'])
+        ax.plot(x,100*self.empstats.disab_stat_ETK(g = 1),label = self.labels['havainto, naiset'])
+        ax.plot(x,100*self.empstats.disab_stat_ETK(g = 2),label = self.labels['havainto, miehet'])
+        ax.plot(x,100*self.empstats.disab_stat_TK(g = 1),label = 'havainto, naiset, TK')
+        ax.plot(x,100*self.empstats.disab_stat_TK(g = 2),label = 'havainto, miehet,TK')
         ax.set_xlabel(self.labels['age'])
         ax.set_ylabel(self.labels['ratio'])
         ax.legend(bbox_to_anchor = (1.05, 1), loc = 2, borderaxespad = 0.)
@@ -3217,7 +3314,7 @@ class PlotStats():
         '''
         
         if not self.episodestats.save_pop:
-            print('test_salaries: not enough data (save_pop = False)')
+            print('plot_aggirr: not enough data (save_pop = False)')
             return
 
         if gender is None:
