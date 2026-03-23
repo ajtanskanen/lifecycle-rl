@@ -1947,7 +1947,7 @@ class EpisodeStats():
             _,_,_,_,_,_,_,_,_,_,\
             _,_,_,_,_,_,_,_,_,_,\
             _,_,_,_,_,_,_,_,_,_,_,_,_,_,\
-            _,_,_,_\
+            _,_,_,_,_,_\
             =self.env.states.state_decode(state) # current employment state
             
         newemp,g,p_g,newpen,newsal,a2,tis,paidpens,pink,toe,toek,\
@@ -1957,7 +1957,7 @@ class EpisodeStats():
             p_toe,p_toekesto,p_ura,p_tis,p_pink,p_ove,kansanelake,p_kansanelake,te_maksussa,p_te_maksussa,\
             nw,old_pw,s_old_pw,pt_act,s_pt_act,wbasis,s_wbasis,m_lleft,s_lleft,m_ud,s_ud,\
             time_to_marriage,time_to_divorce,until_birth,\
-            main_until_student,spouse_until_student,main_until_outsider,spouse_until_outsider\
+            main_until_student,spouse_until_student,main_until_outsider,spouse_until_outsider,main_karenssi,spouse_karenssi\
             =self.env.states.state_decode(newstate)
 
         t=round((a2-self.min_age)*self.inv_timestep)#-1

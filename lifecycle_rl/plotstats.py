@@ -95,7 +95,7 @@ class PlotStats():
         self.empstats = Empstats(year = self.year,max_age = self.max_age,n_groups = self.n_groups,timestep = self.timestep,n_time = self.n_time,
                                 min_age = self.min_age,lang=lang)
         
-    def plot_various_groups(self,empstate=None,alive=None,figname = None,ax = None):
+    def plot_various_groups(self,empstate=None,alive=None,figname = None,ax = None,plot_workforce = True):
         if empstate is not None and alive is not None:
             empstate_ratio = 100*empstate/alive
         else:
@@ -103,20 +103,20 @@ class PlotStats():
 
         ratio_label = self.labels['osuus']
         if figname is not None:
-            self.plot_states(empstate_ratio,ylabel = ratio_label,stack = True,figname = figname+'_stack',ax=ax)
+            self.plot_states(empstate_ratio,ylabel = ratio_label,stack = True,figname = figname+'_stack',ax=ax,plot_workforce=plot_workforce)
         else:
-            self.plot_states(empstate_ratio,ylabel = ratio_label,stack = True,ax=ax)
+            self.plot_states(empstate_ratio,ylabel = ratio_label,stack = True,ax=ax,plot_workforce=plot_workforce)
 
         if figname is not None:
-            self.plot_states(empstate_ratio,ylabel = ratio_label,start_from = 60,stack = True,figname = figname+'_stack60',ax=ax)
-            self.plot_states(empstate_ratio,ylabel = ratio_label,start_from = 57,stack = True,figname = figname+'_stack60',ax=ax)
+            self.plot_states(empstate_ratio,ylabel = ratio_label,start_from = 60,stack = True,figname = figname+'_stack60',ax=ax,plot_workforce=False)
+            self.plot_states(empstate_ratio,ylabel = ratio_label,start_from = 57,stack = True,figname = figname+'_stack60',ax=ax,plot_workforce=False)
         else:
-            self.plot_states(empstate_ratio,ylabel = ratio_label,start_from = 60,stack = True,ax=ax)
-            self.plot_states(empstate_ratio,ylabel = ratio_label,start_from = 57,stack = True,ax=ax)
+            self.plot_states(empstate_ratio,ylabel = ratio_label,start_from = 60,stack = True,ax=ax,plot_workforce=False)
+            self.plot_states(empstate_ratio,ylabel = ratio_label,start_from = 57,stack = True,ax=ax,plot_workforce=False)
 
         if self.version in self.complex_models:
-            self.plot_states(empstate_ratio,ylabel = ratio_label,ylimit = 20,stack = False,ax=ax)
-            self.plot_states(empstate_ratio,ylabel = ratio_label,unemp = True,stack = False,ax=ax)
+            self.plot_states(empstate_ratio,ylabel = ratio_label,ylimit = 20,stack = False,ax=ax,plot_workforce=False)
+            self.plot_states(empstate_ratio,ylabel = ratio_label,unemp = True,stack = False,ax=ax,plot_workforce=False)
             
     def compare_df(self,df1,df2,cctext1 = 'e/v',cctext1_new = None,cctext2 = 'toteuma',cctext2_new = None):
         if cctext1_new is None:
@@ -566,8 +566,11 @@ class PlotStats():
         if self.version in self.complex_models:
             self.plot_gender_emp(figname = figname)
             self.plot_group_emp()
+
+            print_html('<h2>Työvoima</h2>')
             self.plot_emp_vs_workforce()
             self.plot_workforce()
+            self.plot_various_groups(plot_workforce=True)
 
         print_html('<h2>Osa-aika</h2>')
         if self.version in self.recent_models:
@@ -596,7 +599,6 @@ class PlotStats():
         if self.version in self.complex_models:
             print_html('<h2>Ryhmät</h2>')
             self.plot_outsider()        
-            self.plot_various_groups(figname = figname)
             self.plot_group_student()
             ps = self.episodestats.comp_palkkatulo_emp()
             for k in range(self.n_employment):
@@ -685,14 +687,14 @@ class PlotStats():
     def plot_pt_act(self):
         agg_pt,agg_ft,pt,ft,vept,veft,cpt,agg_combi = self.episodestats.comp_ptproportions()
 
-        x = np.linspace(0,2,3)
-        plt.bar(x,agg_pt[0,:])
-        plt.title('Osa-aika, pt-tila: ave {}'.format(ma.mean(agg_pt[0,:])))
-        plt.show()
+        #x = np.linspace(0,2,3)
+        #plt.bar(x,agg_pt[0,:])
+        #plt.title('Osa-aika, pt-tila: ave {}'.format(ma.mean(agg_pt[0,:])))
+        #plt.show()
 
-        plt.bar(x,agg_ft[0,:])
-        plt.title('Kokoaika, pt-tila')
-        plt.show()
+        #plt.bar(x,agg_ft[0,:])
+        #plt.title('Kokoaika, pt-tila')
+        #plt.show()
 
         x = np.linspace(self.min_age,self.max_age,self.n_time)
         plt.stackplot(x,pt[0,:,:].T)
@@ -712,18 +714,6 @@ class PlotStats():
         plt.title('Ve+Kokoaika, pt-tila')
         plt.show()
 
-        x = np.linspace(0,2,3)
-        plt.bar(x,agg_pt[2,:])
-        plt.title('Osa-aika naiset, pt-tila: ave {}'.format(ma.mean(agg_pt[2,:])))
-        plt.show()
-        print('osa-aika','miehet',agg_pt[2,:])
-        print('naiset',agg_pt[1,:])
-        print('yht',agg_pt[0,:])
-
-        plt.bar(x,agg_pt[1,:])
-        plt.title('Osa-aika miehet, pt-tila: ave {}'.format(ma.mean(agg_pt[1,:])))
-        plt.show()
-
         fig,ax = plt.subplots()
         x = np.linspace(8,48,6)
         plt.bar(x,100*agg_combi[0,:],width=7)
@@ -732,15 +722,27 @@ class PlotStats():
         ax.set_xlabel(self.labels['Työaika [h]'])
         plt.show()
 
-        x = np.linspace(0,2,3)
-        plt.bar(x,agg_ft[1,:])
-        plt.title('Kokoaika miehet, pt-tila: ave {}'.format(ma.mean(agg_ft[1,:])))
+        fig,ax = plt.subplots()
+        x = np.linspace(8,48,6)
+        plt.title('Osa-aika naiset, pt-tila: ave {}'.format(ma.mean(agg_pt[2,:])))
+        plt.bar(x,100*agg_combi[2,:],width=7)
+        ax.set_xticks([8,16,24,32,40,48])
+        ax.set_ylabel(self.labels['osuus'])
+        ax.set_xlabel(self.labels['Työaika [h]'])
         plt.show()
 
-        x = np.linspace(0,2,3)
-        plt.bar(x,agg_ft[2,:])
-        plt.title('Kokoaika naiset, pt-tila: ave {}'.format(ma.mean(agg_ft[2,:])))
+        fig,ax = plt.subplots()
+        x = np.linspace(8,48,6)
+        plt.title('Osa-aika miehet, pt-tila: ave {}'.format(ma.mean(agg_pt[1,:])))
+        plt.bar(x,100*agg_combi[1,:],width=7)
+        ax.set_xticks([8,16,24,32,40,48])
+        ax.set_ylabel(self.labels['osuus'])
+        ax.set_xlabel(self.labels['Työaika [h]'])
         plt.show()
+
+        print('osa-aika','miehet',agg_pt[2,:])
+        print('naiset',agg_pt[1,:])
+        print('yht',agg_pt[0,:])
         print('kokoaika','miehet',agg_ft[2,:])
         print('naiset',agg_ft[1,:])
         print('yht',agg_ft[0,:])
@@ -1356,9 +1358,8 @@ class PlotStats():
             plt.hist(sal[:m],bins = 50,density = True)
             ave = np.mean(sal[:m])/12
             palave = np.sum(palkka*p)/12/np.sum(palkka)
-            plt.title('{}: ave {:,.2f} vs {:,.2f}'.format(ika,ave,palave))
-            #plt.plot(p,palkka/sum(palkka)/2000)
-            plt.plot(p,palkka/sum(palkka)/(p[1]-p[0]),label='data')
+            plt.title('{}: ave est {:,.2f} vs obs {:,.2f}'.format(ika,ave,palave))
+            plt.plot(p,palkka/sum(palkka)/(p[1]-p[0]),label='observed data')
             plt.legend()
             plt.show()
 
@@ -1399,8 +1400,8 @@ class PlotStats():
             palkat_ika_naiset = 12.5*np.array([2223.96,2257.10,2284.57,2365.57,2443.64,2548.35,2648.06,2712.89,2768.83,2831.99,2896.76,2946.37,2963.84,2993.79,3040.83,3090.43,3142.91,3159.91,3226.95,3272.29,3270.97,3297.32,3333.42,3362.99,3381.84,3342.78,3345.25,3360.21,3324.67,3322.28,3326.72,3326.06,3314.82,3303.73,3302.65,3246.03,3244.65,3248.04,3223.94,3211.96,3167.00,3156.29,3175.23,3228.67,3388.39,3457.17,3400.23,3293.52,2967.68,2702.05,2528.84,2528.84,2528.84,2528.84])
             interpol = False
         elif self.year in [2020]:
-            palkat_ika_miehet=12.5*np.array([2090.10,2308.40,2346.80,2572.00,2624.90,2701.40,2766.50,2857.20,2967.90,3047.20,3156.70,3263.20,3334.20,3435.00,3556.90,3608.20,3665.50,3766.00,3819.00,3875.40,3957.00,4041.70,4138.00,4204.10,4253.20,4269.10,4323.20,4365.50,4345.50,4344.30,4417.40,4351.20,4315.00,4274.00,4300.90,4270.40,4250.50,4251.80,4223.40,4217.80,4170.30,4222.10,4178.20,4124.20,4208.80,4221.40,4362.80,4223.30,4386.80,4299.30,3844.90,3565.00,3919.70,3161.20]) #,3206.10,3405.60,3315.40,4280.90])
-            palkat_ika_naiset=12.5*np.array([2046.60,2167.40,2304.80,2228.20,2291.90,2373.10,2473.10,2566.50,2682.50,2737.60,2832.80,2881.40,2934.20,2974.10,3042.60,3105.40,3155.90,3220.50,3253.20,3313.10,3373.10,3450.20,3472.80,3557.10,3566.80,3613.20,3667.60,3649.50,3653.90,3582.90,3595.60,3559.00,3550.10,3547.80,3530.30,3543.60,3534.80,3520.40,3511.90,3455.80,3443.00,3432.40,3396.00,3392.40,3368.70,3345.60,3479.20,3524.60,3540.90,3293.00,2903.10,2783.70,2573.50,2798.30]) #,2704.10,3117.20,3341.90
+            palkat_ika_miehet = 12.5*np.array([2090.10,2308.40,2346.80,2572.00,2624.90,2701.40,2766.50,2857.20,2967.90,3047.20,3156.70,3263.20,3334.20,3435.00,3556.90,3608.20,3665.50,3766.00,3819.00,3875.40,3957.00,4041.70,4138.00,4204.10,4253.20,4269.10,4323.20,4365.50,4345.50,4344.30,4417.40,4351.20,4315.00,4274.00,4300.90,4270.40,4250.50,4251.80,4223.40,4217.80,4170.30,4222.10,4178.20,4124.20,4208.80,4221.40,4362.80,4223.30,4386.80,4299.30,3844.90,3565.00,3919.70,3161.20]) #,3206.10,3405.60,3315.40,4280.90])
+            palkat_ika_naiset = 12.5*np.array([2046.60,2167.40,2304.80,2228.20,2291.90,2373.10,2473.10,2566.50,2682.50,2737.60,2832.80,2881.40,2934.20,2974.10,3042.60,3105.40,3155.90,3220.50,3253.20,3313.10,3373.10,3450.20,3472.80,3557.10,3566.80,3613.20,3667.60,3649.50,3653.90,3582.90,3595.60,3559.00,3550.10,3547.80,3530.30,3543.60,3534.80,3520.40,3511.90,3455.80,3443.00,3432.40,3396.00,3392.40,3368.70,3345.60,3479.20,3524.60,3540.90,3293.00,2903.10,2783.70,2573.50,2798.30]) #,2704.10,3117.20,3341.90
             interpol = False
         elif self.year in [2021]:
             x0 = [18,22.5,27.5,32.5,37.5,42.5,47.5,52.5,57.5,62.5,65]
@@ -1419,8 +1420,10 @@ class PlotStats():
             interpol = True
         elif self.year in [2024]:
             x0 = [18,22.5,27.5,32.5,37.5,42.5,47.5,52.5,57.5,62.5,65]
-            y0_men = [2400,2899,3604,4143,4629,5019,5398,5466,5323,5157,5049]
-            y0_women = [2523,2771,3303,3565,3767,4007,4165,4143,4018,3922,3885]
+            y0_men = np.array([2359,2874,3381,3807,4182,4498,4811,4833,4698,4584,4252]) # säännöllisen työajan ansio
+            y0_women = np.array([2294,2627,3167,3425,3622,3853,4009,3984,3880,3792,3602])
+            #y0_men = [2400,2899,3604,4143,4629,5019,5398,5466,5323,5157,5049]
+            #y0_women = [2523,2771,3303,3565,3767,4007,4165,4143,4018,3922,3885]
             interpol = True
         elif self.year in [2025]:
             x0 = [18,22.5,27.5,32.5,37.5,42.5,47.5,52.5,57.5,62.5,65]
@@ -1446,11 +1449,18 @@ class PlotStats():
         sal = np.zeros((n,self.max_age))
 
         # palkkajakaumat vuodelta 2018
-        p = np.arange(700,17500,100)*12.5
-        palkka20 = np.array([10.3,5.6,4.5,14.2,7.1,9.1,22.8,22.1,68.9,160.3,421.6,445.9,501.5,592.2,564.5,531.9,534.4,431.2,373.8,320.3,214.3,151.4,82.3,138.0,55.6,61.5,45.2,19.4,32.9,13.1,9.6,7.4,12.3,12.5,11.5,5.3,2.4,1.6,1.2,1.2,14.1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
-        palkka25 = np.array([12.4,11.3,30.2,4.3,28.5,20.3,22.5,23.7,83.3,193.0,407.9,535.0,926.5,1177.1,1540.9,1526.4,1670.2,1898.3,1538.8,1431.5,1267.9,1194.8,1096.3,872.6,701.3,619.0,557.2,465.8,284.3,291.4,197.1,194.4,145.0,116.7,88.7,114.0,56.9,57.3,55.0,25.2,24.4,20.1,25.2,37.3,41.4,22.6,14.1,9.4,6.3,7.5,8.1,9.0,4.0,3.4,5.4,4.1,5.2,1.0,2.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
-        palkka30 = np.array([1.0,2.0,3.0,8.5,12.1,22.9,15.8,21.8,52.3,98.2,295.3,392.8,646.7,951.4,1240.5,1364.5,1486.1,1965.2,1908.9,1729.5,1584.8,1460.6,1391.6,1551.9,1287.6,1379.0,1205.6,1003.6,1051.6,769.9,680.5,601.2,552.0,548.3,404.5,371.0,332.7,250.0,278.2,202.2,204.4,149.8,176.7,149.0,119.6,76.8,71.4,56.3,75.9,76.8,58.2,50.2,46.8,48.9,30.1,32.2,28.8,31.1,45.5,41.2,36.5,18.1,11.6,8.5,10.2,4.3,13.5,12.3,4.9,13.9,5.4,5.9,7.4,14.1,9.6,8.4,11.5,0.0,3.3,9.0,5.2,5.0,3.1,7.4,2.0,4.0,4.1,14.0,2.0,3.0,1.0,0.0,6.2,2.0,1.2,2.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
-        palkka50 = np.array([2.0,3.1,2.4,3.9,1.0,1.0,11.4,30.1,29.3,34.3,231.9,341.9,514.4,724.0,1076.8,1345.2,1703.0,1545.8,1704.0,1856.1,1805.4,1608.1,1450.0,1391.4,1338.5,1173.2,1186.3,1024.8,1105.6,963.0,953.0,893.7,899.8,879.5,857.0,681.5,650.5,579.2,676.8,498.0,477.5,444.3,409.1,429.0,340.5,297.2,243.1,322.5,297.5,254.1,213.1,249.3,212.1,212.8,164.4,149.3,158.6,157.4,154.1,112.7,93.4,108.4,87.3,86.7,82.0,115.9,66.9,84.2,61.4,43.7,58.1,40.9,73.9,50.0,51.6,25.7,43.2,48.2,43.0,32.6,21.6,22.4,36.3,28.3,19.4,21.1,21.9,21.5,19.2,15.8,22.6,9.3,14.0,22.4,14.0,13.0,11.9,18.7,7.3,21.6,9.5,11.2,12.0,18.2,12.9,2.2,10.7,6.1,11.7,7.6,1.0,4.7,8.5,6.4,3.3,4.6,1.2,3.7,5.8,1.0,1.0,1.0,1.0,3.2,1.2,3.1,2.2,2.3,2.1,1.1,2.0,2.1,2.2,4.6,2.2,1.0,1.0,1.0,0.0,3.0,1.2,0.0,8.2,3.0,1.0,1.0,2.1,1.2,3.2,1.0,5.2,1.1,5.2,1.0,1.2,2.3,1.0,3.1,1.0,1.0,1.1,1.6,1.1,1.1,1.0,1.0,1.0,1.0])
+        if self.year in [2018]:
+            p = np.arange(700,17500,100)*12.5
+            palkka20 = np.array([10.3,5.6,4.5,14.2,7.1,9.1,22.8,22.1,68.9,160.3,421.6,445.9,501.5,592.2,564.5,531.9,534.4,431.2,373.8,320.3,214.3,151.4,82.3,138.0,55.6,61.5,45.2,19.4,32.9,13.1,9.6,7.4,12.3,12.5,11.5,5.3,2.4,1.6,1.2,1.2,14.1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
+            palkka25 = np.array([12.4,11.3,30.2,4.3,28.5,20.3,22.5,23.7,83.3,193.0,407.9,535.0,926.5,1177.1,1540.9,1526.4,1670.2,1898.3,1538.8,1431.5,1267.9,1194.8,1096.3,872.6,701.3,619.0,557.2,465.8,284.3,291.4,197.1,194.4,145.0,116.7,88.7,114.0,56.9,57.3,55.0,25.2,24.4,20.1,25.2,37.3,41.4,22.6,14.1,9.4,6.3,7.5,8.1,9.0,4.0,3.4,5.4,4.1,5.2,1.0,2.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
+            palkka30 = np.array([1.0,2.0,3.0,8.5,12.1,22.9,15.8,21.8,52.3,98.2,295.3,392.8,646.7,951.4,1240.5,1364.5,1486.1,1965.2,1908.9,1729.5,1584.8,1460.6,1391.6,1551.9,1287.6,1379.0,1205.6,1003.6,1051.6,769.9,680.5,601.2,552.0,548.3,404.5,371.0,332.7,250.0,278.2,202.2,204.4,149.8,176.7,149.0,119.6,76.8,71.4,56.3,75.9,76.8,58.2,50.2,46.8,48.9,30.1,32.2,28.8,31.1,45.5,41.2,36.5,18.1,11.6,8.5,10.2,4.3,13.5,12.3,4.9,13.9,5.4,5.9,7.4,14.1,9.6,8.4,11.5,0.0,3.3,9.0,5.2,5.0,3.1,7.4,2.0,4.0,4.1,14.0,2.0,3.0,1.0,0.0,6.2,2.0,1.2,2.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
+            palkka50 = np.array([2.0,3.1,2.4,3.9,1.0,1.0,11.4,30.1,29.3,34.3,231.9,341.9,514.4,724.0,1076.8,1345.2,1703.0,1545.8,1704.0,1856.1,1805.4,1608.1,1450.0,1391.4,1338.5,1173.2,1186.3,1024.8,1105.6,963.0,953.0,893.7,899.8,879.5,857.0,681.5,650.5,579.2,676.8,498.0,477.5,444.3,409.1,429.0,340.5,297.2,243.1,322.5,297.5,254.1,213.1,249.3,212.1,212.8,164.4,149.3,158.6,157.4,154.1,112.7,93.4,108.4,87.3,86.7,82.0,115.9,66.9,84.2,61.4,43.7,58.1,40.9,73.9,50.0,51.6,25.7,43.2,48.2,43.0,32.6,21.6,22.4,36.3,28.3,19.4,21.1,21.9,21.5,19.2,15.8,22.6,9.3,14.0,22.4,14.0,13.0,11.9,18.7,7.3,21.6,9.5,11.2,12.0,18.2,12.9,2.2,10.7,6.1,11.7,7.6,1.0,4.7,8.5,6.4,3.3,4.6,1.2,3.7,5.8,1.0,1.0,1.0,1.0,3.2,1.2,3.1,2.2,2.3,2.1,1.1,2.0,2.1,2.2,4.6,2.2,1.0,1.0,1.0,0.0,3.0,1.2,0.0,8.2,3.0,1.0,1.0,2.1,1.2,3.2,1.0,5.2,1.1,5.2,1.0,1.2,2.3,1.0,3.1,1.0,1.0,1.1,1.6,1.1,1.1,1.0,1.0,1.0,1.0])
+        else: # 2018
+            p = np.arange(700,17500,100)*12.5
+            palkka20 = np.array([10.3,5.6,4.5,14.2,7.1,9.1,22.8,22.1,68.9,160.3,421.6,445.9,501.5,592.2,564.5,531.9,534.4,431.2,373.8,320.3,214.3,151.4,82.3,138.0,55.6,61.5,45.2,19.4,32.9,13.1,9.6,7.4,12.3,12.5,11.5,5.3,2.4,1.6,1.2,1.2,14.1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
+            palkka25 = np.array([12.4,11.3,30.2,4.3,28.5,20.3,22.5,23.7,83.3,193.0,407.9,535.0,926.5,1177.1,1540.9,1526.4,1670.2,1898.3,1538.8,1431.5,1267.9,1194.8,1096.3,872.6,701.3,619.0,557.2,465.8,284.3,291.4,197.1,194.4,145.0,116.7,88.7,114.0,56.9,57.3,55.0,25.2,24.4,20.1,25.2,37.3,41.4,22.6,14.1,9.4,6.3,7.5,8.1,9.0,4.0,3.4,5.4,4.1,5.2,1.0,2.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
+            palkka30 = np.array([1.0,2.0,3.0,8.5,12.1,22.9,15.8,21.8,52.3,98.2,295.3,392.8,646.7,951.4,1240.5,1364.5,1486.1,1965.2,1908.9,1729.5,1584.8,1460.6,1391.6,1551.9,1287.6,1379.0,1205.6,1003.6,1051.6,769.9,680.5,601.2,552.0,548.3,404.5,371.0,332.7,250.0,278.2,202.2,204.4,149.8,176.7,149.0,119.6,76.8,71.4,56.3,75.9,76.8,58.2,50.2,46.8,48.9,30.1,32.2,28.8,31.1,45.5,41.2,36.5,18.1,11.6,8.5,10.2,4.3,13.5,12.3,4.9,13.9,5.4,5.9,7.4,14.1,9.6,8.4,11.5,0.0,3.3,9.0,5.2,5.0,3.1,7.4,2.0,4.0,4.1,14.0,2.0,3.0,1.0,0.0,6.2,2.0,1.2,2.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
+            palkka50 = np.array([2.0,3.1,2.4,3.9,1.0,1.0,11.4,30.1,29.3,34.3,231.9,341.9,514.4,724.0,1076.8,1345.2,1703.0,1545.8,1704.0,1856.1,1805.4,1608.1,1450.0,1391.4,1338.5,1173.2,1186.3,1024.8,1105.6,963.0,953.0,893.7,899.8,879.5,857.0,681.5,650.5,579.2,676.8,498.0,477.5,444.3,409.1,429.0,340.5,297.2,243.1,322.5,297.5,254.1,213.1,249.3,212.1,212.8,164.4,149.3,158.6,157.4,154.1,112.7,93.4,108.4,87.3,86.7,82.0,115.9,66.9,84.2,61.4,43.7,58.1,40.9,73.9,50.0,51.6,25.7,43.2,48.2,43.0,32.6,21.6,22.4,36.3,28.3,19.4,21.1,21.9,21.5,19.2,15.8,22.6,9.3,14.0,22.4,14.0,13.0,11.9,18.7,7.3,21.6,9.5,11.2,12.0,18.2,12.9,2.2,10.7,6.1,11.7,7.6,1.0,4.7,8.5,6.4,3.3,4.6,1.2,3.7,5.8,1.0,1.0,1.0,1.0,3.2,1.2,3.1,2.2,2.3,2.1,1.1,2.0,2.1,2.2,4.6,2.2,1.0,1.0,1.0,0.0,3.0,1.2,0.0,8.2,3.0,1.0,1.0,2.1,1.2,3.2,1.0,5.2,1.1,5.2,1.0,1.2,2.3,1.0,3.1,1.0,1.0,1.1,1.6,1.1,1.1,1.0,1.0,1.0,1.0])
 
         m20 = 0
         m25 = 0
@@ -1535,14 +1545,14 @@ class PlotStats():
         plt.plot(data_range,ma.mean(wdata[::4,:],axis = 1),label = 'malli alive')
         plt.plot(data_range,ma.mean(wdata2[::4,:],axis = 1),label = 'malli not ret')
         plt.plot(data_range,salx[::4],label = 'malli töissä')
-        plt.plot(data_range_72,0.5*palkat_ika_miehet+0.5*palkat_ika_naiset,label = 'data')
+        plt.plot(data_range_72,0.5*palkat_ika_miehet+0.5*palkat_ika_naiset,label = 'obs data')
         plt.legend()
         plt.show()
 
         plt.plot(data_range,salx_m[1::4],label = 'LCM men')
         plt.plot(data_range,salx_f[1::4],label = 'LCM women')
-        plt.plot(data_range_72,palkat_ika_miehet,label = 'data men')
-        plt.plot(data_range_72,palkat_ika_naiset,label = 'data women')
+        plt.plot(data_range_72,palkat_ika_miehet,label = 'obs data men')
+        plt.plot(data_range_72,palkat_ika_naiset,label = 'obs data women')
         plt.xlabel('Age [y]')
         plt.ylabel('Wage [e/y]')
         plt.legend()
@@ -1569,7 +1579,6 @@ class PlotStats():
         s1 = salgx[:-16:4,0]
         s2 = salgx[:-16:4,1]
         s3 = salgx[:-16:4,2]
-        print(s1.shape)
         ax.plot(data_range[:-4],s1/palkat_ika_miehet,ls = '--',label = 'miehet low ')
         ax.plot(data_range[:-4],s2/palkat_ika_miehet,ls = '--',label = 'miehet mid ')
         ax.plot(data_range[:-4],s3/palkat_ika_miehet,ls = '--',label = 'miehet high ')
@@ -1585,10 +1594,9 @@ class PlotStats():
         s1 = salgx[:-16:4,3]
         s2 = salgx[:-16:4,4]
         s3 = salgx[:-16:4,5]
-        print(s1.shape)
-        ax.plot(data_range[:-4],s1/palkat_ika_miehet,ls = '--',label = 'naiset low ')
-        ax.plot(data_range[:-4],s2/palkat_ika_miehet,ls = '--',label = 'naiset mid ')
-        ax.plot(data_range[:-4],s3/palkat_ika_miehet,ls = '--',label = 'naiset high ')
+        ax.plot(data_range[:-4],s1/palkat_ika_naiset,ls = '--',label = 'naiset low ')
+        ax.plot(data_range[:-4],s2/palkat_ika_naiset,ls = '--',label = 'naiset mid ')
+        ax.plot(data_range[:-4],s3/palkat_ika_naiset,ls = '--',label = 'naiset high ')
         x,m1,m2,w1,w2 = self.empstats.stat_wageratio()
         ax.plot(x,m1,ls = '-',label = 'data men low/mid ')
         ax.plot(x,m2,ls = '-',label = 'data men high/mid ')
@@ -1839,7 +1847,6 @@ class PlotStats():
         plt.show()
 
         x = np.linspace(self.min_age,self.max_age,self.n_time)
-        #print(x.shape,self.episodestats.gempstate.shape)
         fig,ax = plt.subplots()
         ax.plot(x,100*np.sum(self.episodestats.gempstate[:,5,3:6]+self.episodestats.gempstate[:,6,3:6]+self.episodestats.gempstate[:,7,3:6],1,
             keepdims = True)/np.sum(self.episodestats.galive[:,3:6],1,keepdims = True),label = 'vanhempainvapailla, naiset')
@@ -2019,13 +2026,25 @@ class PlotStats():
 
             opiskelijat = np.reshape(opiskelijat,(self.episodestats.galive.shape[0],1))
             osuus = 100*opiskelijat/alive
+            if gender== 0:
+                men = 100*opiskelijat/alive
+            else:
+                women = 100*opiskelijat/alive
             x = np.linspace(self.min_age,self.max_age,self.n_time)
             ax.plot(x,osuus,label = leg)
 
-        emp_statsratio = 100*self.empstats.student_stats(g = 1)
-        ax.plot(x,emp_statsratio,label = self.labels['havainto, naiset'])
-        emp_statsratio = 100*self.empstats.student_stats(g = 2)
-        ax.plot(x,emp_statsratio,label = self.labels['havainto, miehet'])
+        emp_statsratio_women = 100*self.empstats.student_stats(g = 1)
+        ax.plot(x,emp_statsratio_women,label = self.labels['havainto, naiset'])
+        emp_statsratio_men = 100*self.empstats.student_stats(g = 2)
+        ax.plot(x,emp_statsratio_men,label = self.labels['havainto, miehet'])
+        ax.set_xlabel(self.labels['age'])
+        ax.set_ylabel(self.labels['ratio'])
+        ax.legend(bbox_to_anchor = (1.05, 1), loc = 2, borderaxespad = 0.)
+        plt.show()
+
+        fig,ax = plt.subplots()
+        ax.plot(x,emp_statsratio_women-np.reshape(women,emp_statsratio_women.shape),label = 'ero,naiset')
+        ax.plot(x,emp_statsratio_men-np.reshape(men,emp_statsratio_men.shape),label = 'ero,miehet')
         ax.set_xlabel(self.labels['age'])
         ax.set_ylabel(self.labels['ratio'])
         ax.legend(bbox_to_anchor = (1.05, 1), loc = 2, borderaxespad = 0.)
@@ -2928,7 +2947,8 @@ class PlotStats():
     def plot_states(self,statistic,ylabel = '',ylimit = None,show_legend = True,parent = False,unemp = False,no_ve = False,
                     start_from = None,end_at = None,stack = True,figname = None,yminlim = None,ymaxlim = None,work60 = False,
                     onlyunemp = False,reverse = False,grayscale = False,emp = False,oa_emp = False,oa_unemp = False,
-                    all_emp = False,sv = False,normalize = False,add_student = True,ax = None,legend_infig = False):
+                    all_emp = False,sv = False,normalize = False,add_student = True,ax = None,legend_infig = False,
+                    plot_workforce = False):
         if start_from is None:
             x = np.linspace(self.min_age,self.max_age,self.n_time)
             x = x[:statistic.shape[0]]
@@ -2983,6 +3003,8 @@ class PlotStats():
             else:
                 ura_osatyo = 0 #statistic[:,3]
 
+        ura_tyovoima = ura_svpaiva+ura_osatyo+ura_mother+ura_dad+ura_vetyo+ura_emp+ura_veosatyo+ura_pipe+ura_tyomarkkinatuki+ura_unemp
+
         if no_ve:
             ura_ret[-2:-1] = None
 
@@ -3023,14 +3045,22 @@ class PlotStats():
                     ax.stackplot(x,ura_unemp,labels = (self.labels['tyött']), colors = pal)
             else:
                 if self.version in self.complex_models:
-                    ax.stackplot(x,ura_emp,ura_osatyo,ura_vetyo,ura_veosatyo,ura_unemp,ura_tyomarkkinatuki,ura_pipe,ura_ret,ura_disab,ura_mother,ura_dad,ura_kht,ura_student,ura_outsider,ura_svpaiva,
-                        labels = (self.labels['työssä'],self.labels['osatyö'],self.labels['ve+työ'],self.labels['ve+osatyö'],self.labels['työtön'],
-                                self.labels['tm-tuki'],self.labels['työttömyysputki'],self.labels['vanhuuseläke'],self.labels['tk-eläke'],self.labels['äitiysvapaa'],
-                                self.labels['isyysvapaa'],self.labels['khtuki'],self.labels['student'],self.labels['outsider'],self.labels['svpaivaraha']),
+                    ax.stackplot(x,ura_emp,ura_osatyo,ura_vetyo,ura_veosatyo,ura_unemp,ura_tyomarkkinatuki,ura_pipe,ura_svpaiva,ura_dad,ura_mother,ura_ret,ura_disab,ura_kht,ura_student,ura_outsider,
+                        labels = (self.labels['työssä'],self.labels['osatyö'],self.labels['ve+työ'],self.labels['ve+osatyö'],
+                                  self.labels['työtön'],self.labels['tm-tuki'],self.labels['työttömyysputki'],self.labels['svpaivaraha'],
+                                  self.labels['äitiysvapaa'],self.labels['isyysvapaa'],
+                                  self.labels['vanhuuseläke'],self.labels['tk-eläke'],
+                                  self.labels['khtuki'],self.labels['student'],self.labels['outsider']),
                         colors = pal)
                 else:
                     ax.stackplot(x,ura_emp,ura_unemp,ura_ret,
                         labels = (self.labels['työssä'],self.labels['työtön'],self.labels['vanhuuseläke']), colors = pal)
+
+            if plot_workforce:
+                ax.plot(x,ura_tyovoima,linewidth = 1.5,color='black')
+                workforce = 100*self.empstats.workforce_stats(g = 0)
+                #workforce = 100*self.episodestats.comp_workforce(self.episodestats.empstate,self.episodestats.alive,ratio = True)
+                ax.plot(x,workforce,'--',linewidth = 1.5,color='green')
 
             if ymaxlim is None:
                 ax.set_ylim(0, 100)
@@ -3094,6 +3124,10 @@ class PlotStats():
                     ax.plot(x,ura_student,label = self.labels['student'])
                     ax.plot(x,ura_outsider,label = self.labels['outsider'])
                     ax.plot(x,ura_svpaiva,label = self.labels['svpaivaraha'])
+            if plot_workforce:
+                ax.plot(x,ura_tyovoima,linewidth = 1.5,color='black')
+                ax.plot(x,ura_tyovoima,linewidth = 1.5,color='black')
+
         ax.set_xlabel(self.labels['age'])
         ax.set_ylabel(ylabel)
         if show_legend:
