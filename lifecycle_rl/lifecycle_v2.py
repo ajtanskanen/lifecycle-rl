@@ -66,7 +66,7 @@ class Lifecycle():
             self.gym_kwargs={'step': self.timestep,
                 'gamma':self.gamma,
                 'min_age': self.min_age, 
-                'max_age': self.max_age,
+                #'max_age': self.max_age,
                 'plotdebug': self.plotdebug, 
                 'min_retirementage': self.min_retirementage, 
                 'max_retirementage':self.max_retirementage,
@@ -94,7 +94,7 @@ class Lifecycle():
                 'gamma':self.gamma,
                 'random_returns': self.random_returns,
                 'min_age': self.min_age, 
-                'max_age': self.max_age,
+                #'max_age': self.max_age,
                 'min_retirementage': self.min_retirementage, 
                 'max_retirementage':self.max_retirementage,
                 'ansiopvraha_kesto300': self.ansiopvraha_kesto300,
@@ -163,6 +163,8 @@ class Lifecycle():
         self.n_employment,self.n_acts=self.env.get_n_states()
         self.version = self.env.get_lc_version()
         self.minimal = self.env.get_minimal()
+        self.max_age = self.env.get_lc_maxage()
+        #print('maxage',self.max_age)
 
         self.inv_timestep=int(np.round(1/self.timestep)) # pitäisi olla kokonaisluku
         self.n_age = self.max_age-self.min_age+1
@@ -243,6 +245,7 @@ class Lifecycle():
     
         self.min_age = 18
         self.max_age = 75
+
         self.figformat='pdf'
         self.minimal=False
         self.timestep=0.25
@@ -515,9 +518,9 @@ class Lifecycle():
             elif key=='min_age':
                 if value is not None:
                     self.min_age=value
-            elif key=='max_age':
-                if value is not None:
-                    self.max_age=value
+            #elif key=='max_age':
+            #    if value is not None:
+            #        self.max_age=value
             elif key=='silent':
                 if value is not None:
                     self.silent=value

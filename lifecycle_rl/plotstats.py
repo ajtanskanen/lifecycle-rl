@@ -2172,7 +2172,7 @@ class PlotStats():
                     y2 = c7,label2 = 'Alle 7v lapset',
                     y3 = c18,label3 = 'Alle 18v lapset',
                     ylabel = 'Lapsia (lkm)',
-                    show_legend = True)
+                    show_legend = True, max_age=75)
 
         x,c3,c7,c18,c_vrt = self.episodestats.comp_children_ages()
         vrt_c18 = self.empstats.children_ages()
@@ -2821,24 +2821,27 @@ class PlotStats():
 
     def plot_y(self,y1,y2 = None,y3 = None,y4 = None,label = '',ylabel = '',label2 = None,label3 = None,label4 = None,
             ylimit = None,show_legend = False,start_from = None,end_at = None,figname = None,
-            yminlim = None,ymaxlim = None,grayscale = False,title = None,reverse = False):
+            yminlim = None,ymaxlim = None,grayscale = False,title = None,reverse = False, max_age = None):
         
+        if max_age is None:
+            max_age = self.max_age
+
         fig,ax = plt.subplots()
         if start_from is None:
-            x = np.linspace(self.min_age,self.max_age,self.n_time)
-        else:
-            if end_at is None:
-                end_at = self.max_age
-            x_n = end_at-start_from+1
-            x_t = int(np.round((x_n-1)*self.inv_timestep))#+2
-            x = np.linspace(start_from,self.max_age,x_t)
-            y1 = y1[self.map_age(start_from):self.map_age(end_at)]
-            if y2 is not None:
-                y2 = y2[self.map_age(start_from):self.map_age(end_at)]
-            if y3 is not None:
-                y3 = y3[self.map_age(start_from):self.map_age(end_at)]
-            if y4 is not None:
-                y4 = y4[self.map_age(start_from):self.map_age(end_at)]
+            start_from = self.min_age
+
+        if end_at is None:
+            end_at = max_age
+        x_n = end_at-start_from+1
+        x_t = int(np.round((x_n-1)*self.inv_timestep))#+2
+        x = np.linspace(start_from,max_age,x_t)
+        y1 = y1[self.map_age(start_from):self.map_age(end_at)]
+        if y2 is not None:
+            y2 = y2[self.map_age(start_from):self.map_age(end_at)]
+        if y3 is not None:
+            y3 = y3[self.map_age(start_from):self.map_age(end_at)]
+        if y4 is not None:
+            y4 = y4[self.map_age(start_from):self.map_age(end_at)]
 
         if grayscale:
             pal = sns.light_palette("black", 8, reverse = True)
@@ -2846,7 +2849,7 @@ class PlotStats():
             pal = sns.color_palette("hls", self.n_employment)  # hls, husl, cubehelix
             
         if start_from is None:
-            ax.set_xlim(self.min_age,self.max_age)
+            ax.set_xlim(self.min_age,max_age)
         else:
             ax.set_xlim(start_from,end_at)
 

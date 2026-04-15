@@ -17,15 +17,13 @@ import matplotlib as mpl
 import seaborn as sns
 import json
 import ast
-from scipy.stats import norm
-#import locale
 from tabulate import tabulate
 import pandas as pd
 import scipy.optimize
 from tqdm import tqdm_notebook as tqdm
 from . empstats import Empstats
 from fin_benefits import Labels
-from scipy.stats import gaussian_kde
+from scipy.stats import gaussian_kde,norm
 from .utils import empirical_cdf,print_html,modify_offsettext,NpEncoder
 from datetime import datetime
 
@@ -296,6 +294,7 @@ class EpisodeStats():
         self.infostats_puoliso = np.zeros((self.n_time,n_emps),dtype = np.int64)
         self.infostats_yksinhuoltaja = np.zeros((self.n_time,1),dtype = np.int64)
         self.infostats_lapsiperheita = np.zeros((self.n_time,1),dtype = np.int64)
+        self.infostats_humancapital = np.zeros((self.n_time,1),dtype = np.float)
         self.infostats_sairausvakuutus = np.zeros((self.n_time,1))
         self.infostats_sairausvakuutus_group = np.zeros((self.n_time,self.n_groups))
         self.infostats_pvhoitomaksu = np.zeros((self.n_time,1),dtype=float)
@@ -670,18 +669,18 @@ class EpisodeStats():
                 self.popunemprightleft[t,n] = -self.env.unempright_left(newemp,tis,bu,a2,ura)
                 self.popunemprightused[t,n] = bu
                 self.infostats_pop_wage[t,n] = newsal
-                self.infostats_unempwagebasis[t,n] = uw
-                self.infostats_unempwagebasis_acc[t,n] = uwr
+                #self.infostats_unempwagebasis[t,n] = uw
+                #self.infostats_unempwagebasis_acc[t,n] = uwr
                 self.infostats_pop_toe[t,n] = toe
                 self.infostats_pop_pinkslip[t,n] = pink
                 self.infostats_pop_pension[t,n] = newpen
-                self.infostats_pop_children_under3[t,n] = c3
-                self.infostats_pop_children_under7[t,n] = c7
-                self.infostats_pop_children_under18[t,n] = c18
+                #self.infostats_pop_children_under3[t,n] = c3
+                #self.infostats_pop_children_under7[t,n] = c7
+                #self.infostats_pop_children_under18[t,n] = c18
 
-            self.infostats_children_under3[t,newemp] += c3
-            self.infostats_children_under7[t,newemp] += c7
-            self.infostats_children_under18[t,newemp] += c18
+            #self.infostats_children_under3[t,newemp] += c3
+            #self.infostats_children_under7[t,newemp] += c7
+            #self.infostats_children_under18[t,newemp] += c18
 
             if q is not None:
                 self.add_taxes(t,q,newemp,n,g)
@@ -1947,7 +1946,7 @@ class EpisodeStats():
             _,_,_,_,_,_,_,_,_,_,\
             _,_,_,_,_,_,_,_,_,_,\
             _,_,_,_,_,_,_,_,_,_,_,_,_,_,\
-            _,_,_,_,_,_\
+            _,_,_,_,_,_,_,_\
             =self.env.states.state_decode(state) # current employment state
             
         newemp,g,p_g,newpen,newsal,a2,tis,paidpens,pink,toe,toek,\
@@ -1957,7 +1956,8 @@ class EpisodeStats():
             p_toe,p_toekesto,p_ura,p_tis,p_pink,p_ove,kansanelake,p_kansanelake,te_maksussa,p_te_maksussa,\
             nw,old_pw,s_old_pw,pt_act,s_pt_act,wbasis,s_wbasis,m_lleft,s_lleft,m_ud,s_ud,\
             time_to_marriage,time_to_divorce,until_birth,\
-            main_until_student,spouse_until_student,main_until_outsider,spouse_until_outsider,main_karenssi,spouse_karenssi\
+            main_until_student,spouse_until_student,main_until_outsider,spouse_until_outsider,main_karenssi,spouse_karenssi,\
+            main_hc,p_hc\
             =self.env.states.state_decode(newstate)
 
         t=round((a2-self.min_age)*self.inv_timestep)#-1
@@ -2009,6 +2009,7 @@ class EpisodeStats():
                 self.infostats_ove[t,newemp] += ove
                 self.infostats_ove_g[t,newemp,g] += ove
                 self.infostats_puoliso[t,newemp] += puoliso
+                self.infostats_humancapital[t] += main_hc
                 if c18>0 and puoliso<1 and p_tila == 15: # mies yksinhuoltaja, jos puoliso kuollut
                     self.infostats_yksinhuoltaja[t] += 1
                     self.infostats_lapsiperheita[t] += 1
@@ -2052,6 +2053,7 @@ class EpisodeStats():
                 self.infostats_ove[t,p_tila] += p_ove
                 self.infostats_ove_g[t,p_tila,p_g] += p_ove
                 self.infostats_puoliso[t,p_tila] += puoliso
+                self.infostats_humancapital[t] += p_hc
                 if c18>0 and puoliso<1:
                     self.infostats_yksinhuoltaja[t] += 1
                     self.infostats_lapsiperheita[t] += 1
@@ -2538,6 +2540,7 @@ class EpisodeStats():
             _ = f.create_dataset('infostats_puoliso', data=self.infostats_puoliso,  dtype=ftype,compression="gzip", compression_opts=9)
             _ = f.create_dataset('infostats_yksinhuoltaja', data=self.infostats_yksinhuoltaja,  dtype=ftype,compression="gzip", compression_opts=9)
             _ = f.create_dataset('infostats_lapsiperheita', data=self.infostats_lapsiperheita,  dtype=ftype,compression="gzip", compression_opts=9)
+            _ = f.create_dataset('infostats_humancapital', data=self.infostats_humancapital,  dtype=ftype,compression="gzip", compression_opts=9)
 
         if self.version in self.ptmodels:
             _ = f.create_dataset('infostats_pt_act', data=self.infostats_pt_act,  dtype=int,compression="gzip", compression_opts=9)
@@ -2746,10 +2749,8 @@ class EpisodeStats():
             self.infostats_irr=f['infostats_irr_tyel_full'][()]
             self.infostats_irr=f['infostats_irr_tyel_reduced'][()]
 
-        #if 'infostats_chilren7' in f.keys():
-        #    self.infostats_chilren7=f['infostats_chilren7'][()]
-        #if 'infostats_chilren18' in f.keys():
-        #    self.infostats_chilren18=f['infostats_chilren18'][()]
+        if 'infostats_humancapital' in f.keys():
+            infostats_humancapital=f['infostats_humancapital'][()]
 
         if 'infostats_group' in f.keys():
             self.infostats_group=f['infostats_group'][()]
@@ -2941,17 +2942,35 @@ class EpisodeStats():
         '''
         scalex = self.get_scalex(gender=gender,g=g)
 
+        q={}
         if gender:
             if g == 0:
                 gr = range(0,3)
             else:
                 gr = range(3,6)
-
-        q={}
-
-        if gender:
             q[self.labels['tyotulosumma']] = np.sum(np.sum(self.infostats_palkkatulo_group[:,gr],axis=1,keepdims=True)*scalex)
             q[self.labels['etuusmeno']] = np.sum(np.sum(self.infostats_etuustulo_group[:,gr],axis=1,keepdims=True)*scalex)
+            q[self.labels['valtionvero']] = np.sum(np.sum(self.infostats_valtionvero_group[:,gr],axis=1,keepdims=True)*scalex)
+            q[self.labels['kunnallisvero']] = np.sum(np.sum(self.infostats_kunnallisvero_group[:,gr],axis=1,keepdims=True)*scalex) 
+            q[self.labels['ptel']] = np.sum(np.sum(self.infostats_ptel_group[:,gr],axis=1,keepdims=True)*scalex)
+            q[self.labels['tyottomyysvakuutusmaksu']] = np.sum(np.sum(self.infostats_tyotvakmaksu_group[:,gr],axis=1,keepdims=True)*scalex)
+            q[self.labels['tyottomyyspvraha']] = np.sum(np.sum(self.infostats_tyotpvraha_group[:,gr],axis=1,keepdims=True)*scalex)
+            q[self.labels['ansiopvraha']] = np.sum(np.sum(self.infostats_ansiopvraha_group[:,gr],axis=1,keepdims=True)*scalex)
+            q[self.labels['peruspvraha']] = np.sum(np.sum(self.infostats_peruspvraha_group[:,gr],axis=1,keepdims=True)*scalex)
+            q[self.labels['asumistuki']] = np.sum(np.sum(self.infostats_asumistuki_group[:,gr],axis=1,keepdims=True)*scalex)
+            q[self.labels['tyoelakemeno']] = np.sum(np.sum(self.infostats_tyoelake_group[:,gr],axis=1,keepdims=True)*scalex)
+            q[self.labels['tyokyvyttomyyselakemeno']] = np.sum(np.sum(self.infostats_tkelake_group[:,gr],axis=1,keepdims=True)*scalex)
+            q[self.labels['osittainenvanhuuselakemeno']] = np.sum(np.sum(self.infostats_oveelake_group[:,gr],axis=1,keepdims=True)*scalex)
+            q[self.labels['vanhuuselakemeno']] = np.sum(np.sum(self.infostats_veelake_group[:,gr],axis=1,keepdims=True)*scalex)
+            q[self.labels['kansanelakemeno']] = np.sum(np.sum(self.infostats_kansanelake_group[:,gr],axis=1,keepdims=True)*scalex)
+            q[self.labels['kokoelakemeno']] = np.sum(np.sum(self.infostats_kokoelake_group[:,gr],axis=1,keepdims=True)*scalex)
+            q[self.labels['tyoelakemaksu']] = np.sum(np.sum(self.infostats_tyelpremium_group[:,gr],axis=1,keepdims=True)*scalex)
+            q[self.labels['opintotuki']] = np.sum(np.sum(self.infostats_opintotuki_group[:,gr],axis=1,keepdims=True)*scalex)
+            q[self.labels['kotihoidontuki']] = np.sum(np.sum(self.infostats_kotihoidontuki_group[:,gr],axis=1,keepdims=True)*scalex)
+            q[self.labels['sairauspaivaraha']] = np.sum(np.sum(self.infostats_sairauspaivaraha_group[:,gr],axis=1,keepdims=True)*scalex)
+            q[self.labels['toimeentulotuki']] = np.sum(np.sum(self.infostats_toimeentulotuki_group[:,gr],axis=1,keepdims=True)*scalex)
+            q[self.labels['sairausvakuutusmaksu']] = np.sum(np.sum(self.infostats_sairausvakuutus_group[:,gr],axis=1,keepdims=True)*scalex)
+            q[self.labels['ylevero']] = np.sum(np.sum(self.infostats_ylevero_group[:,gr],axis=1,keepdims=True)*scalex)
         else:
             q[self.labels['tyotulosumma']] = np.sum(self.infostats_palkkatulo*scalex)
             q[self.labels['tyotulosumma eielakkeella']] = np.sum(self.infostats_palkkatulo_eielakkeella*scalex)
@@ -2961,17 +2980,6 @@ class EpisodeStats():
             q[self.labels['tyotulosumma kokoaika']] = np.sum((self.infostats_palkkatulo_emp[:,1]+self.infostats_palkkatulo_emp[:,9])*scalex[:,0])
             q[self.labels['etuusmeno']] = np.sum(self.infostats_etuustulo*scalex)
             q[self.labels['palkkaverot+maksut']] = np.sum(self.infostats_wagetaxes*scalex)
-
-        if gender:    
-            q[self.labels['valtionvero']] = np.sum(np.sum(self.infostats_valtionvero_group[:,gr],axis=1,keepdims=True)*scalex)
-            q[self.labels['kunnallisvero']] = np.sum(np.sum(self.infostats_kunnallisvero_group[:,gr],axis=1,keepdims=True)*scalex) 
-            q[self.labels['ptel']] = np.sum(np.sum(self.infostats_ptel_group[:,gr],axis=1,keepdims=True)*scalex)
-            q[self.labels['tyottomyysvakuutusmaksu']] = np.sum(np.sum(self.infostats_tyotvakmaksu_group[:,gr],axis=1,keepdims=True)*scalex)
-            q[self.labels['tyottomyyspvraha']] = np.sum(np.sum(self.infostats_tyotpvraha_group[:,gr],axis=1,keepdims=True)*scalex)
-            q[self.labels['ansiopvraha']] = np.sum(np.sum(self.infostats_ansiopvraha_group[:,gr],axis=1,keepdims=True)*scalex)
-            q[self.labels['peruspvraha']] = np.sum(np.sum(self.infostats_peruspvraha_group[:,gr],axis=1,keepdims=True)*scalex)
-            q[self.labels['asumistuki']] = np.sum(np.sum(self.infostats_asumistuki_group[:,gr],axis=1,keepdims=True)*scalex)
-        else:
             q[self.labels['valtionvero']] = np.sum(self.infostats_valtionvero*scalex)
             q[self.labels['kunnallisvero']] = np.sum(self.infostats_kunnallisvero*scalex)
             q[self.labels['ptel']] = np.sum(self.infostats_ptel*scalex)
@@ -2980,18 +2988,6 @@ class EpisodeStats():
             q[self.labels['ansiopvraha']] = np.sum(self.infostats_ansiopvraha*scalex)
             q[self.labels['peruspvraha']] = np.sum(self.infostats_peruspvraha*scalex)
             q[self.labels['asumistuki']] = np.sum(self.infostats_asumistuki*scalex)
-
-        if self.include_perustulo:
-            q[self.labels['perustulo']] = np.sum(self.infostats_perustulo*scalex)
-
-        if gender:    
-            q[self.labels['tyoelakemeno']] = np.sum(np.sum(self.infostats_tyoelake_group[:,gr],axis=1,keepdims=True)*scalex)
-            q[self.labels['tyokyvyttomyyselakemeno']] = np.sum(np.sum(self.infostats_tkelake_group[:,gr],axis=1,keepdims=True)*scalex)
-            q[self.labels['osittainenvanhuuselakemeno']] = np.sum(np.sum(self.infostats_oveelake_group[:,gr],axis=1,keepdims=True)*scalex)
-            q[self.labels['vanhuuselakemeno']] = np.sum(np.sum(self.infostats_veelake_group[:,gr],axis=1,keepdims=True)*scalex)
-            q[self.labels['kansanelakemeno']] = np.sum(np.sum(self.infostats_kansanelake_group[:,gr],axis=1,keepdims=True)*scalex)
-            q[self.labels['kokoelakemeno']] = np.sum(np.sum(self.infostats_kokoelake_group[:,gr],axis=1,keepdims=True)*scalex)
-        else:
             q[self.labels['tyoelakemeno']] = np.sum(self.infostats_tyoelake*scalex)
             q[self.labels['tyokyvyttomyyselakemeno']] = np.sum(self.infostats_tkelake*scalex)
             q[self.labels['osittainenvanhuuselakemeno']] = np.sum(self.infostats_oveelake*scalex)
@@ -3000,18 +2996,6 @@ class EpisodeStats():
             q[self.labels['kokoelakemeno']] = np.sum(self.infostats_kokoelake*scalex)
             q[self.labels['elatustuki']] = np.sum(self.infostats_elatustuki*scalex)
             q[self.labels['lapsilisa']] = np.sum(self.infostats_lapsilisa*scalex) #*17/18 skaalaus korjaisi sen, että lapsilisää maksetaan liian pitkään mallissa (FIXME)
-
-        q[self.labels['takuuelakemeno']] = q[self.labels['kokoelakemeno']]-q[self.labels['tyoelakemeno']]-q[self.labels['kansanelakemeno']]
-
-        if gender: 
-            q[self.labels['tyoelakemaksu']] = np.sum(np.sum(self.infostats_tyelpremium_group[:,gr],axis=1,keepdims=True)*scalex)
-            q[self.labels['opintotuki']] = np.sum(np.sum(self.infostats_opintotuki_group[:,gr],axis=1,keepdims=True)*scalex)
-            q[self.labels['kotihoidontuki']] = np.sum(np.sum(self.infostats_kotihoidontuki_group[:,gr],axis=1,keepdims=True)*scalex)
-            q[self.labels['sairauspaivaraha']] = np.sum(np.sum(self.infostats_sairauspaivaraha_group[:,gr],axis=1,keepdims=True)*scalex)
-            q[self.labels['toimeentulotuki']] = np.sum(np.sum(self.infostats_toimeentulotuki_group[:,gr],axis=1,keepdims=True)*scalex)
-            q[self.labels['sairausvakuutusmaksu']] = np.sum(np.sum(self.infostats_sairausvakuutus_group[:,gr],axis=1,keepdims=True)*scalex)
-            q[self.labels['ylevero']] = np.sum(np.sum(self.infostats_ylevero_group[:,gr],axis=1,keepdims=True)*scalex)
-        else:
             q[self.labels['tyoelakemaksu']] = np.sum(self.infostats_tyelpremium*scalex)
             q[self.labels['opintotuki']] = np.sum(self.infostats_opintotuki*scalex)
             q[self.labels['kotihoidontuki']] = np.sum(self.infostats_kotihoidontuki*scalex)
@@ -3019,6 +3003,11 @@ class EpisodeStats():
             q[self.labels['toimeentulotuki']] = np.sum(self.infostats_toimeentulotuki*scalex)
             q[self.labels['sairausvakuutusmaksu']] = np.sum(self.infostats_sairausvakuutus*scalex)
             q[self.labels['ylevero']] = np.sum(self.infostats_ylevero*scalex)
+
+        if self.include_perustulo:
+            q[self.labels['perustulo']] = np.sum(self.infostats_perustulo*scalex)
+
+        q[self.labels['takuuelakemeno']] = q[self.labels['kokoelakemeno']]-q[self.labels['tyoelakemeno']]-q[self.labels['kansanelakemeno']]
 
         q[self.labels['isyyspaivaraha']] = np.sum(self.infostats_isyyspaivaraha*scalex)
         q[self.labels['aitiyspaivaraha']] = np.sum(self.infostats_aitiyspaivaraha*scalex)
@@ -3111,7 +3100,7 @@ class EpisodeStats():
 
         for t in range(0,self.n_time):
             for k in range(0,self.n_pop,2):
-                if self.infostats_pop_puoliso[t,n]>0:
+                if self.infostats_pop_puoliso[t,k]>0:
                     if self.popempstate[t,k] != 15 and self.popempstate[t,k+1] != 15:
                         paino = 1.0 + 0.5 + 0.3 * self.infostats_pop_children_under18[t,k]
                         data[t,n_fam] = (self.infostats_poptulot_netto[t,k]+self.infostats_poptulot_netto[t,k+1])/paino
@@ -3441,8 +3430,9 @@ class EpisodeStats():
             l=low[n]
             h=high[n]
             emp_htv2 = np.sum(self.episodestats.emp_htv,axis=1)
+            # FIXME
             htv,tyollvaikutus,tyollaste,tyotosuus,tyottomat,osatyollaste=\
-                self.comp_unemp_simstats_agegroups(self.empstate,scale_time=True,start=l,end=h,agegroups=True,emp_htv=emp_htv2)
+                self.comp_unemp_simstats_agegroups(self.empstate,scale_time=True,start=l,end=h,emp_htv=emp_htv2)
             ps,ps_norw=self.comp_palkkasumma(start=l,end=h)
 
             if doprint:
@@ -3486,7 +3476,7 @@ class EpisodeStats():
             tyossa=emp[:,1]/nn
             osatyossa=0*tyossa
 
-        osatyo_osuus=self.comp_state_stats(osatyo_osuus,start=start,end=end)
+        osatyo_osuus=self.comp_state_stats(osatyossa,start=start,end=end)
         kokotyo_osuus=1-osatyo_osuus
 
         return kokotyo_osuus,osatyo_osuus
@@ -3498,6 +3488,8 @@ class EpisodeStats():
             else:
                 emp=self.empstate
 
+        osatyo_osuus=0
+        kokotyo_osuus=0
         if self.minimal:
             nn = np.sum(emp,1)
             kokotyo_osuus=(emp[:,1])/nn
@@ -3522,8 +3514,8 @@ class EpisodeStats():
         Palauta lasten määrä ikäryhmittäin
         '''
         min_cage = self.min_age
-        max_cage = self.max_age+self.timestep
-        x = np.arange(self.min_age,self.max_age+self.timestep,1.0)
+        max_cage = min(75,self.max_age)+self.timestep
+        x = np.arange(self.min_age,max_cage,1.0)
         c3,c7,c18,c_vrt = self.comp_children()
         c3 = self.sum_q_to_a(c3) # annualize
         c7 = self.sum_q_to_a(c7) # annualize
@@ -3535,13 +3527,13 @@ class EpisodeStats():
         demog2=self.empstats.get_demog()
 
         start=self.min_age
-        end=self.max_age
+        end=min(75,self.max_age)
         min_cage=self.map_age(start)
         max_cage=self.map_age(end)+2
         scalex=np.sum(demog2[min_cage:max_cage])/np.sum(self.alive[min_cage:max_cage])
         
         data = np.ravel(self.infostats_pop_children_under18[min_cage:max_cage,:])
-        h, edges = np.histogram(data,density=False,range=(0.5,10.5),bins=9)
+        h, edges = np.histogram(data,density=False,range=(0.5,10.5),bins=9)     
 
         return h*scalex, edges
 
@@ -4026,9 +4018,9 @@ class EpisodeStats():
             scale=1.0
 
         start = self.min_age
-        end = self.max_age
+        end = min(75,self.max_age)
         min_cage = self.map_age(start)
-        max_cage = self.map_age(end)+2
+        max_cage = self.map_age(end)+1
 
         scalex = demog2[min_cage:max_cage]/self.alive[min_cage:max_cage]
 
@@ -4154,7 +4146,8 @@ class EpisodeStats():
                 q[self.labels['lapsiperheitä']] = np.sum(np.sum(self.infostats_lapsiperheita,axis=1)*scalex)                
                 q[self.labels['kuolleet 65-70']] = np.sum(emp[self.map_age(65):self.map_age(70),15])
                 q[self.labels['outsider 65-70']] = np.sum(emp[self.map_age(65):self.map_age(70),11])
-        else:
+        else: # FIXME
+            scalex = np.squeeze(demog2/self.alive*self.timestep)
             q[self.labels['yhteensä']] = np.sum(np.sum(self.empstate[:,:],1)*scalex)
             q[self.labels['palkansaajia']] = np.sum((self.empstate[:,1])*scalex)
             q[self.labels['ansiosidonnaisella']] = np.sum((self.empstate[:,0])*scalex)
@@ -5167,11 +5160,12 @@ class EpisodeStats():
                 osatyo=emp[:,3]
             else:
                 osatyo=0
-
+            employed=self.gempstate[:,1,:]
+            unemployed=emp[:,0,:]
             if ratio:
-                workforce=(employed+osatyo+veosatyo+vetyo+unemployed+piped+tyomarkkinatuki)/alive[:,0]
+                workforce=(employed+osatyo+unemployed)/alive[:,0]
             else:
-                workforce=(employed+osatyo+veosatyo+vetyo+unemployed+piped+tyomarkkinatuki)
+                workforce=(employed+osatyo+unemployed)
 
         if not by_age:
             workforce=np.sum(workforce,1)
@@ -5212,9 +5206,9 @@ class EpisodeStats():
                 osatyo=0
 
             if ratio:
-                workforce=(employed+osatyo+veosatyo+vetyo+unemployed+piped+tyomarkkinatuki)/alive[:,0]
+                workforce=(employed+osatyo+unemployed)/alive[:,0]
             else:
-                workforce=(employed+osatyo+veosatyo+vetyo+unemployed+piped+tyomarkkinatuki)
+                workforce=(employed+osatyo+unemployed)
 
         if not by_age:
             workforce=np.sum(workforce,1)
