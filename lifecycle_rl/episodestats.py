@@ -4158,6 +4158,67 @@ class EpisodeStats():
 
         return q
 
+    def comp_participants_by_group(self,scale=True,include_retwork=True,g=0,lkm=False,emp_htv=None):
+        '''
+        Laske henkilöiden lkm / htv
+
+        scalex olettaa, että naisia & miehiä yhtä paljon. Tämän voisi tarkentaa.
+
+        vain uusille malleille
+        '''
+        q={}
+
+        # elif self.version in set([7,8,9,10,11]):
+        retage=self.map_age(self.min_retirementage)
+        kaikkitilat = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16]
+        if lkm:
+            emp = self.scale_by_group(self.gempstate,g=g,axis=2)
+        else:
+            emp = self.scale_by_group(self.emp_htv,g=g,axis=1)
+
+        aikuisia = np.sum(emp[:,kaikkitilat]) # np.sum(np.sum(emp,axis=1)*scalex)
+        if lkm:
+            q[self.labels['yhteensä']] = None
+            q[self.labels['aikuisia']] = aikuisia
+            q[self.labels['lapsia']] = None
+            q[self.labels['työikäisiä 18-62']] = np.sum(emp[self.map_age(18):self.map_age(63),kaikkitilat])
+            q[self.labels['työikäisiä 18-65']] = np.sum(emp[self.map_age(18):self.map_age(65),kaikkitilat])
+
+        q[self.labels['työllisiä 18-62']] = np.sum(emp[self.map_age(18):self.map_age(63),[1,8,9,10]])
+        q[self.labels['työllisiä 18-65']] = np.sum(emp[self.map_age(18):self.map_age(65),[1,8,9,10]])
+        q[self.labels['työllisiä']] = np.sum(emp[:,[1,8,9,10]]) 
+        q[self.labels['työssä 63+']] = np.sum(emp[self.map_age(63):,[1,8,9,10]]) 
+        q[self.labels['työssä 65+']] = np.sum(emp[self.map_age(65):,[1,8,9,10]]) 
+        q[self.labels['työssä ja eläkkeellä']] = np.sum(emp[:,[8,9]]) 
+        if lkm:
+            q[self.labels['eläkkeellä']] = np.sum(emp[:,[2,3,8,9]])
+            q[self.labels['vanhuuseläkkeellä']] = np.sum(emp[retage:,[2,3,8,9]])
+
+        if include_retwork:
+            q[self.labels['palkansaajia']] = np.sum(emp[:,[1,8,9,10]]) 
+        else:
+            q[self.labels['palkansaajia']] = np.sum(emp[:,[1,10]]) 
+
+        q[self.labels['osaaikatyössä']] = np.sum(emp[:,[8,10]]) 
+        q[self.labels['kokoaikatyössä']] = np.sum(emp[:,[1,9]]) 
+        if lkm:
+            q[self.labels['ansiosidonnaisella']] = np.sum(emp[:,[0,4]]) 
+            q[self.labels['tmtuella']] = np.sum(emp[:,13]) 
+            q[self.labels['isyysvapaalla']] = np.sum(emp[:,6]) 
+            q[self.labels['kotihoidontuella']] = np.sum(emp[:,7]) 
+            q[self.labels['työkyvyttömyyseläke']] = np.sum(emp[:retage,3]) 
+            q[self.labels['svpäiväraha']] = np.sum(emp[:,14]) 
+            q[self.labels['vanhempainvapaalla']] = np.sum(emp[:,5]) 
+            q[self.labels['opiskelijoita']] = np.sum(emp[:,[12,16]]) 
+            q[self.labels['ovella']] = None # np.sum(np.sum(self.infostats_ove_g,axis=1)*scalex)  # FIXME
+            q[self.labels['pareja']] = None
+            q[self.labels['yksinhuoltajia']] = None # np.sum(np.sum(self.infostats_yksinhuoltaja,axis=1)*scalex)
+            q[self.labels['lapsiperheitä']] = None
+            q[self.labels['kuolleet 65-70']] = np.sum(emp[self.map_age(65):self.map_age(70),15])
+            q[self.labels['outsider 65-70']] = np.sum(emp[self.map_age(65):self.map_age(70),11])
+
+        return q
+    
     def comp_participants_by_sex(self,scale=True,include_retwork=True,g=0,lkm=False,emp_htv=None):
         '''
         Laske henkilöiden lkm / htv
@@ -4182,10 +4243,13 @@ class EpisodeStats():
             q[self.labels['aikuisia']] = aikuisia
             q[self.labels['lapsia']] = None
             q[self.labels['työikäisiä 18-62']] = np.sum(emp[self.map_age(18):self.map_age(63),kaikkitilat])
+            q[self.labels['työikäisiä 18-65']] = np.sum(emp[self.map_age(18):self.map_age(65),kaikkitilat])
 
         q[self.labels['työllisiä 18-62']] = np.sum(emp[self.map_age(18):self.map_age(63),[1,8,9,10]])
+        q[self.labels['työllisiä 18-65']] = np.sum(emp[self.map_age(18):self.map_age(65),[1,8,9,10]])
         q[self.labels['työllisiä']] = np.sum(emp[:,[1,8,9,10]]) 
         q[self.labels['työssä 63+']] = np.sum(emp[self.map_age(63):,[1,8,9,10]]) 
+        q[self.labels['työssä 65+']] = np.sum(emp[self.map_age(65):,[1,8,9,10]]) 
         q[self.labels['työssä ja eläkkeellä']] = np.sum(emp[:,[8,9]]) 
         if lkm:
             q[self.labels['eläkkeellä']] = np.sum(emp[:,[2,3,8,9]])

@@ -353,6 +353,91 @@ class PlotStats():
         else:
             print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))
 
+    def compare_against_group(self,cc = None,cctext = 'toteuma',selftext = 'base',grayscale = False,to_latex=False):
+        for g in range(6):
+            self.compare_against_g(cc = cc,g=g,cctext = cctext,selftext = selftext,grayscale = grayscale,to_latex=to_latex)
+
+    def compare_against_g(self,cc = None,g=0,cctext = 'toteuma',selftext = 'base',grayscale = False,to_latex=False):
+        '''
+        compare_against_g - compares how group g variables change in a reform.
+        
+        :param self: the first lifecycle class
+        :param cc: the second lifecycle class
+        :param cctext: name of cc
+        :param selftext: name of self
+        :param grayscale: plot figures in grayscale or not
+
+        '''
+        q_group = self.episodestats.comp_participants_by_group(scale = True,lkm = False,g = g)
+        q_lkm_group = self.episodestats.comp_participants_by_group(scale = True,lkm = True,g = g)
+
+        if cc is None:
+            q_stat_group = self.empstats.comp_participants_by_group(scale = True,lkm = True,g = 0)
+            q_days_group = self.empstats.stat_days()
+        else:
+            q_stat_group = cc.episodestats.comp_participants_by_sex(scale = True,lkm = True,g = 0)
+            q_days_group = cc.episodestats.comp_participants_by_sex(scale = True,lkm = False,g = 0)
+
+        df1_men = pd.DataFrame.from_dict(q_group,orient = 'index',columns = [selftext+f' g{g} (py)'])
+        df2_men = pd.DataFrame.from_dict(q_days_group,orient = 'index',columns = [cctext+f' g{g} (py)'])
+        df4_men = pd.DataFrame.from_dict(q_lkm_group,orient = 'index',columns = [selftext+f' g{g} (#)'])
+        df5_men = pd.DataFrame.from_dict(q_stat_group,orient = 'index',columns = [cctext+f' g{g} (#)'])
+
+        df = pd.DataFrame() #df1_men.copy()
+        df['diff men (py)'] = df1_men[selftext+f' g{g} (py)']-df2_men[cctext+f' g{g} (py)']
+
+        print('Group g'+str(g))
+        print('Henkilövuosia töissä väestötasolla')
+        if to_latex:
+            print(df.to_latex(float_format="{:,.0f}".format))
+        else:
+            print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))
+
+        df = df1_men.copy()
+        df[cctext+f' g{g} (py)'] = df2_men[cctext+f' g{g} (py)']
+
+        if to_latex:
+            print(df.to_latex(float_format="{:,.0f}".format))
+        else:
+            print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))
+        df = pd.DataFrame() #df4.copy()
+        df[f'diff g{g}  (#)'] = df4_men[selftext+f' g{g} (#)']-df5_men[cctext+f' g{g} (#)']
+        if to_latex:
+            print(df.to_latex(float_format="{:.0f}".format))
+        else:
+            print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))
+        
+        df = df4_men.copy()
+        df[cctext+' m (#)'] = df5_men[cctext+' men (#)']
+        if to_latex:
+            print(df.to_latex(float_format="{:,.0f}".format))
+        else:
+            print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))
+
+        q_men = self.episodestats.comp_budget(scale = True,gender=True,g=0)
+        q_cc_men = cc.episodestats.comp_budget(scale = True,gender=True,g=0)
+        df1_men = pd.DataFrame.from_dict(q_men,orient = 'index',columns = [selftext+' men (e)'])
+        df2_men = pd.DataFrame.from_dict(q_cc_men,orient = 'index',columns = [cctext+' men (e)'])
+
+        df1_men.loc[:,selftext+' men (e)'] = df1_men.loc[:,selftext+' men (e)'] / 1_000_000
+        df2_men.loc[:,cctext+' men (e)'] = df2_men.loc[:,cctext+' men (e)'] / 1_000_000
+        
+        df = df1_men.copy()
+        df[cctext+' m (e)'] = df2_men[cctext+' men (e)']
+        print('Budget')
+        if to_latex:
+            print(df.to_latex(float_format="{:,.0f}".format))
+        else:
+            print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))
+
+        df = pd.DataFrame()
+        df['diff men (e)'] = df1_men[selftext+' men (e)']-df2_men[cctext+' men (e)']
+        print('Diff Budget')
+        if to_latex:
+            print(df.to_latex(float_format="{:,.0f}".format))
+        else:
+            print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))            
+
 
     def compare_against3(self,cc,cc3,cc4=None,cctext = 'Model A',cc3text='Model B',cc4text=None,selftext = 'baseline',to_latex = False,grayscale = False):
         q = self.episodestats.comp_budget(scale = True)
@@ -484,6 +569,28 @@ class PlotStats():
                 #self.plot_distrib(label = 'Jakauma työvoiman ulkopuoliset',ansiosid = False,tmtuki = False,putki = False,outsider = True)
                 #self.plot_distrib(label = 'Jakauma laaja (ansiosidonnainen+tmtuki+putki+ulkopuoliset)',laaja = True)
             
+    def plot_results_groups(self,grayscale = False,figname = None,palette_EK = True):
+
+        if grayscale:
+            plt.style.use('grayscale')
+            plt.rcParams['figure.facecolor'] = 'white' 
+
+        if palette_EK:
+            csfont,pal = setup_EK_fonts()
+        else:
+            csfont = {}
+
+        print_html('<h1>Statistics</h1>')
+        
+        if self.episodestats.save_pop:
+            net1,eqnet1 = self.episodestats.comp_total_netincome()
+            print(f'netincome {net1:.2f} eq {eqnet1:.3f}')
+
+        self.compare_against()
+
+        print_html('<h2>Simulation stats</h2>')
+        print('Simulated individuals',self.episodestats.n_pop)
+        print('Simulated on',self.episodestats.date_time)
 
 
     def plot_results(self,grayscale = False,figname = None,palette_EK = True):
@@ -3839,6 +3946,12 @@ class PlotStats():
             self.load_sim(load)
 
         self.plot_results(figname = figname,grayscale = grayscale)
+
+    def render_groups(self,load = None,figname = None,grayscale = False):
+        if load is not None:
+            self.load_sim(load)
+
+        self.plot_groups(figname = figname,grayscale = grayscale)
 
     def compare_simfig_no8(self,cc2,label1 = 'perus',label2 = 'vaihtoehto',grayscale = True,figname = None,dash = False,palette_EK = True):
         if grayscale:

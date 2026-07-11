@@ -567,6 +567,13 @@ class Lifecycle():
             self.plotstats.render(figname=figname,grayscale=grayscale)
             #self.episodestats.render(figname=figname,grayscale=grayscale)
 
+    def render_groups(self,load=None,figname=None,grayscale=False):
+        if load is not None:
+            self.episodestats.load_sim(load)
+            self.plotstats.render_groups(figname=figname,grayscale=grayscale)
+        else:
+            self.plotstats.render_groups(figname=figname,grayscale=grayscale)
+
     def render_dist(self,load=None,figname=None,grayscale=False):
         if load is not None:
             self.episodestats.load_sim(load)
