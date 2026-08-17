@@ -1,5 +1,4 @@
-tensorflow==1.15.0
-gym==0.21.0
+h5py
 fin_benefits
 numpy
 gym_unemployment

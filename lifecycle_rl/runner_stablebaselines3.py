@@ -7,20 +7,20 @@ Initial implementation. Works but needs improvement, e.g., no lr_schedule or lea
 
 '''
 
-import gym, numpy as np
+import numpy as np
+import gymnasium as gym
 from stable_baselines3.common.vec_env import SubprocVecEnv,DummyVecEnv
-from stable_baselines3 import ACKTR, A2C, DQN, PPO#, ACKTR
+from stable_baselines3 import A2C, PPO
+from sb3_contrib import ACKTR
 from stable_baselines3.common.env_checker  import check_env as env_checker_check_env
-#from stable_baselines3.bench import Monitor
-#from stable_baselines3.results_plotter import load_results, ts2xy
-#from stable_baselines3 import results_plotter
-#from .vec_monitor import VecMonitor
-#from stable_baselines3.common.policies import FeedForwardPolicy#, register_policy
-#from stable_baselines3.common.policies import MlpPolicy#, register_policy
-from .utils import make_env
+from .utils_v3 import make_env
 import torch as th
+import warnings
+import os
 
-from tqdm import tqdm_notebook as tqdm
+#from tqdm import tqdm_notebook as tqdm
+from tqdm import tqdm as tqdm
+from multiprocessing import Process,Manager
 
 from . episodestats import EpisodeStats
 from . simstats import SimStats
@@ -28,7 +28,7 @@ from . simstats import SimStats
 class runner_stablebaselines3():
     def __init__(self,environment,gamma,timestep,n_time,n_pop,
                  minimal,min_age,max_age,min_retirementage,year,episodestats,
-                 gym_kwargs,version):
+                 gym_kwargs,version,processes=10):
         self.gamma=gamma
         self.timestep=timestep
         self.environment=environment
@@ -41,19 +41,55 @@ class runner_stablebaselines3():
         self.year=year
         self.gym_kwargs=gym_kwargs.copy()
         self.gym_kwargs['silent']=True
+        self.share_features_extractor = True
         
         self.env = gym.make(self.environment,kwargs=self.gym_kwargs)
-        self.n_employment,self.n_acts=self.env.get_n_states()
-        self.state_shape = self.env.observation_space.shape or self.env.observation_space.n
-        self.action_shape = self.env.action_space.shape or self.env.action_space.n
+        self.n_employment,self.n_acts=self.env.unwrapped.get_n_states()
+        self.state_shape = self.env.unwrapped.observation_space.shape or self.env.unwrapped.observation_space.n
+        self.action_shape = self.env.unwrapped.action_space.shape or self.env.unwrapped.action_space.n
+        self.save_pop = gym_kwargs['save_pop']
 
-        self.version = self.env.get_lc_version()
+        self.version = self.env.unwrapped.get_lc_version()
+
+        # n_add = 2
+        self.model_twoperson = set([4,5,6,7,8,9,10,11,12,104]) # self.version
+
+        self.args={'gamma': gamma, 
+              'version': version,
+              'tau': 1.0,
+              'environment': environment,
+              'test': False,
+              'hidden': 256,
+              'n_time': n_time, 
+              'timestep': timestep, 
+              'n_pop': n_pop, 
+              'min_age': min_age, 
+              'max_age': max_age, 
+              'processes': processes,
+              'seed': 1,
+              'debug': False,
+              'lr': 0.01,
+              'n_employment': self.n_employment,
+              'n_acts': self.n_acts,
+              'gym_kwargs': gym_kwargs,
+              'startage': None,
+              'rnn_steps': 20,
+              'horizon': 0.99,
+              'min_retirementage': min_retirementage, 
+              'save_dir': 'results/',
+              'simfile': 'results_'+str(year),
+              'minimal': minimal,
+              'render': False,
+              'parttime_actions': self.env.unwrapped.setup_parttime_actions(),
+              'save_pop': self.save_pop,
+              'state_shape': (self.env.observation_space.shape or self.env.observation_space.n)[0],
+              'year': year}
 
         self.episodestats=episodestats
         #SimStats(self.timestep,self.n_time,self.n_employment,self.n_pop,
         #                       self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,
         #                       version=self.version,params=self.gym_kwargs,year=self.year,gamma=self.gamma)
-        
+
     def check_env(self,env):
         env_checker_check_env(env, warn=True)
 
@@ -63,35 +99,12 @@ class runner_stablebaselines3():
             print('arch',arch)
 
         # multiprocess environment
-        if rlmodel in set(['A2C','a2c']):
-            policy_kwargs = dict(activation_fn=th.nn.ReLU, net_arch=[64, 64, 16],lr_schedule=learning_schedule,learning_rate=learning_rate)
-            n_cpu = 4
-        elif rlmodel in set(['acktr','ACKTR','leaky_acktr']):
-            policy_kwargs = dict(activation_fn=th.nn.LeakyReLU, net_arch=[256, 256, 16],lr_schedule=learning_schedule,learning_rate=learning_rate)
-            if predict:
-                n_cpu = 10
-            else:
-                n_cpu = 10 # 12 # 20
-        elif rlmodel=='ppo': # th.nn.leakyrelu
-            if arch is not None:
-                policy_kwargs = dict(activation_fn=th.nn.LeakyReLU, net_arch=arch,lr_schedule=learning_schedule,learning_rate=learning_rate) 
-            else:
-                policy_kwargs = dict(activation_fn=th.nn.LeakyReLU, net_arch=[256, 256, 16],lr_schedule=learning_schedule,learning_rate=learning_rate) 
-            if predict:
-                n_cpu = 20
-            else:
-                n_cpu = 10
-        elif rlmodel in set(['dqn','DQN']): # th.nn.leakyrelu
-            if arch is not None:
-                policy_kwargs = dict(activation_fn=th.nn.LeakyReLU, net_arch=arch,lr_schedule=learning_schedule,learning_rate=learning_rate) 
-            else:
-                policy_kwargs = dict(activation_fn=th.nn.LeakyReLU, net_arch=[256, 256, 16],lr_schedule=learning_schedule,learning_rate=learning_rate) 
-            if predict:
-                n_cpu = 20
-            else:
-                n_cpu = 10
+        if arch is not None:
+            policy_kwargs = dict(activation_fn=th.nn.LeakyReLU, net_arch=arch, share_features_extractor=self.share_features_extractor) 
         else:
-            error('Unknown rlmodel')
+            policy_kwargs = dict(activation_fn=th.nn.LeakyReLU, net_arch=[256, 256, 16], share_features_extractor=self.share_features_extractor) 
+            
+        n_cpu = 10
 
         if debug:
             n_cpu=1
@@ -100,7 +113,7 @@ class runner_stablebaselines3():
 
     def setup_rlmodel(self,rlmodel,loadname,env,batch,policy_kwargs,learning_rate,
                       cont,max_grad_norm=None,tensorboard=False,verbose=2,n_cpu=1,
-                      learning_schedule='linear',vf=None,gae_lambda=0.9):
+                      learning_schedule='linear',vf=None,gae_lambda=0.9,device="cpu",entcoef=None):
         '''
         Alustaa RL-mallin ajoa varten
         
@@ -108,56 +121,66 @@ class runner_stablebaselines3():
         '''
         batch=max(1,int(np.ceil(batch/n_cpu)))
         
-        full_tensorboard_log=True
+        full_tensorboard_log=False
+        vf_coef=0.1
+
         if vf is not None:
             vf_coef=vf
+
+        if entcoef is None:
+            ent_coef=0.01 
         else:
-            vf_coef=0.10 # baseline 0.25, best 0.10
+            ent_coef=entcoef 
 
         if max_grad_norm is None:
-            max_grad_norm=0.05
+            max_grad_norm=0.05 # default 0.50
             
-        max_grad_norm=0.001 # ok?
+        max_grad_norm=0.1 # 0.05 # 0.01 # 0.001  was old
         kfac_clip=0.001
         
         if cont:
             learning_rate=0.25*learning_rate
             
-        #scaled_learning_rate=learning_rate*np.sqrt(batch)
-        scaled_learning_rate=learning_rate#*batch
+        scaled_learning_rate=learning_rate
         print('batch {} learning rate {} scaled {} n_cpu {}'.format(batch,learning_rate,
             scaled_learning_rate,n_cpu))
-            
-        #TIMESTEPS = batch*self.n_time
-        #sched_LR = LinearSchedule(TIMESTEPS, scaled_learning_rate, scaled_learning_rate/100)
 
         if cont:
             if rlmodel in set(['ppo','PPO']):
-                model = PPO.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time,kfac_clip=kfac_clip,
-                                   vf_coef=vf_coef,gae_lambda=gae_lambda,policy_kwargs=policy_kwargs,max_grad_norm=max_grad_norm)
+                learn_steps = batch * 16
+                model = PPO.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,learning_rate=scaled_learning_rate,
+                                   vf_coef=vf_coef,gae_lambda=gae_lambda,policy_kwargs=policy_kwargs,max_grad_norm=max_grad_norm,device=device)
             elif rlmodel in set(['acktr','ACKTR','leaky_acktr']):
-                model = ACKTR.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time,kfac_clip=kfac_clip,
-                                   vf_coef=vf_coef,gae_lambda=gae_lambda,policy_kwargs=policy_kwargs,max_grad_norm=max_grad_norm)
+                learn_steps = batch * 16
+                model = ACKTR.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,kfac_clip=kfac_clip,learning_rate=scaled_learning_rate,ent_coef=ent_coef,
+                                   vf_coef=vf_coef,gae_lambda=gae_lambda,max_grad_norm=max_grad_norm,device=device)
+            elif rlmodel in set(['a2c','A2C']):
+                learn_steps = batch * 4
+                model = A2C.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,learning_rate=scaled_learning_rate,device=device)
             else:
-                model = A2C.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time,policy_kwargs=policy_kwargs)
+                raise ValueError('Unknown rlmodel')
         else:
             if rlmodel in set(['ppo','PPO']):
-                model = PPO('MlpPolicy', env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time,kfac_clip=kfac_clip,
-                            max_grad_norm=max_grad_norm,gae_lambda=gae_lambda,vf_coef=vf_coef,policy_kwargs=policy_kwargs)
+                learn_steps = batch * 16
+                model = PPO('MlpPolicy', env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,learning_rate=scaled_learning_rate,
+                            max_grad_norm=max_grad_norm,gae_lambda=gae_lambda,vf_coef=vf_coef,policy_kwargs=policy_kwargs,device=device)
             elif rlmodel in set(['acktr','ACKTR','leaky_acktr']):
-                model = ACKTR('MlpPolicy', env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time,kfac_clip=kfac_clip,
-                            max_grad_norm=max_grad_norm,gae_lambda=gae_lambda,vf_coef=vf_coef,policy_kwargs=policy_kwargs)
+                learn_steps = batch * 16
+                model = ACKTR('MlpPolicy', env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,kfac_clip=kfac_clip,learning_rate=scaled_learning_rate,ent_coef=ent_coef,
+                            max_grad_norm=max_grad_norm,gae_lambda=gae_lambda,vf_coef=vf_coef,policy_kwargs=policy_kwargs,device=device)
+            elif rlmodel in set(['a2c','A2C']):
+                learn_steps = batch * 4
+                model = A2C('MlpPolicy', env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,learning_rate=scaled_learning_rate,policy_kwargs=policy_kwargs,device=device)
             else:
-                model = A2C('MlpPolicy', env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time)#,policy_kwargs=policy_kwargs)
+                raise ValueError('Unknown rlmodel')
                             
         return model
         
-
     def train(self,train=False,debug=False,steps=20_000,cont=False,rlmodel='dqn',
                 save='saved/malli',pop=None,batch=1,max_grad_norm=None,learning_rate=0.25,
                 start_from=None,max_n_cpu=1000,use_vecmonitor=False,
-                bestname='tmp/best2',use_callback=False,log_interval=100,verbose=2,plotdebug=False,
-                learning_schedule='linear',vf=None,arch=None,gae_lambda=None):
+                bestname='tmp/best2',use_callback=False,log_interval=100,verbose=1,plotdebug=False,
+                learning_schedule='linear',vf=None,arch=None,gae_lambda=None,processes=None,entcoef=None):
         '''
         Opetusrutiini
         '''
@@ -169,15 +192,25 @@ class runner_stablebaselines3():
         self.rlmodel=rlmodel
         self.bestname=bestname
 
-        self.episodestats.reset(self.timestep,self.n_time,self.n_employment,self.n_pop,
+        print('rlmodel',rlmodel)
+
+        if processes is not None:
+            self.args['processes']=processes
+
+        pop=1 # self.n_pop
+        self.episodestats.reset(self.timestep,self.n_time,self.n_employment,pop,
                                 self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year)
 
         # multiprocess environment
-        policy_kwargs,n_cpu=self.get_multiprocess_env(self.rlmodel,debug=debug,arch=arch,
-            learning_schedule=learning_schedule,learning_rate=learning_rate)  
+        policy_kwargs,n_cpu=self.get_multiprocess_env(self.rlmodel,debug=debug,arch=arch)  
 
         self.savename=save
         n_cpu=min(max_n_cpu,n_cpu)
+
+        if self.args['processes'] is not None:
+            n_cpu = min(self.args['processes'],n_cpu)
+
+        print('n_cpu',n_cpu)
 
         if debug:
             print('use_vecmonitor',use_vecmonitor)
@@ -190,24 +223,11 @@ class runner_stablebaselines3():
         if nonvec:
             env=self.env
         else:
-            if use_vecmonitor:
-                env = SubprocVecEnv([lambda: make_env(self.environment, i, gkwargs, use_monitor=False) for i in range(n_cpu)], start_method='spawn')
-                #env = VecMonitor(env,filename=self.log_dir+'monitor.csv')
-            else:
-                env = SubprocVecEnv([lambda: make_env(self.environment, i, gkwargs, use_monitor=use_callback) for i in range(n_cpu)], start_method='spawn')
-                #env = ShmemVecEnv([lambda: self.make_env(self.environment, i, gkwargs, use_monitor=use_callback) for i in range(n_cpu)], start_method='fork')
-
-            #if False:
-                #env = DummyVecEnv([lambda: gym.make(self.environment,kwargs=gkwargs) for i in range(n_cpu)])
-
-        normalize=False
-        if normalize:
-            normalize_kwargs={}
-            env = VecNormalize(env, **normalize_kwargs)
+            env = SubprocVecEnv([lambda: make_env(self.environment, i, gkwargs) for i in range(n_cpu)], start_method='spawn')
 
         model=self.setup_rlmodel(self.rlmodel,start_from,env,batch,policy_kwargs,learning_rate,
                                 cont,max_grad_norm=max_grad_norm,verbose=verbose,n_cpu=n_cpu,
-                                vf=vf,gae_lambda=gae_lambda)
+                                learning_schedule=learning_schedule,vf=vf,gae_lambda=gae_lambda,entcoef=entcoef)
         print('training..')
 
         if use_callback: # tässä ongelma, vecmonitor toimii => kuitenkin monta callbackia
@@ -219,113 +239,219 @@ class runner_stablebaselines3():
         print('done')
 
         del model,env
-
-#     def save_to_hdf(self,filename,nimi,arr,dtype):
-#         f = h5py.File(filename, 'w')
-#         dset = f.create_dataset(nimi, data=arr, dtype=dtype)
-#         f.close()
-# 
-#     def load_hdf(self,filename,nimi):
-#         f = h5py.File(filename, 'r')
-#         val=f.get(nimi).value
-#         f.close()
-#         return val
         
-    def setup_model(self,debug=False,rlmodel='acktr',plot=True,load=None,pop=None,
-                    deterministic=False,arch=None,predict=False,learning_schedule=None,learning_rate=None):
+    def setup_model(self,env,rank=1,debug=False,rlmodel='acktr',plot=True,load=None,
+                    deterministic=False,arch=None,predict=False,n_cpu_tf_sess=1,entcoef=None,device="cpu"):
 
-        if pop is not None:
-            self.n_pop=pop
-
-        if load is not None:
-            self.loadname=load
-
-        if rlmodel is not None:
-            self.rlmodel=rlmodel
-            
-        print('simulate')
-            
-        self.episodestats.reset(self.timestep,self.n_time,self.n_employment,self.n_pop,
-                                self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year)
-
-        print('simulating ',self.loadname)
+        if rank==0:    
+            print('simulating ',load)
 
         # multiprocess environment
-        policy_kwargs,n_cpu=self.get_multiprocess_env(rlmodel,debug=debug,arch=arch,predict=predict,
-            learning_schedule=learning_schedule,learning_rate=learning_rate)
+        #policy_kwargs,_=self.get_multiprocess_env(rlmodel,debug=debug,arch=arch,predict=predict)
 
-        nonvec=False
-        if nonvec:
-            env=self.env
+        if rlmodel in set(['a2c','A2C']):
+            model = A2C.load(load, env=env, verbose=1,gamma=self.gamma, n_cpu_tf_sess=n_cpu_tf_sess,device=device)
+        elif rlmodel in set(['acktr','small_acktr','lnacktr','small_lnacktr','deep_acktr','leaky_acktr','small_leaky_acktr']):
+            model = ACKTR.load(load, env=env, verbose=1,gamma=self.gamma, n_cpu_tf_sess=n_cpu_tf_sess,device=device,ent_coef=entcoef)
+        elif rlmodel=='custom_acktr':
+            model = ACKTR.load(load, env=env, verbose=1,gamma=self.gamma, n_cpu_tf_sess=n_cpu_tf_sess,ent_coef=entcoef,device=device)
+        elif rlmodel in set(['ppo','PPO']):
+            model = PPO.load(load, env=env, verbose=1,gamma=self.gamma, n_cpu_tf_sess=n_cpu_tf_sess,device=device)
         else:
-            env = SubprocVecEnv([lambda: make_env(self.environment, i, self.gym_kwargs) for i in range(n_cpu)])
+            raise ValueError('unknown model')
 
-        normalize=False
-        if normalize:
-            normalize_kwargs={}
-            env = VecNormalize(env, **normalize_kwargs)
-            
-        print('predicting...')
+        return model
 
-        if self.rlmodel=='a2c':
-            model = A2C.load(load, env=env, verbose=1,gamma=self.gamma, policy_kwargs=policy_kwargs)
-        if self.rlmodel in set(['acktr','ACKTR','leaky_acktr']):
-            model = ACKTR.load(load, env=env, verbose=1,gamma=self.gamma, policy_kwargs=policy_kwargs)
-        elif self.rlmodel=='trpo':
-            model = TRPO.load(load, env=env, verbose=1,gamma=self.gamma, policy_kwargs=policy_kwargs)
-        elif self.rlmodel=='ppo':
-            model = PPO.load(load, env=env, verbose=1,gamma=self.gamma, policy_kwargs=policy_kwargs)
-        elif self.rlmodel in set(['dqn','DQN']):
-            model = DQN.load(load, env=env, verbose=1,gamma=self.gamma)#, policy_kwargs=policy_kwargs)
-        else:
-            error('unknown model')
-
-        return model,env,n_cpu
 
     def simulate(self,debug=False,rlmodel='acktr',load=None,pop=None,startage=None,
-                 deterministic=False,save='results/testsimulate',arch=None):
+                 deterministic=False,save='results/testsimulate',arch=None,set_seed=True,render=False,processes=None):
 
-        model,env,n_cpu=self.setup_model(debug=debug,rlmodel=rlmodel,load=load,pop=pop,
-                 deterministic=deterministic,arch=arch,predict=True)
+        args=self.args.copy()
+        args['debug']=debug
+        args['rlmodel']=rlmodel
+        args['load']=load
+        args['pop']=pop
+        args['startage']=startage
+        args['deterministic']=deterministic
+        args['save']=save
+        args['arch']=arch
+        args['set_seed']=set_seed
+        args['render']=render
+        args['simfile']=save
 
-        states = env.reset()
-        if self.version in set([4,5,104]):  # increase by 2
+        if processes is not None:
+            self.args['processes']=processes
+
+        if render:  
+            self.args['processes'] = 1 
+
+        gkwargs=self.args['gym_kwargs'].copy()
+        gkwargs.update({'train':False})
+        
+        pop = 100 # self.n_pop
+        self.episodestats.reset(self.timestep,self.n_time,self.n_employment,pop,
+                                self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year)
+
+        manager = Manager()
+        info = manager.dict({'pop': 0,'total': args['pop']})
+        processes = []
+
+        print('simulating with',self.args['processes'],'processes')
+        pop_left = args['pop']
+        num_procs = 10 # args['processes']
+        per_process = int(np.ceil(args['pop']/num_procs/2))*2
+        for rank in range(num_procs):
+            sim_num = min(per_process,pop_left)
+            pop_left -= sim_num
+            print('********','rank',rank,'sim_num',sim_num,'pop_left',pop_left)
+            p = Process(target=self.simulate_single, args=(rank, args, gkwargs, sim_num, info))
+            print('started.',rank)
+            p.start()
+            processes.append(p)
+
+        print('switching to join')
+        print(processes)
+            
+        for p in processes: 
+            print('exitcode',p.exitcode)
+            p.join()         
+
+        print('joined.')
+
+        self.combine_episodestats(args)
+        
+        print('done')        
+            
+    def simulate_single(self, rank, args, kwargs, n_pop_single, procinfo):
+        '''
+        An own process for each simulation unit
+        '''
+
+        print('sim_single',rank)
+        
+        render = args['render']
+        print('pop',args['pop'],'procs',args['processes'])
+        deterministic = args['deterministic']
+        debug = args['debug']
+        #savefile=args['save_dir']+args['simfile']+'_rank_'+str(rank)
+        savefile=args['simfile']+'_rank_'+str(rank)
+
+        if rank==0:
+            print('savefile',savefile)
+
+        seed = 20_000 + rank*100 # must not be identical to train seed
+        envlist = [lambda: make_env(args['environment'],seed+i,kwargs=kwargs) for i in range(1)]
+        env = DummyVecEnv(envlist)
+        print('version',env.env_method('get_lc_version',indices=[0])[0])
+
+        env.seed(seed=args['seed'] + rank)
+
+        #if hasattr(env.unwrapped, 'get_lc_twoperson'):
+        if env.env_method('get_lc_twoperson',indices=[0])[0]:
             n_add=2
-            pop_num=np.array([k for k in range(0,n_add*n_cpu,n_add)])
-            n=n_add*(n_cpu-1)
         else:  # increase by 1
-            pop_num=np.array([k for k in range(0,n_cpu,1)])
             n_add=1
-            n=n_cpu-1
-        
-        tqdm_e = tqdm(range(int(self.n_pop/n_add)), desc='Population', leave=True, unit=" p")
-        self.episodestats.init_variables()
-        
-        if startage is not None:
-            self.env.set_startage(startage)
+        #else:
+        #    print('get_lc_twoperson: Fallback')
+        #    if args['version'] in self.model_twoperson:  # increase by 2
+        #        n_add=2
+        #    else:  # increase by 1
+        #        n_add=1
 
-        while np.any(pop_num<self.n_pop):
+        model=self.setup_model(env,rank=rank,debug=args['debug'],rlmodel=args['rlmodel'],load=args['load'],
+                 deterministic=args['deterministic'],arch=args['arch'],predict=True,n_cpu_tf_sess=1)
+
+        if args['startage'] is not None:
+            env.env_method('set_startage',args['startage'])
+
+        #states,infox = env.reset()
+        states = env.reset()
+
+        if rank == 0:
+            print('predict',rank)
+            if render:
+                env.render()
+
+        epienv = gym.make(args['environment'],kwargs=kwargs) # make a local (unshared) environment
+        episodestats = SimStats(args['timestep'],args['n_time'],args['n_employment'],n_pop_single,
+                            epienv,args['minimal'],args['min_age'],args['max_age'],args['min_retirementage'],
+                            version=args['version'],params=args['gym_kwargs'],year=args['year'],gamma=args['gamma'],
+                            silent=True,parttime_actions=args['parttime_actions'],save_pop=args['save_pop'])
+        episodestats.init_variables()
+
+        if rank==0:
+            tqdm_e = tqdm(range(args['pop']), desc='Population', leave=True, unit=" p", total=args['pop'])
+
+        k=0
+        n=0
+        pred=0
+        while n<n_pop_single:
             act, predstate = model.predict(states,deterministic=deterministic)
             newstate, rewards, dones, infos = env.step(act)
-            for k in range(n_cpu):
-                if pop_num[k]<self.n_pop: # do not save extras
-                    if dones[k]:
-                        self.episodestats.add(pop_num[k],act[k],rewards[k],states[k],infos[k]['terminal_observation'],infos[k],debug=debug)
-                        tqdm_e.update(1)
-                        n+=n_add
-                        tqdm_e.set_description("Pop " + str(n))
-                        pop_num[k]=n
-                    else:
-                        self.episodestats.add(pop_num[k],act[k],rewards[k],states[k],newstate[k],infos[k],debug=debug)
+            # 
+            # print('rank',rank,'k',k,'age',state_decode_dict['age'],'n',n,n_pop_single,dones)
+            # newstate,rewards,terminated,truncated,infos = env.step(act)
+            # done = terminated or truncated
+            if n<n_pop_single: # do not save extras
+                if dones[k]:
+                    #state_decode_dict = epienv.unwrapped.states.state_decode_dict(newstate[0])
+                    #print('rank',rank,'k',k,'age',state_decode_dict['age'],'n',n,n_pop_single,dones[0],infos[k]['terminal_observation'])
+                    #print('rank',rank,'k',k,'n',n,n_pop_single)
+                    episodestats.add(n,act[k],rewards[k],states[k],infos[k]['terminal_observation'],infos[k])
+                    # episodestats.add(n,act[k],rewards[k],states[k],newstate[k],infos[k]) # needed?
+                    n += n_add
+                    procinfo['pop'] += n_add
+                    if rank==0:
+                        tqdm_e.update(procinfo['pop']-pred)
+                        tqdm_e.set_description("Pop " + str(procinfo['pop']))
+                        pred = procinfo['pop']
+                    #else:
+                    #    print('rank',rank,'n',n,'pop',procinfo['pop'],'pred',pred)
+                else:
+                    episodestats.add(n,act[k],rewards[k],states[k],newstate[k],infos[k])
     
             states = newstate
 
-        print('saving results...')
+        if rank==0:
+            print('saving results...')
 
-        self.episodestats.scale_sim()
-        self.episodestats.save_sim(save)
+        episodestats.scale_sim()
+        episodestats.save_sim(savefile)
 
+        return 1
+
+
+    def combine_results(self,results=None):
+        print('Combining results...')
+        self.combine_episodestats(self.args,results=results)
         print('done')
 
-        if False:
-            return self.emp        
+    def combine_episodestats(self,args,results=None):
+        if results is None:
+            save=args['simfile']+'_rank_'
+        else:
+            save=results+'_rank_'
+        
+        base=SimStats(args['timestep'],args['n_time'],args['n_employment'],args['n_pop'],
+                            self.env,args['minimal'],args['min_age'],args['max_age'],args['min_retirementage'],
+                            version=args['version'],params=args['gym_kwargs'],year=args['year'],gamma=args['gamma'],
+                            silent=True,save_pop=args['save_pop'])
+        base.load_sim(save+'0')
+        eps=SimStats(args['timestep'],args['n_time'],args['n_employment'],args['n_pop'],
+                            self.env,args['minimal'],args['min_age'],args['max_age'],args['min_retirementage'],
+                            version=args['version'],params=args['gym_kwargs'],year=args['year'],gamma=args['gamma'],
+                            silent=True,save_pop=args['save_pop'])
+        for k in range(1,self.args['processes']):
+            eps.load_sim(save+str(k))
+            base.append_episodestat(eps)
+
+        base.rescale_sim_with_procs(self.args['processes'])
+
+        if results is None:
+            base.save_sim(args['simfile']+'_combined')
+        else:
+            base.save_sim(results+'_combined')
+
+        # remove rank files
+        for k in range(0,self.args['processes']):
+            os.remove(save+str(k))

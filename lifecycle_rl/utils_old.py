@@ -65,6 +65,25 @@ def make_env(env_id, rank, kwargs, seed=None):
 
     return _init()
 
+
+def make_env3(env_id, rank, kwargs, seed=None):
+    """
+    Utility function for multiprocessed env.#
+
+    :param env_id: (str) the environment ID
+    :param seed: (int) the inital seed for RNG
+    :param rank: (int) index of the subprocess
+    """
+    def _init():
+        env = gym.make(env_id,kwargs=kwargs)
+        if seed is not None:
+            env.reset(seed=seed + rank)
+            env.env_seed(seed + rank + 100)
+
+        return env
+
+    return _init()
+
 def empirical_cdf(a):
     # a is the data array
     x = np.sort(a,axis=None)

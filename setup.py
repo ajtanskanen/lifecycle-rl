@@ -1,21 +1,14 @@
-from setuptools import setup
+import fnmatch
+from setuptools import find_packages, setup, Extension
+from setuptools.command.build_py import build_py as build_py_orig
 
 setup(name='lifecycle_rl',
-	version='2.0.0',
-	install_requires=['tensorflow==1.15.0','gym==0.21.0','fin_benefits','numpy','gym_unemployment','numpy_financial','tabulate','pandas','tqdm','seaborn','matplotlib','ipython','celluloid'], #And any other dependencies required 'bayesian-optimization',
-	packages=setuptools.find_packages(),	
-    # metadata to display on PyPI
+	version='3.0.0',
+	install_requires=['h5py','fin_benefits','numpy','gym_unemployment','numpy_financial','tabulate','pandas','tqdm','seaborn','matplotlib','ipython','celluloid'], 
+	packages=find_packages(),	
+    
     author="Antti J. Tanskanen",
-    author_email="antti.tanskanen@ek.fi",
+    author_email="antti.tanskanen@gmail.com",
     description="Discrete choice life cycle model based on the Finnish social security",
-    keywords="social-security earnings-related",
-    #url="http://example.com/HelloWorld/",   # project home page, if any
-    #project_urls={
-    #    "Bug Tracker": "https://bugs.example.com/HelloWorld/",
-    #    "Documentation": "https://docs.example.com/HelloWorld/",
-    #    "Source Code": "https://code.example.com/HelloWorld/",
-    #},
-    #classifiers=[
-    #    'License :: OSI Approved :: Python Software Foundation License'
-    #]      
+    keywords="life cycle model",
 )

@@ -9,9 +9,9 @@
 '''
 
 import math
-import gym
-from gym import spaces, logger, utils, error
-from gym.utils import seeding
+import gymnasium as gym
+from gymnasium import spaces, logger, utils, error
+from gymnasium.utils import seeding
 import numpy as np
 from fin_benefits import Benefits
 import gym_unemployment
@@ -20,7 +20,7 @@ import h5py
 from tqdm import tqdm_notebook as tqdm
 from lifecycle_rl import Lifecycle
 from scipy.interpolate import interpn,interp1d,interp2d,RectBivariateSpline,PchipInterpolator
-from scipy.integrate import quad,trapz
+from scipy.integrate import quad #,trapz
 from scipy.special import softmax
 import time
 from scipy.stats import gaussian_kde

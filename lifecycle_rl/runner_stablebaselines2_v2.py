@@ -291,19 +291,6 @@ class runner_stablebaselines2():
                     model = ACKTR.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time,
                                        learning_rate=scaled_learning_rate, policy_kwargs=policy_kwargs,
                                        max_grad_norm=max_grad_norm,lr_schedule=learning_schedule,n_cpu_tf_sess=n_cpu_tf_sess)
-            else:
-                if tensorboard:
-                    from stable_baselines.deepq.policies import MlpPolicy # for DQN
-                    model = DQN.load(loadname, env=env, verbose=verbose,gamma=self.gamma,
-                                     batch_size=batch,tensorboard_log=self.tenb_dir,
-                                     policy_kwargs=policy_kwargs,lr_schedule=learning_schedule,
-                                     full_tensorboard_log=full_tensorboard_log,learning_rate=learning_rate)
-                else:
-                    from stable_baselines.deepq.policies import MlpPolicy # for DQN
-                    model = DQN.load(loadname, env=env, verbose=verbose,gamma=self.gamma,
-                                     batch_size=batch,tensorboard_log=self.tenb_dir,
-                                     policy_kwargs=policy_kwargs,lr_schedule=learning_schedule,
-                                     learning_rate=learning_rate)
         else:
             if rlmodel=='a2c':
                 from stable_baselines.common.policies import MlpPolicy 
@@ -360,15 +347,6 @@ class runner_stablebaselines2():
                 model = ACKTR(MlpLstmPolicy, env, verbose=verbose,gamma=self.gamma,n_steps=batch*self.n_time,
                             tensorboard_log=self.tenb_dir, learning_rate=learning_rate,n_cpu_tf_sess=n_cpu_tf_sess, 
                             policy_kwargs=policy_kwargs,max_grad_norm=max_grad_norm,lr_schedule=learning_schedule)
-            else:
-                from stable_baselines.deepq.policies import MlpPolicy # for DQN
-                if tensorboard:
-                    model = DQN(MlpPolicy, env, verbose=verbose,gamma=self.gamma,batch_size=batch, 
-                                tensorboard_log=self.tenb_dir,learning_rate=learning_rate,
-                                policy_kwargs=policy_kwargs,full_tensorboard_log=full_tensorboard_log) 
-                else:
-                    model = DQN(MlpPolicy, env, verbose=verbose,gamma=self.gamma,batch_size=batch,
-                                learning_rate=learning_rate,policy_kwargs=policy_kwargs) 
                             
         return model
         

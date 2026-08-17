@@ -26,14 +26,14 @@ from . empstats import Empstats
 import fin_benefits
 from fin_benefits import Labels
 from scipy.stats import gaussian_kde
-from .utils import empirical_cdf,print_html,modify_offsettext,add_source,setup_EK_fonts,lineplot,add_label
+from .utils_v3 import empirical_cdf,print_html,modify_offsettext,add_source,setup_EK_fonts,lineplot,add_label
 import timeit
 
 
 #locale.setlocale(locale.LC_ALL, 'fi_FI')
 
 class PlotStats():
-    def __init__(self,stats,timestep,n_time,n_emps,n_pop,env,minimal,min_age,max_age,min_retirementage,year = 2018,version = 10,
+    def __init__(self,stats,timestep,n_time,n_emps,n_pop,env,minimal,min_age,max_age,min_retirementage,year = 2018,version = None,
         params = None,gamma = 0.92,lang = 'English'):
         self.version = version
         self.gamma = gamma
@@ -42,12 +42,12 @@ class PlotStats():
         self.params['n_emps'] = n_emps
         self.episodestats = stats
 
-        self.complex_models = {1,2,3,4,5,6,7,8,9,10,11,104}
-        self.recent_models = set([5,6,7,8,9,10,11])
+        self.complex_models = {1,2,3,4,5,6,7,8,9,10,11,12,104}
+        self.recent_models = set([5,6,7,8,9,10,11,12])
         self.no_groups_models = {0,101}
         self.savings_models = {101,102,103,104}
         self.minimalmodels = set([0,101])
-        self.ptmodels = set([5,6,7,8,9,10,11])
+        self.ptmodels = set([5,6,7,8,9,10,11,12])
 
         self.lab = Labels()
         self.reset(timestep,n_time,n_emps,n_pop,env,minimal,min_age,max_age,min_retirementage,year,params = params,lang = lang)
@@ -1048,7 +1048,7 @@ class PlotStats():
         ka = np.mean(pens_distrib)
         plt.axvline(x = ka,ls = lstyle,color = axvcolor)
         if plot_ke:
-            arv = self.env.ben.laske_kansanelake(66,0/12,1,disability = True)*12
+            arv = self.env.unwrapped.ben.laske_kansanelake(66,0/12,1,disability = True)*12
             plt.axvline(x = arv,ls = lstyle,color = 'red')
             plt.axvline(x = 0.5*arv,ls = lstyle,color = 'pink')
             

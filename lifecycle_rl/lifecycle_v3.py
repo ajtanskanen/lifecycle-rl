@@ -21,9 +21,9 @@
 '''
 
 import math
-import gym
-from gym import spaces, logger, utils, error
-from gym.utils import seeding
+import gymnasium as gym
+from gymnasium import spaces, logger, utils, error
+from gymnasium.utils import seeding
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import ticker
@@ -160,28 +160,28 @@ class Lifecycle():
         os.makedirs("best/", exist_ok=True)
         
         self.env = gym.make(self.environment,kwargs=self.gym_kwargs)
-        self.n_employment,self.n_acts=self.env.get_n_states()
-        self.version = self.env.get_lc_version()
-        self.minimal = self.env.get_minimal()
-        self.max_age = self.env.get_lc_maxage()
+        self.n_employment,self.n_acts=self.env.unwrapped.get_n_states()
+        self.version = self.env.unwrapped.get_lc_version()
+        self.minimal = self.env.unwrapped.get_minimal()
+        self.max_age = self.env.unwrapped.get_lc_maxage()
         #print('maxage',self.max_age)
 
         self.inv_timestep=int(np.round(1/self.timestep)) # pitäisi olla kokonaisluku
         self.n_age = self.max_age-self.min_age+1
         self.n_time = int(np.round((self.n_age-1)*self.inv_timestep))+1
 
-        self.complexmodels = set([4,5,6,7,8,9,10,11,104])
+        self.complexmodels = set([4,5,6,7,8,9,10,11,12,104])
         self.minimalmodels = set([0,101])
-        self.ptmodels = set([5,6,7,8,9,10,11])
-        self.recentmodels = set([6,7,8,9,10,11])
+        self.ptmodels = set([5,6,7,8,9,10,11,12])
+        self.recentmodels = set([6,7,8,9,10,11,12])
         self.savings_models = set([101,102,103,104])
 
 
         if self.version in self.complexmodels:
-            self.min_retirementage=self.env.get_retirementage()
+            self.min_retirementage=self.env.unwrapped.get_retirementage()
 
         if self.version in self.ptmodels:
-            parttime_actions = self.env.setup_parttime_actions()
+            parttime_actions = self.env.unwrapped.setup_parttime_actions()
         else:
             parttime_actions = None
 
@@ -533,12 +533,12 @@ class Lifecycle():
             elif key=='ben':
                 if value is not None:
                     self.ben=value
-            
+             
     def explain(self):
         '''
         Tulosta laskennan parametrit
         '''
-        self.env.explain()
+        self.env.unwrapped.explain()
         #print('Parameters of lifecycle:\ntimestep {}\ngamma {} per anno\nmin_age {}\nmax_age {}\nmin_retirementage {}'.format(self.timestep,self.gamma,self.min_age,self.max_age,self.min_retirementage))
         #print('max_retirementage {}\nansiopvraha_kesto300 {}\nansiopvraha_kesto400 {}\nansiopvraha_toe {}'.format(self.max_retirementage,self.ansiopvraha_kesto300,self.ansiopvraha_kesto400,self.ansiopvraha_toe))
         #print('perustulo {}\nkarenssi_kesto {}\nmortality {}\nrandomness {}'.format(self.perustulo,self.karenssi_kesto,self.mortality,self.randomness))
@@ -687,11 +687,11 @@ class Lifecycle():
             
             while not done:
                 if v==1:
-                    emp,_,_,_,age=self.env.state_decode(state) # current employment state
+                    emp,_,_,_,age=self.env.unwrapped.state_decode(state) # current employment state
                 elif v==3:
-                    emp,_,_,_,age,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_=self.env.state_decode(state) # current employment state
+                    emp,_,_,_,age,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_=self.env.unwrapped.state_decode(state) # current employment state
                 else:
-                    emp,_,_,_,age,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_=self.env.state_decode(state) # current employment state            
+                    emp,_,_,_,age,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_=self.env.unwrapped.state_decode(state) # current employment state            
 
                 if strategy=='random':
                     act=np.random.randint(3)
@@ -726,7 +726,8 @@ class Lifecycle():
                     else:
                         act=1
 
-                newstate,r,done,_=self.env.step(act)
+                newstate,r,terminated,truncated,_=self.env.step(act)
+                done = terminated or truncated
                 
                 if done:
                     n=n+1
@@ -770,7 +771,7 @@ class Lifecycle():
                batch=1,cont=False,start_from=None,callback_minsteps=None,
                verbose=1,max_grad_norm=None,learning_rate=0.25,log_interval=10,
                learning_schedule='linear',vf=None,arch=None,gae_lambda=None,
-               startage=None,processes=None):
+               startage=None,processes=None,entcoef=None):
    
         '''
         run_results
@@ -794,13 +795,15 @@ class Lifecycle():
                                   debug=debug,save=save,batch=batch,
                                   cont=cont,start_from=start_from,twostage=twostage,
                                   max_grad_norm=max_grad_norm,learning_rate=learning_rate,log_interval=log_interval,
-                                  learning_schedule=learning_schedule,vf=vf,arch=arch,gae_lambda=gae_lambda,processes=processes)
+                                  learning_schedule=learning_schedule,vf=vf,arch=arch,gae_lambda=gae_lambda,processes=processes,
+                                  entcoef=entcoef)
             else:
                 self.train_protocol(rlmodel=rlmodel,steps=steps,verbose=verbose,
                                  debug=debug,batch=batch,cont=cont,
                                  save=save,twostage=twostage,
                                  max_grad_norm=max_grad_norm,learning_rate=learning_rate,log_interval=log_interval,
-                                 learning_schedule=learning_schedule,vf=vf,arch=arch,gae_lambda=gae_lambda,processes=processes)
+                                 learning_schedule=learning_schedule,vf=vf,arch=arch,gae_lambda=gae_lambda,processes=processes,
+                                 entcoef=entcoef)
         if predict:
             #print('predict...')
             self.predict_protocol(pop=pop,rlmodel=rlmodel,load=save,startage=startage,
@@ -809,7 +812,8 @@ class Lifecycle():
     def train_protocol(self,steps=2_000_000,rlmodel='acktr',
                debug=False,batch=1,cont=False,twostage=False,log_interval=10,
                start_from=None,save='best3',verbose=1,max_grad_norm=None,
-               learning_rate=0.25,learning_schedule='linear',vf=None,arch=None,gae_lambda=None,processes=None):
+               learning_rate=0.25,learning_schedule='linear',vf=None,arch=None,gae_lambda=None,processes=None,
+               entcoef=None):
         '''
         run_protocol
 
@@ -827,11 +831,11 @@ class Lifecycle():
             self.runner.train(steps=steps,cont=cont,rlmodel=rlmodel,save=tmpname,batch=batch,debug=debug,
                         start_from=start_from,use_callback=False,use_vecmonitor=False,
                         log_interval=log_interval,verbose=1,vf=vf,arch=arch,gae_lambda=gae_lambda,
-                        max_grad_norm=max_grad_norm,learning_rate=learning_rate,learning_schedule=learning_schedule,processes=processes)
+                        max_grad_norm=max_grad_norm,learning_rate=learning_rate,learning_schedule=learning_schedule,processes=processes,entcoef=entcoef)
         else:
             self.runner.train(steps=steps,cont=False,rlmodel=rlmodel,save=tmpname,batch=batch,debug=debug,vf=vf,arch=arch,
                         use_callback=False,use_vecmonitor=False,log_interval=log_interval,verbose=1,gae_lambda=gae_lambda,
-                        max_grad_norm=max_grad_norm,learning_rate=learning_rate,learning_schedule=learning_schedule,processes=processes)
+                        max_grad_norm=max_grad_norm,learning_rate=learning_rate,learning_schedule=learning_schedule,processes=processes,entcoef=entcoef)
 
     def predict_protocol(self,pop: float=1_00,rlmodel: str='acktr',results: str='results/simut_res',arch=None,
                          load: str='saved/malli',debug: bool=False,deterministic: bool=False,startage: float=None,processes: int=None):
@@ -860,7 +864,7 @@ class Lifecycle():
                deterministic=True,train=True,predict=True,batch=1,cont=False,
                start_from=None,twostage=False,callback_minsteps=None,
                stats_results='results/distrib_stats',startn=None,verbose=1,
-               learning_rate=0.25,learning_schedule='linear',log_interval=100):
+               learning_rate=0.25,learning_schedule='linear',log_interval=100,entcoef=None):
    
         '''
         run_verify
@@ -885,7 +889,7 @@ class Lifecycle():
                deterministic=deterministic,train=train,predict=predict,
                batch=batch,cont=cont,start_from=start_from,
                callback_minsteps=callback_minsteps,verbose=verbose,learning_rate=learning_rate,
-               learning_schedule=learning_schedule,log_interval=log_interval)
+               learning_schedule=learning_schedule,log_interval=log_interval,entcoef=entcoef)
 
         #self.render_distrib(load=results,n=n,stats_results=stats_results)
             
@@ -1023,7 +1027,7 @@ class Lifecycle():
             return fig,axs
         
     def filter_act(self,act,state):
-        employment_status,pension,old_wage,age,time_in_state,next_wage=self.env.state_decode(state)
+        employment_status,pension,old_wage,age,time_in_state,next_wage=self.env.unwrapped.state_decode(state)
         if age<self.min_retirementage:
             if act==2:
                 act=0
@@ -1035,9 +1039,9 @@ class Lifecycle():
     
         if emp==2:
             elake=max(780*12,elake)
-            state=self.env.state_encode(emp,elake,0,age,time_in_state,0)
+            state=self.env.unwrapped.state_encode(emp,elake,0,age,time_in_state,0)
         else:
-            state=self.env.state_encode(emp,elake,vanhapalkka,age,time_in_state,palkka)
+            state=self.env.unwrapped.state_encode(emp,elake,vanhapalkka,age,time_in_state,palkka)
 
         act, predstate = model.predict(state,deterministic=deterministic)
         act=self.filter_act(act,state)
@@ -1076,7 +1080,7 @@ class Lifecycle():
                     #    elake=max(780*12,elake)
                     #    state=self.env.state_encode(emp,elake,0,age,time_in_state,0)
                     #else:
-                    state=self.env.state_encode(emp,elake,old_palkka,age,time_in_state,palkka)
+                    state=self.unwrapped.state_encode(emp,elake,old_palkka,age,time_in_state,palkka)
 
                     act, predstate = model.predict(state,deterministic=deterministic)
                     act=self.filter_act(act,state)
@@ -1090,9 +1094,9 @@ class Lifecycle():
                     old_palkka=map_palkka_old(p,emp=emp)
                     if emp==2:
                         elake=max(780*12,elake)
-                        state=self.env.state_encode(emp,elake,0,age,time_in_state,0)
+                        state=self.env.unwrapped.state_encode(emp,elake,0,age,time_in_state,0)
                     else:
-                        state=self.env.state_encode(emp,elake,old_palkka,age,time_in_state,palkka)
+                        state=self.env.unwrapped.state_encode(emp,elake,old_palkka,age,time_in_state,palkka)
 
                     act, predstate = model.predict(state,deterministic=deterministic)
                     act=self.filter_act(act,state)
@@ -1130,10 +1134,10 @@ class Lifecycle():
         print(res)
         
     def comp_aggkannusteet(self,n=None,savefile=None):
-        self.episodestats.comp_aggkannusteet(self.env.ben,n=n,savefile=savefile)
+        self.episodestats.comp_aggkannusteet(self.env.unwrapped.ben,n=n,savefile=savefile)
         
     def plot_aggkannusteet(self,loadfile,baseloadfile=None,figname=None,label=None,baselabel=None):
-        self.episodestats.plot_aggkannusteet(self.env.ben,loadfile,baseloadfile=baseloadfile,figname=figname,
+        self.episodestats.plot_aggkannusteet(self.env.unwrapped.ben,loadfile,baseloadfile=baseloadfile,figname=figname,
                                              label=label,baselabel=baselabel)
         
     def comp_taxratios(self,grouped=True):
