@@ -41,7 +41,7 @@ class runner_stablebaselines3():
         self.year=year
         self.gym_kwargs=gym_kwargs.copy()
         self.gym_kwargs['silent']=True
-        self.share_features_extractor = True
+        self.share_features_extractor = False
         
         self.env = gym.make(self.environment,kwargs=self.gym_kwargs)
         self.n_employment,self.n_acts=self.env.unwrapped.get_n_states()
@@ -113,31 +113,15 @@ class runner_stablebaselines3():
 
     def setup_rlmodel(self,rlmodel,loadname,env,batch,policy_kwargs,learning_rate,
                       cont,max_grad_norm=None,tensorboard=False,verbose=2,n_cpu=1,
-                      learning_schedule='linear',vf=None,gae_lambda=0.9,device="cpu",entcoef=None):
+                      learning_schedule='linear',vf=None,gae_lambda=None,device="cpu",entcoef=None):
         '''
         Alustaa RL-mallin ajoa varten
         
         gae_lambda=0.9
         '''
         batch=max(1,int(np.ceil(batch/n_cpu)))
-        
         full_tensorboard_log=False
-        vf_coef=0.1
 
-        if vf is not None:
-            vf_coef=vf
-
-        if entcoef is None:
-            ent_coef=0.01 
-        else:
-            ent_coef=entcoef 
-
-        if max_grad_norm is None:
-            max_grad_norm=0.05 # default 0.50
-            
-        max_grad_norm=0.1 # 0.05 # 0.01 # 0.001  was old
-        kfac_clip=0.001
-        
         if cont:
             learning_rate=0.25*learning_rate
             
@@ -147,13 +131,31 @@ class runner_stablebaselines3():
 
         if cont:
             if rlmodel in set(['ppo','PPO']):
-                learn_steps = batch * 16
+                learn_steps = batch * 64
+                max_grad_norm = 0.5
+                scaled_learning_rate = 0.0003
+                if entcoef is None:
+                    ent_coef=0.0
+                else:
+                    ent_coef=entcoef 
+
+                vf_coef = 0.5
                 model = PPO.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,learning_rate=scaled_learning_rate,
                                    vf_coef=vf_coef,gae_lambda=gae_lambda,policy_kwargs=policy_kwargs,max_grad_norm=max_grad_norm,device=device)
             elif rlmodel in set(['acktr','ACKTR','leaky_acktr']):
-                learn_steps = batch * 16
+                learn_steps = batch * 64
+                max_grad_norm = 0.1
+                kfac_clip = 0.001
+                if vf is not None:
+                    vf_coef=vf
+                else:
+                    vf_coef=0.1
+                if entcoef is None:
+                    ent_coef=0.01 
+                else:
+                    ent_coef=entcoef 
                 model = ACKTR.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,kfac_clip=kfac_clip,learning_rate=scaled_learning_rate,ent_coef=ent_coef,
-                                   vf_coef=vf_coef,gae_lambda=gae_lambda,max_grad_norm=max_grad_norm,device=device)
+                                   vf_coef=vf_coef,gae_lambda=gae_lambda,max_grad_norm=max_grad_norm,device=device,share_features_extractor=self.share_features_extractor)
             elif rlmodel in set(['a2c','A2C']):
                 learn_steps = batch * 4
                 model = A2C.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,learning_rate=scaled_learning_rate,device=device)
@@ -161,13 +163,31 @@ class runner_stablebaselines3():
                 raise ValueError('Unknown rlmodel')
         else:
             if rlmodel in set(['ppo','PPO']):
-                learn_steps = batch * 16
+                learn_steps = batch * 64
+                max_grad_norm = 0.5
+                vf_coef = 0.5
+                if entcoef is None:
+                    ent_coef=0.0
+                else:
+                    ent_coef=entcoef 
+                scaled_learning_rate = 0.0003
                 model = PPO('MlpPolicy', env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,learning_rate=scaled_learning_rate,
                             max_grad_norm=max_grad_norm,gae_lambda=gae_lambda,vf_coef=vf_coef,policy_kwargs=policy_kwargs,device=device)
             elif rlmodel in set(['acktr','ACKTR','leaky_acktr']):
-                learn_steps = batch * 16
+                learn_steps = batch * 64
+                max_grad_norm = 0.1
+                kfac_clip = 0.001
+                if vf is not None:
+                    vf_coef=vf
+                else:
+                    vf_coef=0.1
+
+                if entcoef is None:
+                    ent_coef=0.01 
+                else:
+                    ent_coef=entcoef 
                 model = ACKTR('MlpPolicy', env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,kfac_clip=kfac_clip,learning_rate=scaled_learning_rate,ent_coef=ent_coef,
-                            max_grad_norm=max_grad_norm,gae_lambda=gae_lambda,vf_coef=vf_coef,policy_kwargs=policy_kwargs,device=device)
+                            max_grad_norm=max_grad_norm,gae_lambda=gae_lambda,vf_coef=vf_coef,policy_kwargs=policy_kwargs,device=device,share_features_extractor=self.share_features_extractor)
             elif rlmodel in set(['a2c','A2C']):
                 learn_steps = batch * 4
                 model = A2C('MlpPolicy', env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,learning_rate=scaled_learning_rate,policy_kwargs=policy_kwargs,device=device)
