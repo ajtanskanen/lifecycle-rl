@@ -41,7 +41,8 @@ class runner_stablebaselines3():
         self.year=year
         self.gym_kwargs=gym_kwargs.copy()
         self.gym_kwargs['silent']=True
-        self.share_features_extractor = False
+        self.share_features_extractor = True
+        self.default_arch = [256, 256, 256] # [256, 256, 16]
         
         self.env = gym.make(self.environment,kwargs=self.gym_kwargs)
         self.n_employment,self.n_acts=self.env.unwrapped.get_n_states()
@@ -100,24 +101,46 @@ class runner_stablebaselines3():
 
         # multiprocess environment
         if arch is not None:
-            policy_kwargs = dict(activation_fn=th.nn.LeakyReLU, net_arch=arch, share_features_extractor=self.share_features_extractor) 
+            policy_kwargs = dict(activation_fn=th.nn.LeakyReLU) #, net_arch=arch) 
         else:
-            policy_kwargs = dict(activation_fn=th.nn.LeakyReLU, net_arch=[256, 256, 16], share_features_extractor=self.share_features_extractor) 
+            policy_kwargs = dict(activation_fn=th.nn.LeakyReLU) #, net_arch=[256, 256, 16]) 
             
-        n_cpu = 10
+        n_cpu = 4
 
         if debug:
             n_cpu=1
             
         return policy_kwargs,n_cpu
 
+    def setup_model(self,env,rank=1,debug=False,rlmodel='acktr',load=None,
+                    deterministic=False,arch=None,predict=False,n_cpu_tf_sess=1,device="cpu"):
+        '''
+        USED ONLY IN SIMULATION. Loads a model for simulation.
+        '''
+        if rank==0:    
+            print('simulating ',load)
+
+        # multiprocess environment
+        #policy_kwargs,_=self.get_multiprocess_env(rlmodel,debug=debug,arch=arch,predict=predict)
+
+        if rlmodel in set(['a2c','A2C']):
+            model = A2C.load(load, env=env, verbose=1,gamma=self.gamma, n_cpu_tf_sess=n_cpu_tf_sess,device=device)
+        elif rlmodel in set(['acktr','small_acktr','lnacktr','small_lnacktr','deep_acktr','leaky_acktr','small_leaky_acktr']):
+            model = ACKTR.load(load, env=env, verbose=1,gamma=self.gamma, n_cpu_tf_sess=n_cpu_tf_sess,device=device,net_arch=self.default_arch)
+        elif rlmodel=='custom_acktr':
+            model = ACKTR.load(load, env=env, verbose=1,gamma=self.gamma, n_cpu_tf_sess=n_cpu_tf_sess,device=device)
+        elif rlmodel in set(['ppo','PPO']):
+            model = PPO.load(load, env=env, verbose=1,gamma=self.gamma, n_cpu_tf_sess=n_cpu_tf_sess,device=device,net_arch=self.default_arch)
+        else:
+            raise ValueError('unknown model')
+
+        return model
+
     def setup_rlmodel(self,rlmodel,loadname,env,batch,policy_kwargs,learning_rate,
                       cont,max_grad_norm=None,tensorboard=False,verbose=2,n_cpu=1,
-                      learning_schedule='linear',vf=None,gae_lambda=None,device="cpu",entcoef=None):
+                      learning_schedule='linear',vf=None,gae_lambda=0.95,device="cpu",entcoef=None,nstep=None):
         '''
         Alustaa RL-mallin ajoa varten
-        
-        gae_lambda=0.9
         '''
         batch=max(1,int(np.ceil(batch/n_cpu)))
         full_tensorboard_log=False
@@ -131,7 +154,7 @@ class runner_stablebaselines3():
 
         if cont:
             if rlmodel in set(['ppo','PPO']):
-                learn_steps = batch * 64
+                learn_steps = batch * nstep
                 max_grad_norm = 0.5
                 scaled_learning_rate = 0.0003
                 if entcoef is None:
@@ -143,7 +166,7 @@ class runner_stablebaselines3():
                 model = PPO.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,learning_rate=scaled_learning_rate,
                                    vf_coef=vf_coef,gae_lambda=gae_lambda,policy_kwargs=policy_kwargs,max_grad_norm=max_grad_norm,device=device)
             elif rlmodel in set(['acktr','ACKTR','leaky_acktr']):
-                learn_steps = batch * 64
+                learn_steps = batch * nstep
                 max_grad_norm = 0.1
                 kfac_clip = 0.001
                 if vf is not None:
@@ -155,7 +178,7 @@ class runner_stablebaselines3():
                 else:
                     ent_coef=entcoef 
                 model = ACKTR.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,kfac_clip=kfac_clip,learning_rate=scaled_learning_rate,ent_coef=ent_coef,
-                                   vf_coef=vf_coef,gae_lambda=gae_lambda,max_grad_norm=max_grad_norm,device=device,share_features_extractor=self.share_features_extractor)
+                                   vf_coef=vf_coef,gae_lambda=gae_lambda,max_grad_norm=max_grad_norm,device=device,net_arch=self.default_arch)
             elif rlmodel in set(['a2c','A2C']):
                 learn_steps = batch * 4
                 model = A2C.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,learning_rate=scaled_learning_rate,device=device)
@@ -163,7 +186,7 @@ class runner_stablebaselines3():
                 raise ValueError('Unknown rlmodel')
         else:
             if rlmodel in set(['ppo','PPO']):
-                learn_steps = batch * 64
+                learn_steps = batch * nstep
                 max_grad_norm = 0.5
                 vf_coef = 0.5
                 if entcoef is None:
@@ -174,7 +197,7 @@ class runner_stablebaselines3():
                 model = PPO('MlpPolicy', env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,learning_rate=scaled_learning_rate,
                             max_grad_norm=max_grad_norm,gae_lambda=gae_lambda,vf_coef=vf_coef,policy_kwargs=policy_kwargs,device=device)
             elif rlmodel in set(['acktr','ACKTR','leaky_acktr']):
-                learn_steps = batch * 64
+                learn_steps = batch * nstep
                 max_grad_norm = 0.1
                 kfac_clip = 0.001
                 if vf is not None:
@@ -187,7 +210,7 @@ class runner_stablebaselines3():
                 else:
                     ent_coef=entcoef 
                 model = ACKTR('MlpPolicy', env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,kfac_clip=kfac_clip,learning_rate=scaled_learning_rate,ent_coef=ent_coef,
-                            max_grad_norm=max_grad_norm,gae_lambda=gae_lambda,vf_coef=vf_coef,policy_kwargs=policy_kwargs,device=device,share_features_extractor=self.share_features_extractor)
+                            max_grad_norm=max_grad_norm,gae_lambda=gae_lambda,vf_coef=vf_coef,policy_kwargs=policy_kwargs,device=device,net_arch=self.default_arch)
             elif rlmodel in set(['a2c','A2C']):
                 learn_steps = batch * 4
                 model = A2C('MlpPolicy', env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,learning_rate=scaled_learning_rate,policy_kwargs=policy_kwargs,device=device)
@@ -200,7 +223,7 @@ class runner_stablebaselines3():
                 save='saved/malli',pop=None,batch=1,max_grad_norm=None,learning_rate=0.25,
                 start_from=None,max_n_cpu=1000,use_vecmonitor=False,
                 bestname='tmp/best2',use_callback=False,log_interval=100,verbose=1,plotdebug=False,
-                learning_schedule='linear',vf=None,arch=None,gae_lambda=None,processes=None,entcoef=None):
+                learning_schedule='linear',vf=None,arch=None,gae_lambda=None,processes=None,entcoef=None,nstep=None):
         '''
         Opetusrutiini
         '''
@@ -247,7 +270,7 @@ class runner_stablebaselines3():
 
         model=self.setup_rlmodel(self.rlmodel,start_from,env,batch,policy_kwargs,learning_rate,
                                 cont,max_grad_norm=max_grad_norm,verbose=verbose,n_cpu=n_cpu,
-                                learning_schedule=learning_schedule,vf=vf,gae_lambda=gae_lambda,entcoef=entcoef)
+                                learning_schedule=learning_schedule,vf=vf,gae_lambda=gae_lambda,entcoef=entcoef,nstep=nstep)
         print('training..')
 
         if use_callback: # tässä ongelma, vecmonitor toimii => kuitenkin monta callbackia
@@ -259,28 +282,6 @@ class runner_stablebaselines3():
         print('done')
 
         del model,env
-        
-    def setup_model(self,env,rank=1,debug=False,rlmodel='acktr',plot=True,load=None,
-                    deterministic=False,arch=None,predict=False,n_cpu_tf_sess=1,entcoef=None,device="cpu"):
-
-        if rank==0:    
-            print('simulating ',load)
-
-        # multiprocess environment
-        #policy_kwargs,_=self.get_multiprocess_env(rlmodel,debug=debug,arch=arch,predict=predict)
-
-        if rlmodel in set(['a2c','A2C']):
-            model = A2C.load(load, env=env, verbose=1,gamma=self.gamma, n_cpu_tf_sess=n_cpu_tf_sess,device=device)
-        elif rlmodel in set(['acktr','small_acktr','lnacktr','small_lnacktr','deep_acktr','leaky_acktr','small_leaky_acktr']):
-            model = ACKTR.load(load, env=env, verbose=1,gamma=self.gamma, n_cpu_tf_sess=n_cpu_tf_sess,device=device,ent_coef=entcoef)
-        elif rlmodel=='custom_acktr':
-            model = ACKTR.load(load, env=env, verbose=1,gamma=self.gamma, n_cpu_tf_sess=n_cpu_tf_sess,ent_coef=entcoef,device=device)
-        elif rlmodel in set(['ppo','PPO']):
-            model = PPO.load(load, env=env, verbose=1,gamma=self.gamma, n_cpu_tf_sess=n_cpu_tf_sess,device=device)
-        else:
-            raise ValueError('unknown model')
-
-        return model
 
 
     def simulate(self,debug=False,rlmodel='acktr',load=None,pop=None,startage=None,

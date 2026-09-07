@@ -771,7 +771,7 @@ class Lifecycle():
                batch=1,cont=False,start_from=None,callback_minsteps=None,
                verbose=1,max_grad_norm=None,learning_rate=0.25,log_interval=10,
                learning_schedule='linear',vf=None,arch=None,gae_lambda=None,
-               startage=None,processes=None,entcoef=None):
+               startage=None,processes=None,entcoef=None,nstep=None):
    
         '''
         run_results
@@ -796,14 +796,14 @@ class Lifecycle():
                                   cont=cont,start_from=start_from,twostage=twostage,
                                   max_grad_norm=max_grad_norm,learning_rate=learning_rate,log_interval=log_interval,
                                   learning_schedule=learning_schedule,vf=vf,arch=arch,gae_lambda=gae_lambda,processes=processes,
-                                  entcoef=entcoef)
+                                  entcoef=entcoef,nstep=nstep)
             else:
                 self.train_protocol(rlmodel=rlmodel,steps=steps,verbose=verbose,
                                  debug=debug,batch=batch,cont=cont,
                                  save=save,twostage=twostage,
                                  max_grad_norm=max_grad_norm,learning_rate=learning_rate,log_interval=log_interval,
                                  learning_schedule=learning_schedule,vf=vf,arch=arch,gae_lambda=gae_lambda,processes=processes,
-                                 entcoef=entcoef)
+                                 entcoef=entcoef,nstep=nstep)
         if predict:
             #print('predict...')
             self.predict_protocol(pop=pop,rlmodel=rlmodel,load=save,startage=startage,
@@ -813,7 +813,7 @@ class Lifecycle():
                debug=False,batch=1,cont=False,twostage=False,log_interval=10,
                start_from=None,save='best3',verbose=1,max_grad_norm=None,
                learning_rate=0.25,learning_schedule='linear',vf=None,arch=None,gae_lambda=None,processes=None,
-               entcoef=None):
+               entcoef=None,nstep=None):
         '''
         run_protocol
 
@@ -831,14 +831,14 @@ class Lifecycle():
             self.runner.train(steps=steps,cont=cont,rlmodel=rlmodel,save=tmpname,batch=batch,debug=debug,
                         start_from=start_from,use_callback=False,use_vecmonitor=False,
                         log_interval=log_interval,verbose=1,vf=vf,arch=arch,gae_lambda=gae_lambda,
-                        max_grad_norm=max_grad_norm,learning_rate=learning_rate,learning_schedule=learning_schedule,processes=processes,entcoef=entcoef)
+                        max_grad_norm=max_grad_norm,learning_rate=learning_rate,learning_schedule=learning_schedule,processes=processes,entcoef=entcoef,nstep=nstep)
         else:
             self.runner.train(steps=steps,cont=False,rlmodel=rlmodel,save=tmpname,batch=batch,debug=debug,vf=vf,arch=arch,
                         use_callback=False,use_vecmonitor=False,log_interval=log_interval,verbose=1,gae_lambda=gae_lambda,
-                        max_grad_norm=max_grad_norm,learning_rate=learning_rate,learning_schedule=learning_schedule,processes=processes,entcoef=entcoef)
+                        max_grad_norm=max_grad_norm,learning_rate=learning_rate,learning_schedule=learning_schedule,processes=processes,entcoef=entcoef,nstep=nstep)
 
     def predict_protocol(self,pop: float=1_00,rlmodel: str='acktr',results: str='results/simut_res',arch=None,
-                         load: str='saved/malli',debug: bool=False,deterministic: bool=False,startage: float=None,processes: int=None):
+                         load: str='saved/malli',debug: bool=False,deterministic: bool=False,startage: float=None,processes: int=None,nstep: int=None):
         '''
         predict_protocol
 
@@ -864,7 +864,7 @@ class Lifecycle():
                deterministic=True,train=True,predict=True,batch=1,cont=False,
                start_from=None,twostage=False,callback_minsteps=None,
                stats_results='results/distrib_stats',startn=None,verbose=1,
-               learning_rate=0.25,learning_schedule='linear',log_interval=100,entcoef=None):
+               learning_rate=0.25,learning_schedule='linear',log_interval=100,entcoef=None,nstep=None):
    
         '''
         run_verify
@@ -889,7 +889,7 @@ class Lifecycle():
                deterministic=deterministic,train=train,predict=predict,
                batch=batch,cont=cont,start_from=start_from,
                callback_minsteps=callback_minsteps,verbose=verbose,learning_rate=learning_rate,
-               learning_schedule=learning_schedule,log_interval=log_interval,entcoef=entcoef)
+               learning_schedule=learning_schedule,log_interval=log_interval,entcoef=entcoef,nstep=nstep)
 
         #self.render_distrib(load=results,n=n,stats_results=stats_results)
             
