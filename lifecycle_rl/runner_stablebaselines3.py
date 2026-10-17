@@ -209,8 +209,13 @@ class runner_stablebaselines3():
                     ent_coef=0.01 
                 else:
                     ent_coef=entcoef 
+                # ACKTR rakentaa rungon itse: aktivointi annetaan ACKTR:n omana argumenttina,
+                # policy_kwargsin activation_fn ei vaikuttaisi runkoon (net_arch on tyhjä)
+                acktr_policy_kwargs = dict(policy_kwargs)
+                activation_fn = acktr_policy_kwargs.pop('activation_fn', th.nn.Tanh)
                 model = ACKTR('MlpPolicy', env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,kfac_clip=kfac_clip,learning_rate=scaled_learning_rate,ent_coef=ent_coef,
-                            max_grad_norm=max_grad_norm,gae_lambda=gae_lambda,vf_coef=vf_coef,policy_kwargs=policy_kwargs,device=device,net_arch=self.default_arch)
+                            max_grad_norm=max_grad_norm,gae_lambda=gae_lambda,vf_coef=vf_coef,policy_kwargs=acktr_policy_kwargs,device=device,net_arch=self.default_arch,
+                            activation_fn=activation_fn)
             elif rlmodel in set(['a2c','A2C']):
                 learn_steps = batch * 4
                 model = A2C('MlpPolicy', env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,learning_rate=scaled_learning_rate,policy_kwargs=policy_kwargs,device=device)
