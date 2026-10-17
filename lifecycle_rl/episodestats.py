@@ -422,7 +422,7 @@ class EpisodeStats():
         self.infostats_sairausvakuutus_group[t,g] += q[person+'sairausvakuutusmaksu']*scale
         self.infostats_ylevero[t] += q[person+'ylevero']*scale
         self.infostats_ylevero_group[t,g] += q[person+'ylevero']*scale
-        self.infostats_ylevero_distrib[t,newemp] = q[person+'ylevero']*scale
+        self.infostats_ylevero_distrib[t,newemp] += q[person+'ylevero']*scale
         self.infostats_equivalent_income[t] += q[person+'eq']*self.timestep # already at annual level
         if 'alv' in q:
             self.infostats_alv[t] += q[person+'alv']*scale
@@ -478,7 +478,6 @@ class EpisodeStats():
         self.infostats_valtionvero_group += cc.infostats_valtionvero_group
         self.infostats_kunnallisvero += cc.infostats_kunnallisvero
         self.infostats_kunnallisvero_group += cc.infostats_kunnallisvero_group
-        self.infostats_valtionvero_distrib += cc.infostats_valtionvero_distrib
         self.infostats_kunnallisvero_distrib += cc.infostats_kunnallisvero_distrib
         self.infostats_valtionvero_distrib += cc.infostats_valtionvero_distrib
         self.infostats_ptel += cc.infostats_ptel
@@ -577,6 +576,7 @@ class EpisodeStats():
         self.infostats_equivalent_income += cc.infostats_equivalent_income
         self.infostats_alv += cc.infostats_alv
         self.infostats_alv_group += cc.infostats_alv_group
+        self.infostats_humancapital += cc.infostats_humancapital
         if self.version in self.savings_models:
             self.infostats_savings = np.append(self.infostats_savings[:,:self.n_pop],cc.infostats_savings[:,:cc.n_pop],axis=1)
             self.sav_actions = np.append(self.sav_actions[:,:self.n_pop],cc.sav_actions[:,:cc.n_pop],axis=1)
@@ -2132,11 +2132,11 @@ class EpisodeStats():
             _,_,_,_,_,_,_,_\
             =self.env.unwrapped.states.state_decode(state) # current employment state
             
-        newemp,g,p_g,newpen,newsal,a2,tis,paidpens,pink,toe,toek,\
+        newemp,g,p_g,newpen,newsal,a2,tis,te_maksussa,pink,toe,toek,\
             ura,bu,wr,upr,uw,uwr,pr,c3,c7,c18,\
             unemp_left,aa,toe58,ove,jasen,puoliso,p_tila,p_w,p_newpen,\
-            p_wr,p_paidpens,p_nw,p_bu,p_unemp_benefit_left,p_unemp_after_ra,p_uw,p_uwr,p_aa,p_toe58,\
-            p_toe,p_toekesto,p_ura,p_tis,p_pink,p_ove,kansanelake,p_kansanelake,te_maksussa,p_te_maksussa,\
+            p_wr,p_te_maksussa,p_nw,p_bu,p_unemp_benefit_left,p_unemp_after_ra,p_uw,p_uwr,p_aa,p_toe58,\
+            p_toe,p_toekesto,p_ura,p_tis,p_pink,p_ove,kansanelake,p_kansanelake,paidpens,p_paidpens,\
             nw,old_pw,s_old_pw,pt_act,s_pt_act,wbasis,s_wbasis,m_lleft,s_lleft,m_ud,s_ud,\
             time_to_marriage,time_to_divorce,until_birth,\
             main_until_student,spouse_until_student,main_until_outsider,spouse_until_outsider,main_karenssi,spouse_karenssi,\
@@ -2217,7 +2217,7 @@ class EpisodeStats():
                     self.infostats_pop_toe[t,n+1] = p_toe
                     self.infostats_pop_pinkslip[t,n+1] = p_pink
                     self.infostats_pop_pension[t,n+1] = p_newpen
-                    self.infostats_pop_wage_reduction[t,n+1] = wr
+                    self.infostats_pop_wage_reduction[t,n+1] = p_wr
                     self.infostats_unempwagebasis[t,n+1] = p_uw
                     self.infostats_unempwagebasis_acc[t,n+1] = p_uwr
                     self.stat_unemp_len[t,n+1] = p_tis
@@ -2770,7 +2770,7 @@ class EpisodeStats():
         if not silent and not self.silent:
             print(f'Loading results from {filename} version {self.version}')
 
-        if 'max_ge' in f.keys():
+        if 'max_age' in f.keys():
             self.max_age=f['max_age'][()]
             self.min_age=f['min_age'][()]
 
@@ -2933,7 +2933,7 @@ class EpisodeStats():
             self.infostats_irr=f['infostats_irr_tyel_reduced'][()]
 
         if 'infostats_humancapital' in f.keys():
-            infostats_humancapital=f['infostats_humancapital'][()]
+            self.infostats_humancapital=f['infostats_humancapital'][()]
 
         if 'infostats_group' in f.keys():
             self.infostats_group=f['infostats_group'][()]
@@ -3064,11 +3064,13 @@ class EpisodeStats():
             self.infostats_alv_group=f['infostats_alv_group'][()]
             self.infostats_pvhoitomaksu_group=f['infostats_pvhoitomaksu_group'][()]
             self.infostats_tyotpvraha_group=f['infostats_tyotpvraha_group'][()]
+        if 'infostats_lleft' in f.keys():
+            self.infostats_lleft = f['infostats_lleft'][()]
 
         if 'gini_coef' in f.keys():
             self.gini_coef=f['gini_coef'][()]
         else:
-            gini_coef=None
+            self.gini_coef=None
 
         if n_pop is not None:
             self.n_pop=n_pop
@@ -4054,12 +4056,12 @@ class EpisodeStats():
         self.ratiostates=self.empstate/self.alive
         self.demogstates=(self.empstate.T*scalex).T
         if self.minimal:
-            self.stats_employed=self.demogstates[:,0]+self.demogstates[:,3]
+            self.stats_employed=self.demogstates[:,1]+self.demogstates[:,3]
             self.stats_parttime=self.demogstates[:,3]
             self.stats_unemployed=self.demogstates[:,0]
             self.stats_all = np.sum(self.demogstates,1)
         else:
-            self.stats_employed=self.demogstates[:,0]+self.demogstates[:,10]+self.demogstates[:,8]+self.demogstates[:,9]+self.demogstates[:,5]+self.demogstates[:,6]
+            self.stats_employed=self.demogstates[:,1]+self.demogstates[:,10]+self.demogstates[:,8]+self.demogstates[:,9]+self.demogstates[:,5]+self.demogstates[:,6]
             self.stats_parttime=self.demogstates[:,10]+self.demogstates[:,8]
             self.stats_unemployed=self.demogstates[:,0]+self.demogstates[:,4]+self.demogstates[:,13]
             self.stats_all = np.sum(self.demogstates,1)
@@ -4187,7 +4189,7 @@ class EpisodeStats():
         scalex_men = np.squeeze(demog2[min_cage:max_cage,0]/np.maximum(1,alive_men)*self.timestep)
         scalex_women = np.squeeze(demog2[min_cage:max_cage,1]/np.maximum(1,alive_women)*self.timestep)
         
-        women = np.sum(np.sum(self.galive[min_cage:max_cage,3:6],axis=1)*scalex_men)
+        women = np.sum(np.sum(self.galive[min_cage:max_cage,3:6],axis=1)*scalex_women)
         men = np.sum(np.sum(self.galive[min_cage:max_cage,0:3],axis=1)*scalex_men)
 
         return women,men
@@ -4484,7 +4486,7 @@ class EpisodeStats():
 
         alive[:,0] = np.sum(self.galive[:,3:6],1)
         ulkopuolella_n=np.sum(self.gempstate[:,7,3:6],axis=1)[:,None]/alive
-        tyovoimassa_n= np.sum(self.gempstate[:,5,0:3],axis=1)[:,None]/alive
+        tyovoimassa_n= np.sum(self.gempstate[:,5,3:6],axis=1)[:,None]/alive
 
         if show:
             m,n=ulkopuolella_m[::skip],ulkopuolella_n[::skip]
@@ -4789,14 +4791,16 @@ class EpisodeStats():
     def get_childmask(self,childg=0,g=None):
         if childg==0: # alle 3v
             gendermask = self.infostats_pop_children_under3<1
-        elif childg==1: # alle 7v
+        elif childg==1: # 3-7v
             gendermask1 = self.infostats_pop_children_under7<1 
             gendermask2 = self.infostats_pop_children_under3>0
-            gendermask = ma.mask_or(gendermask1,gendermask2)
-        elif childg==2: # alle 18v
+            gendermask = np.logical_and(gendermask1, gendermask2) 
+            #gendermask = ma.mask_and(gendermask1,gendermask2)
+        elif childg==2: # 7-18v
             gendermask1 = self.infostats_pop_children_under18<1 
             gendermask2 = self.infostats_pop_children_under7>0
-            gendermask = ma.mask_or(gendermask1,gendermask2)
+            gendermask = np.logical_and(gendermask1, gendermask2) 
+            #gendermask = ma.mask_and(gendermask1,gendermask2)
         else: # ei lapsia
             gendermask = self.infostats_pop_children_under18>0
 
@@ -4823,11 +4827,11 @@ class EpisodeStats():
             agg_irr_tyel_reduced=self.reaalinen_palkkojenkasvu*100+self.comp_annual_irr(maxnpv,agg_premium,agg_pensions_reduced)
         else:
             if gender==1: # naiset
-                gendermask = self.get_gendermask(1).astype(float).T
+                gendermask = self.get_gendermask(2).astype(float).T
                 #gendermask = (self.infostats_group>2).astype(float).T
                 alive = np.sum(self.galive[-1,3:6])
             else: # miehet
-                gendermask = self.get_gendermask(2).astype(float).T
+                gendermask = self.get_gendermask(1).astype(float).T
                 #gendermask = (self.infostats_group<3).astype(float).T
                 alive = np.sum(self.galive[-1,0:3])
         
@@ -5563,7 +5567,7 @@ class EpisodeStats():
             agg_ftsuhde[g,:] = np.sum(self.infostats_pt_act[:,1,gset,:],axis=(0,1)) / np.sum(self.infostats_pt_act[:,1,gset,:],axis=(0,1,2))
             s_pt = np.sum(self.infostats_pt_act[:,10,gset,:],axis=1)
             s_ft = np.sum(self.infostats_pt_act[:,1,gset,:],axis=1)
-            agg_combisuhde[g,0:3] = np.sum(s_pt,axis=0) / (np.sum(self.infostats_pt_act[:,1,gset,:],axis=(0,1,2))+np.sum(self.infostats_pt_act[:,1,gset,:],axis=(0,1,2)))
+            agg_combisuhde[g,0:3] = np.sum(s_pt,axis=0) / (np.sum(self.infostats_pt_act[:,10,gset,:],axis=(0,1,2))+np.sum(self.infostats_pt_act[:,10,gset,:],axis=(0,1,2)))
             agg_combisuhde[g,3:6] = np.sum(s_ft,axis=0) / (np.sum(self.infostats_pt_act[:,1,gset,:],axis=(0,1,2))+np.sum(self.infostats_pt_act[:,1,gset,:],axis=(0,1,2)))
             ptsuhde[g,:,:] = s_pt / np.sum(self.infostats_pt_act[:,10,gset,:],axis=(1,2))[:,None]
             ftsuhde[g,:,:] = s_ft / np.sum(self.infostats_pt_act[:,1,gset,:],axis=(1,2))[:,None]
@@ -5686,7 +5690,7 @@ class EpisodeStats():
         for k in range(self.n_pop):
             #g=self.infostats_group[k]
             for t in range(1,self.n_time-1):
-                age=t+self.min_age
+                age=t*self.timestep+self.min_age
                 income=self.infostats_poptulot_netto[t,k]
                 employment_state=self.popempstate[t,k]
                 v,_=self.env.unwrapped.log_utility((1+x)*income,employment_state,age)
@@ -5697,7 +5701,7 @@ class EpisodeStats():
                 u[t] += v
 
             t=self.n_time-1
-            age=t+self.min_age
+            age=t*self.timestep+self.min_age
             income=self.infostats_poptulot_netto[t,k]
             employment_state=self.popempstate[t,k]
             v0,_=self.env.unwrapped.log_utility(income,employment_state,age)

@@ -265,7 +265,7 @@ class Lifecycle():
         self.callback_minsteps = 1_000
 
         # apumuuttujia
-        self.gamma = 0.92
+        self.gamma = 0.92 ** 0.25
         self.karenssi_kesto=0.25
         self.include_investment=False
         self.include_wealth=False
@@ -783,6 +783,9 @@ class Lifecycle():
         if self.plotdebug:
             debug=True
             self.runner.check_env(self.env)
+
+        if processes is None:
+            processes=self.processes
    
         self.n_pop=pop
         if callback_minsteps is not None:
@@ -848,6 +851,7 @@ class Lifecycle():
         print('pop_protocol',pop)
  
         def run_sim():
+            print('simulate... SIC! processes', processes)
             self.runner.simulate(pop=pop,rlmodel=rlmodel,debug=debug,arch=arch,
                         load=load,save=results,deterministic=deterministic,startage=startage,processes=processes)
  

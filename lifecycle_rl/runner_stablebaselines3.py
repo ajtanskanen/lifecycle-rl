@@ -42,7 +42,7 @@ class runner_stablebaselines3():
         self.gym_kwargs=gym_kwargs.copy()
         self.gym_kwargs['silent']=True
         self.share_features_extractor = True
-        self.default_arch = [256, 256, 256] # [256, 256, 16]
+        self.default_arch = [256, 256, 64] # [256, 256, 16] # [dict(pi=[64, 32, 16],vf=[256, 192, 16])]
         
         self.env = gym.make(self.environment,kwargs=self.gym_kwargs)
         self.n_employment,self.n_acts=self.env.unwrapped.get_n_states()
@@ -51,9 +51,6 @@ class runner_stablebaselines3():
         self.save_pop = gym_kwargs['save_pop']
 
         self.version = self.env.unwrapped.get_lc_version()
-
-        # n_add = 2
-        self.model_twoperson = set([4,5,6,7,8,9,10,11,12,104]) # self.version
 
         self.args={'gamma': gamma, 
               'version': version,
@@ -87,14 +84,11 @@ class runner_stablebaselines3():
               'year': year}
 
         self.episodestats=episodestats
-        #SimStats(self.timestep,self.n_time,self.n_employment,self.n_pop,
-        #                       self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,
-        #                       version=self.version,params=self.gym_kwargs,year=self.year,gamma=self.gamma)
 
     def check_env(self,env):
         env_checker_check_env(env, warn=True)
 
-    def get_multiprocess_env(self,rlmodel,debug=False,arch=None,predict=False,learning_schedule='linear',learning_rate=0.5):
+    def get_multiprocess_env(self,rlmodel,debug=False,arch=None,predict=False,learning_schedule='constant',learning_rate=0.5): # linear -> constant
 
         if arch is not None:
             print('arch',arch)
@@ -138,15 +132,15 @@ class runner_stablebaselines3():
 
     def setup_rlmodel(self,rlmodel,loadname,env,batch,policy_kwargs,learning_rate,
                       cont,max_grad_norm=None,tensorboard=False,verbose=2,n_cpu=1,
-                      learning_schedule='linear',vf=None,gae_lambda=0.95,device="cpu",entcoef=None,nstep=None):
+                      learning_schedule='constant',vf=None,gae_lambda=0.95,device="cpu",entcoef=None,nstep=None): # linear -> constant
         '''
         Alustaa RL-mallin ajoa varten
         '''
         batch=max(1,int(np.ceil(batch/n_cpu)))
         full_tensorboard_log=False
 
-        if cont:
-            learning_rate=0.25*learning_rate
+        #if cont:
+        #    learning_rate=0.25*learning_rate
             
         scaled_learning_rate=learning_rate
         print('batch {} learning rate {} scaled {} n_cpu {}'.format(batch,learning_rate,
@@ -208,7 +202,7 @@ class runner_stablebaselines3():
                 if entcoef is None:
                     ent_coef=0.01 
                 else:
-                    ent_coef=entcoef 
+                    ent_coef=entcoef
                 # ACKTR rakentaa rungon itse: aktivointi annetaan ACKTR:n omana argumenttina,
                 # policy_kwargsin activation_fn ei vaikuttaisi runkoon (net_arch on tyhjä)
                 acktr_policy_kwargs = dict(policy_kwargs)
@@ -228,7 +222,7 @@ class runner_stablebaselines3():
                 save='saved/malli',pop=None,batch=1,max_grad_norm=None,learning_rate=0.25,
                 start_from=None,max_n_cpu=1000,use_vecmonitor=False,
                 bestname='tmp/best2',use_callback=False,log_interval=100,verbose=1,plotdebug=False,
-                learning_schedule='linear',vf=None,arch=None,gae_lambda=None,processes=None,entcoef=None,nstep=None):
+                learning_schedule='constant',vf=None,arch=None,gae_lambda=None,processes=None,entcoef=None,nstep=None): # linear -> constant
         '''
         Opetusrutiini
         '''
@@ -271,7 +265,7 @@ class runner_stablebaselines3():
         if nonvec:
             env=self.env
         else:
-            env = SubprocVecEnv([lambda: make_env(self.environment, i, gkwargs) for i in range(n_cpu)], start_method='spawn')
+            env = SubprocVecEnv([lambda i=i: make_env(self.environment, i, gkwargs) for i in range(n_cpu)], start_method='spawn')
 
         model=self.setup_rlmodel(self.rlmodel,start_from,env,batch,policy_kwargs,learning_rate,
                                 cont,max_grad_norm=max_grad_norm,verbose=verbose,n_cpu=n_cpu,
@@ -286,6 +280,7 @@ class runner_stablebaselines3():
         model.save(save)
         print('done')
 
+        env.close()
         del model,env
 
 
@@ -306,43 +301,49 @@ class runner_stablebaselines3():
         args['simfile']=save
 
         if processes is not None:
-            self.args['processes']=processes
+            args['processes']=processes
+        else:
+            args['processes']=self.args['processes']
 
         if render:  
-            self.args['processes'] = 1 
+            args['processes'] = 1 
 
         gkwargs=self.args['gym_kwargs'].copy()
         gkwargs.update({'train':False})
         
-        pop = 100 # self.n_pop
-        self.episodestats.reset(self.timestep,self.n_time,self.n_employment,pop,
-                                self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year)
+        #pop = 100 # self.n_pop
+        #self.episodestats.reset(self.timestep,self.n_time,self.n_employment,pop,
+        #                        self.env,self.minimal,self.min_age,self.max_age,self.min_retirementage,self.year)
 
-        manager = Manager()
-        info = manager.dict({'pop': 0,'total': args['pop']})
-        processes = []
+        n_pop = int(args['pop'])
+        num_procs = max(1, int(args['processes']))
+        per_process = int(np.ceil(n_pop / num_procs / 2)) * 2
+        num_procs = int(np.ceil(n_pop / per_process))  # ei käynnistetä tyhjiä prosesseja
 
-        print('simulating with',self.args['processes'],'processes')
-        pop_left = args['pop']
-        num_procs = 10 # args['processes']
-        per_process = int(np.ceil(args['pop']/num_procs/2))*2
-        for rank in range(num_procs):
-            sim_num = min(per_process,pop_left)
-            pop_left -= sim_num
-            print('********','rank',rank,'sim_num',sim_num,'pop_left',pop_left)
-            p = Process(target=self.simulate_single, args=(rank, args, gkwargs, sim_num, info))
-            print('started.',rank)
-            p.start()
-            processes.append(p)
+        print('simulating', n_pop, 'agents with', num_procs, 'processes')
 
-        print('switching to join')
-        print(processes)
-            
-        for p in processes: 
-            print('exitcode',p.exitcode)
-            p.join()         
+        with Manager() as manager:
+            info = manager.dict({'pop': 0, 'total': n_pop})
 
-        print('joined.')
+            proclist = []
+            pop_left = n_pop
+            for rank in range(num_procs):
+                sim_num = min(per_process, pop_left)
+                if sim_num <= 0:
+                    break
+                pop_left -= sim_num
+                print('****', 'rank', rank, 'sim_num', sim_num, 'pop_left', pop_left)
+                p = Process(target=self.simulate_single,
+                            args=(rank, args, gkwargs, sim_num, info))
+                p.start()
+                proclist.append(p)
+
+            for p in proclist:
+                p.join()
+
+            for rank, p in enumerate(proclist):
+                if p.exitcode != 0:
+                    print('warning: rank', rank, 'exited with code', p.exitcode)
 
         self.combine_episodestats(args)
         
@@ -353,36 +354,29 @@ class runner_stablebaselines3():
         An own process for each simulation unit
         '''
 
-        print('sim_single',rank)
-        
         render = args['render']
-        print('pop',args['pop'],'procs',args['processes'])
         deterministic = args['deterministic']
         debug = args['debug']
         #savefile=args['save_dir']+args['simfile']+'_rank_'+str(rank)
         savefile=args['simfile']+'_rank_'+str(rank)
 
-        if rank==0:
-            print('savefile',savefile)
-
         seed = 20_000 + rank*100 # must not be identical to train seed
         envlist = [lambda: make_env(args['environment'],seed+i,kwargs=kwargs) for i in range(1)]
         env = DummyVecEnv(envlist)
-        print('version',env.env_method('get_lc_version',indices=[0])[0])
 
-        env.seed(seed=args['seed'] + rank)
+        if rank==0:
+            print('sim_single',rank)
+            print('pop',args['pop'],'procs',args['processes'])
+            print('savefile',savefile)
+            print('version',env.env_method('get_lc_version',indices=[0])[0])
+
+        env.seed(seed=args['seed'] + rank + 10_000_000)
 
         #if hasattr(env.unwrapped, 'get_lc_twoperson'):
         if env.env_method('get_lc_twoperson',indices=[0])[0]:
             n_add=2
         else:  # increase by 1
             n_add=1
-        #else:
-        #    print('get_lc_twoperson: Fallback')
-        #    if args['version'] in self.model_twoperson:  # increase by 2
-        #        n_add=2
-        #    else:  # increase by 1
-        #        n_add=1
 
         model=self.setup_model(env,rank=rank,debug=args['debug'],rlmodel=args['rlmodel'],load=args['load'],
                  deterministic=args['deterministic'],arch=args['arch'],predict=True,n_cpu_tf_sess=1)
@@ -444,6 +438,9 @@ class runner_stablebaselines3():
         episodestats.scale_sim()
         episodestats.save_sim(savefile)
 
+        env.close()
+        epienv.close()
+
         return 1
 
 
@@ -461,12 +458,12 @@ class runner_stablebaselines3():
         base=SimStats(args['timestep'],args['n_time'],args['n_employment'],args['n_pop'],
                             self.env,args['minimal'],args['min_age'],args['max_age'],args['min_retirementage'],
                             version=args['version'],params=args['gym_kwargs'],year=args['year'],gamma=args['gamma'],
-                            silent=True,save_pop=args['save_pop'])
+                            silent=True,save_pop=args['save_pop'],parttime_actions=args['parttime_actions'])
         base.load_sim(save+'0')
         eps=SimStats(args['timestep'],args['n_time'],args['n_employment'],args['n_pop'],
                             self.env,args['minimal'],args['min_age'],args['max_age'],args['min_retirementage'],
                             version=args['version'],params=args['gym_kwargs'],year=args['year'],gamma=args['gamma'],
-                            silent=True,save_pop=args['save_pop'])
+                            silent=True,save_pop=args['save_pop'],parttime_actions=args['parttime_actions'])
         for k in range(1,self.args['processes']):
             eps.load_sim(save+str(k))
             base.append_episodestat(eps)

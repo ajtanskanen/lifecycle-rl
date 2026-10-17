@@ -1976,7 +1976,7 @@ class Empstats():
             q[self.labels['ylevero']]=497_000_000*kerroin
             q[self.labels['ansiopvraha']]=1_840_034_600*kerroin # 1_930_846_464+1_964_486_581 # ansioturva + perusturva = 3 895 333 045
             q[self.labels['peruspvraha']]=1_843_804_553*kerroin # Kelasto
-            q[self.labels['asumistuki']]=(1_684_214_127 + 679_207_428)*kerroin # yleinen plus eläkkeensaajan 2023
+            q[self.labels['asumistuki']]=(1_227_965_673 + 652_953_691) # yleinen plus eläkkeensaajan 2023
             q[self.labels['tyoelakemeno']]=31_449_600_000*kerroin
             q[self.labels['kansanelakemeno']]=2_167_992_823*kerroin
             q[self.labels['takuuelakemeno']]=273_173_956*kerroin
@@ -1987,7 +1987,7 @@ class Empstats():
             q[self.labels['aitiyspaivaraha']]=850_374_956*kerroin
             q[self.labels['kotihoidontuki']]=245_768_701*kerroin
             q[self.labels['sairauspaivaraha']]=901_058_982*kerroin # 2023
-            q[self.labels['toimeentulotuki']]=718_462_857*kerroin
+            q[self.labels['toimeentulotuki']]=1_001_071_926
             if self.include_perustulo:
                 q[self.labels['perustulo']]=0
             q[self.labels['pvhoitomaksu']]=175_800_000*kerroin
@@ -2022,7 +2022,7 @@ class Empstats():
             q[self.labels['aitiyspaivaraha']]=850_374_956*kerroin
             q[self.labels['kotihoidontuki']]=245_768_701*kerroin
             q[self.labels['sairauspaivaraha']]=901_058_982*kerroin # 2023
-            q[self.labels['toimeentulotuki']]=718_462_857*kerroin
+            q[self.labels['toimeentulotuki']]=1_001_071_926*kerroin
             if self.include_perustulo:
                 q[self.labels['perustulo']]=0
             q[self.labels['pvhoitomaksu']]=175_800_000*kerroin # 2024

@@ -26,16 +26,6 @@ from . simstats import SimStats
 #from multiprocessing import shared_memory
 from multiprocessing import Process,Manager
 
-
-#Custom MLP policy of three layers of size 128 each
-class CustomPolicy(FeedForwardPolicy):
-    def __init__(self, *args, **kwargs):
-        super(CustomPolicy, self).__init__(*args, **kwargs,
-                                           net_arch=[dict(pi=[128, 128, 16],
-                                                          vf=[512, 256, 128])],
-                                           feature_extraction="mlp")
-                                           #act_fun=tf.nn.relu)
-
 class runner_stablebaselines2():
     def __init__(self,environment,gamma,timestep,n_time,n_pop,
                  minimal,min_age,max_age,min_retirementage,year,episodestats,

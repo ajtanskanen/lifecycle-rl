@@ -6,7 +6,7 @@ import gymnasium as gym
 import numpy as np
 from gymnasium import spaces, logger, utils, error
 from gymnasium.utils import seeding
-from IPython.core.display import display,HTML
+from IPython.display import display,HTML
 import matplotlib.pyplot as plt 
 import json
 #from stable_baselines.common import set_global_seeds
@@ -50,7 +50,7 @@ def make_env(env_id, rank, kwargs, seed=None):
     def _init():
         env = gym.make(env_id,kwargs=kwargs)
         if seed is not None:
-            env.seed(seed + rank)
+            env.seed(seed + rank + 100)
             env.env_seed(seed + rank + 100)
 
         # monitor enables various things, not used by default
