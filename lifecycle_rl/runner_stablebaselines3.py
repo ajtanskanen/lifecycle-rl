@@ -12,6 +12,7 @@ import gymnasium as gym
 from stable_baselines3.common.vec_env import SubprocVecEnv,DummyVecEnv
 from stable_baselines3 import A2C, PPO
 from sb3_contrib import ACKTR
+from sb3_contrib.acktr.acktr import make_sb2_lr_schedule
 from stable_baselines3.common.env_checker  import check_env as env_checker_check_env
 from .utils_v3 import make_env
 import torch as th
@@ -171,7 +172,10 @@ class runner_stablebaselines3():
                     ent_coef=0.01 
                 else:
                     ent_coef=entcoef 
-                model = ACKTR.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,kfac_clip=kfac_clip,learning_rate=scaled_learning_rate,ent_coef=ent_coef,
+                # load() rakentaa lr-aikataulun learning_ratesta; pelkkä float tekisi siitä vakion,
+                # joten aikataulu annetaan valmiina funktiona
+                model = ACKTR.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,kfac_clip=kfac_clip,
+                                   learning_rate=make_sb2_lr_schedule(scaled_learning_rate,learning_schedule),ent_coef=ent_coef,
                                    vf_coef=vf_coef,gae_lambda=gae_lambda,max_grad_norm=max_grad_norm,device=device,net_arch=self.default_arch)
             elif rlmodel in set(['a2c','A2C']):
                 learn_steps = batch * 4
@@ -209,7 +213,7 @@ class runner_stablebaselines3():
                 activation_fn = acktr_policy_kwargs.pop('activation_fn', th.nn.Tanh)
                 model = ACKTR('MlpPolicy', env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,kfac_clip=kfac_clip,learning_rate=scaled_learning_rate,ent_coef=ent_coef,
                             max_grad_norm=max_grad_norm,gae_lambda=gae_lambda,vf_coef=vf_coef,policy_kwargs=acktr_policy_kwargs,device=device,net_arch=self.default_arch,
-                            activation_fn=activation_fn)
+                            activation_fn=activation_fn,lr_schedule=learning_schedule)
             elif rlmodel in set(['a2c','A2C']):
                 learn_steps = batch * 4
                 model = A2C('MlpPolicy', env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,learning_rate=scaled_learning_rate,policy_kwargs=policy_kwargs,device=device)
