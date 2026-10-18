@@ -41,9 +41,9 @@ import profile
 import re
 
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
-os.environ['OMP_NUM_THREADS'] = '4'  # or any {'0', '1', '2'}
-OMP_NUM_THREADS=4
+#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
+#os.environ['OMP_NUM_THREADS'] = '4'  # or any {'0', '1', '2'}
+#OMP_NUM_THREADS=4
 
 import warnings
 

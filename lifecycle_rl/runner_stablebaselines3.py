@@ -43,7 +43,7 @@ class runner_stablebaselines3():
         self.gym_kwargs=gym_kwargs.copy()
         self.gym_kwargs['silent']=True
         self.share_features_extractor = True
-        self.default_arch = [256, 256, 64] # [256, 256, 16] # [dict(pi=[64, 32, 16],vf=[256, 192, 16])]
+        self.default_arch = [256, 256, 64] # [256, 256, 16] # [dict(pi=[64, 32, 16],vf=[256, 192, 16])] # [dict(pi=[128, 128, 16],vf=[256, 256, 16])] # 
         
         self.env = gym.make(self.environment,kwargs=self.gym_kwargs)
         self.n_employment,self.n_acts=self.env.unwrapped.get_n_states()
@@ -291,6 +291,9 @@ class runner_stablebaselines3():
     def simulate(self,debug=False,rlmodel='acktr',load=None,pop=None,startage=None,
                  deterministic=False,save='results/testsimulate',arch=None,set_seed=True,render=False,processes=None):
 
+        if processes is not None:
+            self.args['processes']=processes
+
         args=self.args.copy()
         args['debug']=debug
         args['rlmodel']=rlmodel
@@ -303,11 +306,6 @@ class runner_stablebaselines3():
         args['set_seed']=set_seed
         args['render']=render
         args['simfile']=save
-
-        if processes is not None:
-            args['processes']=processes
-        else:
-            args['processes']=self.args['processes']
 
         if render:  
             args['processes'] = 1 
