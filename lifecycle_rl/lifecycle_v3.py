@@ -265,10 +265,10 @@ class Lifecycle():
         self.callback_minsteps = 1_000
 
         # apumuuttujia
-        self.gamma = 0.92 ** 0.25
-        self.karenssi_kesto=0.25
-        self.include_investment=False
-        self.include_wealth=False
+        self.gamma = 0.92 ** 0.25 # timestep täällä tai muuten RL-algoritmi ei saa sitä
+        self.karenssi_kesto = 0.25
+        self.include_investment = False
+        self.include_wealth = False
         self.plotdebug=False
         self.include_pinkslip=True
         self.mortality=False
