@@ -380,8 +380,6 @@ class runner_stablebaselines3():
             print('savefile',savefile)
             print('version',env.env_method('get_lc_version',indices=[0])[0])
 
-        env.seed(seed=args['seed'] + rank + 10_000_000)
-
         #if hasattr(env.unwrapped, 'get_lc_twoperson'):
         if env.env_method('get_lc_twoperson',indices=[0])[0]:
             n_add=2
@@ -390,6 +388,11 @@ class runner_stablebaselines3():
 
         model=self.setup_model(env,rank=rank,debug=args['debug'],rlmodel=args['rlmodel'],load=args['load'],
                  deterministic=args['deterministic'],arch=args['arch'],predict=True,n_cpu_tf_sess=1)
+
+        # Siemen asetetaan vasta latauksen jälkeen: load() kutsuu set_random_seed(mallin seed),
+        # joka muuten ylikirjoittaisi envin siemenen ja tekisi kaikista prosesseista identtisiä.
+        # set_random_seed siementää envin lisäksi torchin, numpyn ja action spacen prosessikohtaisesti.
+        model.set_random_seed(args['seed'] + rank + 10_000_000)
 
         if args['startage'] is not None:
             env.env_method('set_startage',args['startage'])
