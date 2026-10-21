@@ -4049,7 +4049,9 @@ class EpisodeStats():
         min_cage=self.map_age(self.min_age)
         max_cage=self.map_age(self.max_age)+1
 
-        scalex = np.squeeze(demog2/self.n_pop*self.timestep)
+        # Skaalataan elossa olevilla: demog2 on havaittu väestö, josta kuolleet on jo poistettu.
+        # Jakaminen n_pop:lla vähentäisi kuolleisuuden toiseen kertaan.
+        scalex = np.squeeze(demog2/np.maximum(1,self.alive)*scale)
 
         d = np.squeeze(demog2[min_cage:max_cage])
 
@@ -4064,7 +4066,7 @@ class EpisodeStats():
             self.stats_employed=self.demogstates[:,1]+self.demogstates[:,10]+self.demogstates[:,8]+self.demogstates[:,9]+self.demogstates[:,5]+self.demogstates[:,6]
             self.stats_parttime=self.demogstates[:,10]+self.demogstates[:,8]
             self.stats_unemployed=self.demogstates[:,0]+self.demogstates[:,4]+self.demogstates[:,13]
-            self.stats_all = np.sum(self.demogstates,1)
+            self.stats_all = np.sum(self.demogstates,1)-self.demogstates[:,15] # tila 15 = kuollut
 
         if returns:
             return self.stats_employed,self.stats_parttime,self.stats_unemployed
