@@ -271,7 +271,7 @@ class Lifecycle():
         self.include_wealth = False
         self.plotdebug=False
         self.include_pinkslip=True
-        self.mortality=False
+        self.mortality=True
         self.universalcredit=False
         self.perustulo=False
         self.perustulo_korvaa_toimeentulotuen=False

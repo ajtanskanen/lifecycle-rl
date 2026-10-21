@@ -2198,7 +2198,7 @@ class PlotStats():
                 leg = 'mort women'
                 alive[:,0] = np.sum(self.episodestats.galive[:,3:6],1)
 
-            osuus = 100*(1.0-alive/self.episodestats.n_pop*2.0)
+            osuus = 100*(1.0-alive/self.episodestats.n_pop*2.0) # puolet simuloiduista naisia, puolet miehiä
             x = np.linspace(self.min_age,self.max_age,self.n_time)
             ax.plot(x,osuus,label = leg)
 
