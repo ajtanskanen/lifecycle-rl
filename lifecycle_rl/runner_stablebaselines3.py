@@ -132,6 +132,14 @@ class runner_stablebaselines3():
 
         return model
 
+    @staticmethod
+    def head_mask_key(env):
+        '''
+        ACKTR:n toimintopäiden maskaus: käytössä, jos ympäristö raportoi maskin info['head_mask']:ssa
+        (make_head_mask). Vanhemmat ympäristöversiot opetetaan ilman maskausta.
+        '''
+        return 'head_mask' if env.has_attr('make_head_mask') else None
+
     def setup_rlmodel(self,rlmodel,loadname,env,batch,policy_kwargs,learning_rate,
                       cont,max_grad_norm=None,tensorboard=False,verbose=2,n_cpu=1,
                       learning_schedule='constant',vf=None,gae_lambda=0.95,device="cpu",entcoef=None,nstep=None): # linear -> constant
@@ -177,7 +185,8 @@ class runner_stablebaselines3():
                 # joten aikataulu annetaan valmiina funktiona
                 model = ACKTR.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,kfac_clip=kfac_clip,
                                    learning_rate=make_sb2_lr_schedule(scaled_learning_rate,learning_schedule),ent_coef=ent_coef,
-                                   vf_coef=vf_coef,gae_lambda=gae_lambda,max_grad_norm=max_grad_norm,device=device,net_arch=self.default_arch)
+                                   vf_coef=vf_coef,gae_lambda=gae_lambda,max_grad_norm=max_grad_norm,device=device,net_arch=self.default_arch,
+                                   head_mask_key=self.head_mask_key(env))
             elif rlmodel in set(['a2c','A2C']):
                 learn_steps = batch * 4
                 model = A2C.load(loadname, env=env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,learning_rate=scaled_learning_rate,device=device)
@@ -221,7 +230,7 @@ class runner_stablebaselines3():
                     trunk = dict(net_arch=self.default_arch)
                 model = ACKTR('MlpPolicy', env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,kfac_clip=kfac_clip,learning_rate=scaled_learning_rate,ent_coef=ent_coef,
                             max_grad_norm=max_grad_norm,gae_lambda=gae_lambda,vf_coef=vf_coef,policy_kwargs=acktr_policy_kwargs,device=device,
-                            activation_fn=activation_fn,lr_schedule=learning_schedule,**trunk)
+                            activation_fn=activation_fn,lr_schedule=learning_schedule,head_mask_key=self.head_mask_key(env),**trunk)
             elif rlmodel in set(['a2c','A2C']):
                 learn_steps = batch * 4
                 model = A2C('MlpPolicy', env, verbose=verbose,gamma=self.gamma,n_steps=learn_steps,learning_rate=scaled_learning_rate,policy_kwargs=policy_kwargs,device=device)
