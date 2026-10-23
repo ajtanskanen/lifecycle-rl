@@ -178,7 +178,9 @@ class runner_stablebaselines3():
                 else:
                     vf_coef=0.1
                 if entcoef is None:
-                    ent_coef=0.01 
+                    # palkkioerot ovat pieniä ja ACKTR ei normalisoi diskreettien toimintojen
+                    # advantageja, joten 0.01:n entropiabonus pitää politiikan lähes tasajakaumana
+                    ent_coef=0.0
                 else:
                     ent_coef=entcoef 
                 # load() rakentaa lr-aikataulun learning_ratesta; pelkkä float tekisi siitä vakion,
@@ -214,7 +216,7 @@ class runner_stablebaselines3():
                     vf_coef=0.1
 
                 if entcoef is None:
-                    ent_coef=0.01 
+                    ent_coef=0.0 # ks. yllä: 0.01 pitää politiikan lähes tasajakaumana
                 else:
                     ent_coef=entcoef
                 # ACKTR rakentaa rungon itse: aktivointi annetaan ACKTR:n omana argumenttina,
