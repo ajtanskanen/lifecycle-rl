@@ -383,7 +383,7 @@ class Empstats():
             if g==0:
                 emp=np.array([0.6105759828008752,0.36016254273373727,0.3200082881537852,0.31085326683659426,0.2961498182479252,0.26076304815478224,0.21717549619463294,0.16641070038324632,0.12561170757615392,0.09970727006967911,0.08447530352041628,0.07503089648504051,0.06789322495112164,0.061260107735702285,0.055520658256038594,0.0515436462531838,0.04817152678403533,0.04471627959833152,0.04152182213308703,0.03694700539525616,0.03539286556624591,0.03266022699941268,0.029000580518836284,0.02776118476173848,0.026129642947531506,0.023567648089261407,0.02124305011194233,0.018677343473413686,0.018161677270230565,0.01723714716276528,0.015677151269835564,0.014383645059768906,0.013870882888513777,0.012206702538576846,0.011129111867311378,0.010024730696630913,0.009421473363363957,0.008356152220173213,0.00734188861644527,0.006531885964350937,0.00604490590891582,0.004262147501979019,0.004306813129634657,0.002993180179939787,0.0026046947513059648,0.0020732356282642155,0.0022339957079804858,0.0017817522346164866,0.0017737541744918578,0.001687352553004321,0.001680866391002669,0.0013963753181419304,0.0012489650274678395,0.001046203137411532,0.0009559402291935917,0.000605417463136484,0.0007138329447531051,0.0,0.0,0.0,0.0,0.0])
             elif g==1:
-                emp=np.array([0.632,0.349,0.306,0.312,0.303,0.285,0.236,0.181,0.145,0.121,0.100,0.090,0.084,0.075,0.073,0.069,0.062,0.060,0.056,0.054,0.051,0.045,0.043,0.038,0.034,0.032,0.030,0.027,0.025,0.021,0.022,0.020,0.017,0.017,0.015,0.013,0.012,0.010,0.010,0.008,0.007,0.007,0.004,0.004,0.003,0.002,0.002,0.003,0.002,0.002,0.002,0.002,0.002,0.0,0.0,0.0,0.0,0.0])
+                emp=np.array([0.632,0.341,0.302,0.310,0.302,0.285,0.235,0.181,0.145,0.121,0.100,0.090,0.084,0.075,0.073,0.069,0.062,0.060,0.056,0.054,0.051,0.045,0.043,0.038,0.034,0.032,0.030,0.027,0.025,0.021,0.022,0.020,0.017,0.017,0.015,0.013,0.012,0.010,0.010,0.008,0.007,0.007,0.004,0.004,0.003,0.002,0.002,0.003,0.002,0.002,0.002,0.002,0.002,0.001,0.001,0.001,0.001,0,0,0,0,0])
             elif g==2:
                 emp=np.array([0.700,0.481,0.347,0.305,0.292,0.267,0.226,0.176,0.139,0.108,0.084,0.069,0.061,0.055,0.049,0.043,0.039,0.034,0.033,0.029,0.026,0.026,0.024,0.020,0.021,0.020,0.018,0.017,0.017,0.013,0.014,0.013,0.012,0.011,0.010,0.009,0.009,0.008,0.007,0.007,0.006,0.005,0.004,0.003,0.002,0.002,0.002,0.002,0.002,0.002,0.002,0.002,0.002,0.0,0.0,0.0,0.0,0.0])
         elif self.year==2025: # päivitä
@@ -1256,7 +1256,7 @@ class Empstats():
 
 
         demo_min_age=18
-        demo_max_age=79
+        demo_max_age=99
 
         # toistetaan demogin rakenne
         demog_naiset = demog_naiset[demo_min_age:demo_max_age+1]
@@ -1453,7 +1453,7 @@ class Empstats():
         '''
         #demog2=self.get_demog()
         d1862 = self.comp_demog_agesum(18,62) #np.sum(demog2[self.map_age(18):self.map_age(63)])*self.timestep
-        aikuisia = self.comp_demog_agesum(18,79) # np.sum(np.sum(demog2))*self.timestep
+        aikuisia = self.comp_demog_agesum(18,90) # np.sum(np.sum(demog2))*self.timestep
 
         #h_to_v=1.0 / 1860.0
 
@@ -1461,12 +1461,12 @@ class Empstats():
         if self.year==2018:
             lapsia = 1_058_091
             q[self.labels['yhteensä']] = aikuisia + lapsia
-            q[self.labels['aikuisia']] = aikuisia # 18-79
+            q[self.labels['aikuisia']] = aikuisia # 18-99
             q[self.labels['työikäisiä 18-62']]= d1862 # 3_108_968 * h_to_v # väestörakenne, statfin, 18-62
             q[self.labels['lapsia']] = lapsia
             q[self.labels['työllisiä']]= 2_373_668 # TK, työssäkäynti # 2_540_000 # TK
             q[self.labels['työssä ja eläkkeellä']]=31_000 # ETK 2020
-            q[self.labels['eläkkeellä']]=1_111_032 # 18-79, työvoimatutkimus, ETK: 1243767
+            q[self.labels['eläkkeellä']]=1_111_032 # 18-99 työvoimatutkimus, ETK: 1243767
             q[self.labels['työssä 63+']]=69_669 # ETK 2020
             q[self.labels['palkansaajia']]=2_204_000 # TK
             q[self.labels['ansiosidonnaisella']]=118_615  # Kelan tilasto 31.12.2018 
@@ -1488,7 +1488,7 @@ class Empstats():
             q[self.labels['lapsia']] = lapsia
             q[self.labels['työllisiä']]=2_566_000 # TK
             q[self.labels['työssä ja eläkkeellä']]=31_000 # ETK 2020
-            q[self.labels['eläkkeellä']]=1_111_032 # 18-79, työvoimatutkimus, ETK: 1243767
+            q[self.labels['eläkkeellä']]=1_111_032 # 18-99, työvoimatutkimus, ETK: 1243767
             q[self.labels['työssä 63+']]=83_356 # ETK 2020
             q[self.labels['palkansaajia']]=2_204_000 # TK
             q[self.labels['ansiosidonnaisella']]=121_367  # Kelan tilasto 27.11.2025
@@ -1511,7 +1511,7 @@ class Empstats():
             q[self.labels['työllisiä']]=2_284_673  # TK, työssäkäynti # # 2_528_000 # TK
             q[self.labels['työssä 63+']]=90_419 # ETK 2020
             q[self.labels['työssä ja eläkkeellä']]=31_000 # ETK 2020
-            q[self.labels['eläkkeellä']]=1_111_032 # 18-79, työvoimatutkimus, ETK: 1243767
+            q[self.labels['eläkkeellä']]=1_111_032 # 18-99, työvoimatutkimus, ETK: 1243767
             q[self.labels['palkansaajia']]=2_204_000 # TK
             q[self.labels['ansiosidonnaisella']]=193_265	  # Kelan tilasto 2025
             q[self.labels['tmtuella']]=247_385  # Kelan tilasto 2025
@@ -1532,7 +1532,7 @@ class Empstats():
             q[self.labels['lapsia']] = lapsia
             q[self.labels['työllisiä']]=2_377_126  # TK, työssäkäynti # # TK
             q[self.labels['työssä ja eläkkeellä']]=31_000 # ETK 2020
-            q[self.labels['eläkkeellä']]=1_111_032 # 18-79, työvoimatutkimus, ETK: 1243767
+            q[self.labels['eläkkeellä']]=1_111_032 # 18-99, työvoimatutkimus, ETK: 1243767
             q[self.labels['työssä 63+']]=94_968 # ETK 2020
             q[self.labels['palkansaajia']]=2_204_000 # TK
             q[self.labels['ansiosidonnaisella']]=128_593  # Kelan tilasto 2025
@@ -1554,7 +1554,7 @@ class Empstats():
             q[self.labels['lapsia']] = lapsia
             q[self.labels['työllisiä']]=2_423_548 # TK, työssäkäynti 
             q[self.labels['työssä ja eläkkeellä']]=31_000 # ETK 2020
-            q[self.labels['eläkkeellä']]=1_111_032 # 18-79, työvoimatutkimus, ETK: 1 243 767
+            q[self.labels['eläkkeellä']]=1_111_032 # 18-99, työvoimatutkimus, ETK: 1 243 767
             q[self.labels['työssä 63+']]=103_394 # TK työssäkäynti
             q[self.labels['palkansaajia']]=2_204_000 # TK
             q[self.labels['ansiosidonnaisella']]=109_309  # Kelan tilasto 2025
@@ -1577,8 +1577,8 @@ class Empstats():
             q[self.labels['työllisiä']]=2_417_365 # työvoimatutkimus, 2_528_000 # TK
             q[self.labels['työllisiä 18-62']] = 2_303_977 # työvoimatutkimus
             q[self.labels['työssä ja eläkkeellä']]=31_000 # ETK 2020
-            q[self.labels['eläkkeellä']]=885_004 # # ETK 18-79: 1_240_551 , työssäkäyntitutkimus: 885_004
-            q[self.labels['vanhuuseläkkeellä']]=1_061_711 # 18-79, ETK: 1240551            
+            q[self.labels['eläkkeellä']]=885_004 # # ETK 18-99: 1_240_551 , työssäkäyntitutkimus: 885_004
+            q[self.labels['vanhuuseläkkeellä']]=1_061_711 # 18-99, ETK: 1240551            
             q[self.labels['työssä 63+']]=113_388 # TK työssäkäynti, 2023
             q[self.labels['palkansaajia']]=2_204_000 # TK
             q[self.labels['ansiosidonnaisella']]=130_869  # Kelan tilasto 2025
@@ -1601,7 +1601,7 @@ class Empstats():
             q[self.labels['lapsia']] = lapsia
             q[self.labels['työllisiä']]=2_423_548  # TK, työssäkäynti # 2_423_548 # TK, työssäkäynti # 2_528_000 # TK
             q[self.labels['työssä ja eläkkeellä']]=31_000 # ETK 2020
-            q[self.labels['eläkkeellä']]=1_111_032 # 18-79, työvoimatutkimus, ETK: 1243767
+            q[self.labels['eläkkeellä']]=1_111_032 # 18-99, työvoimatutkimus, ETK: 1243767
             q[self.labels['työssä 63+']]=103_394 # ETK 2020
             q[self.labels['palkansaajia']]=2_204_000 # TK
             q[self.labels['ansiosidonnaisella']]=124_084	  # Kelan tilasto 2025

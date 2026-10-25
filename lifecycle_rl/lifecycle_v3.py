@@ -282,7 +282,7 @@ class Lifecycle():
         self.ansiopvraha_toe=None
         self.environment=None #'unemployment-v0'
         self.include_preferencenoise=False
-        self.preferencenoise_level=0
+        self.preferencenoise_level=None # None: ympäristön oma preferencenoise_std
         self.porrasta_putki=True
         self.porrasta_1askel=True
         self.porrasta_2askel=True

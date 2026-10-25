@@ -2124,7 +2124,7 @@ class EpisodeStats():
     def add_v12(self,n,act,r,state,newstate,q=None,debug=False,plot=False,aveV=None,pred_r=None):
 
         emp,_,_,_,_,a,_,_,_,_,_,\
-            _,_,_,_,_,_,_,_,_,_,\
+            _,_,_,_,_,_,_,_,_,_,_,\
             _,_,_,_,_,_,p_tila_vanha,_,_,\
             _,_,_,_,_,_,_,_,_,_,\
             _,_,_,_,_,_,_,_,_,_,\
@@ -2133,7 +2133,7 @@ class EpisodeStats():
             =self.env.unwrapped.states.state_decode(state) # current employment state
             
         newemp,g,p_g,newpen,newsal,a2,tis,te_maksussa,pink,toe,toek,\
-            ura,bu,wr,upr,uw,uwr,pr,c3,c7,c18,\
+            ura,bu,wr,upr,uw,uwr,pr,pr2,c3,c7,c18,\
             unemp_left,aa,toe58,ove,jasen,puoliso,p_tila,p_w,p_newpen,\
             p_wr,p_te_maksussa,p_nw,p_bu,p_unemp_benefit_left,p_unemp_after_ra,p_uw,p_uwr,p_aa,p_toe58,\
             p_toe,p_toekesto,p_ura,p_tis,p_pink,p_ove,kansanelake,p_kansanelake,paidpens,p_paidpens,\
@@ -3237,7 +3237,7 @@ class EpisodeStats():
             q[self.labels['nettotulot']] = np.sum(self.infostats_tulot_netto*scalex)
 
         if False:
-            q[self.labels['tulot_netto_v2']] = q[self.labels['tyotulosumma']]+q[self.labels['etuusmeno']]-q[self.labels['verot+maksut+alv']]-q[self.labels['pvhoitomaksu']]
+            q[self.labels['tulot_netto_v2']] = q[self.labels['tyotulosumma']]+q[self.labels['etuusmeno']]-q[self.labels['verot+maksut+alv']] # pvhoitomaksu sisältyy jo verot+maksut-erään
             q[self.labels['etuusmeno_v2']] = q[self.labels['tyottomyyspvraha']]+q[self.labels['kansanelakemeno']]+q[self.labels['takuuelakemeno']]+q[self.labels['opintotuki']]+q[self.labels['isyyspaivaraha']]+\
                 q[self.labels['aitiyspaivaraha']]+q[self.labels['sairauspaivaraha']]+q[self.labels['toimeentulotuki']]+\
                 q[self.labels['asumistuki']]+q[self.labels['kotihoidontuki']]+q[self.labels['elatustuki']]+q[self.labels['lapsilisa']] + q[self.labels['kokoelakemeno']]
@@ -3337,7 +3337,7 @@ class EpisodeStats():
 
     def comp_uncertainty(self,emp,emp_htv=None,start=19,end=68):
         min_cage=max(0,self.map_age(start))
-        max_cage=self.map_age(end)+1
+        max_cage=self.map_age_end(end)
 
         tyollosuus,htvosuus,tyot_osuus,kokotyo_osuus,osatyo_osuus=self.comp_employed_ratio(emp,emp_htv=emp_htv)
         haj = np.mean(np.std(tyollosuus[min_cage:max_cage]))
@@ -3399,7 +3399,7 @@ class EpisodeStats():
             scale=1.0
 
         min_cage=self.map_age(start)
-        max_cage=self.map_age(end)+1
+        max_cage=self.map_age_end(end)
 
         if grouped:
             scalex=demog2/self.alive
@@ -3459,7 +3459,7 @@ class EpisodeStats():
             scale=1.0
 
         min_cage=self.map_age(start)
-        max_cage=self.map_age(end)+1
+        max_cage=self.map_age_end(end)
 
         scalex=demog2/self.alive
         ps = np.zeros((self.n_time,6))
@@ -3498,7 +3498,7 @@ class EpisodeStats():
             scale=1.0
 
         min_cage=self.map_age(start)
-        max_cage=self.map_age(end)+1
+        max_cage=self.map_age_end(end)
 
         if grouped:
             scalex=demog2/self.alive
@@ -3547,7 +3547,7 @@ class EpisodeStats():
             scale=1.0
 
         min_cage=self.map_age(start)
-        max_cage=self.map_age(end)+1
+        max_cage=self.map_age_end(end)
 
         scalex=demog2/self.alive 
         ps = np.zeros((self.n_time,1))
@@ -3842,7 +3842,7 @@ class EpisodeStats():
             scale = 1.0
 
         min_cage = max(0,self.map_age(start))
-        max_cage = self.map_age(end)+1
+        max_cage = self.map_age_end(end)
 
         scalex = demog2[min_cage:max_cage]*scale
         tyollosuus,htvosuus,tyott_osuus,kokotyo_osuus,osatyo_osuus = self.comp_employed_ratio(emp,emp_htv=emp_htv)
@@ -3873,7 +3873,7 @@ class EpisodeStats():
             scale = 1.0
 
         min_cage = max(0,self.map_age(start))
-        max_cage = self.map_age(end)+1
+        max_cage = self.map_age_end(end)
 
         scalex = demog2[min_cage:max_cage]*scale
         tyollosuus,htvosuus,tyot_osuus,kokotyo_osuus,osatyo_osuus = self.comp_employed_ratio(emp,emp_htv=emp_htv)
@@ -4100,7 +4100,8 @@ class EpisodeStats():
         scalex_men[0] = scalex_men[1]
         scalex_women[0] = scalex_women[1]
 
-        # tilastoista puuttuu 18,0 -vuotiaat. monistetaan 18,25 -vuotiaiden tiedot
+        # tilastoista puuttuu 18,0 -vuotiaat. monistetaan 18,25 -vuotiaiden tiedot (kopioon, ei tallennettuihin tietoihin)
+        gemp = gemp.copy()
         gemp[0,:,:] = gemp[1,:,:]
 
         if g is None:
@@ -4132,7 +4133,8 @@ class EpisodeStats():
         scalex_men[0] = scalex_men[1]
         scalex_women[0] = scalex_women[1]
 
-        # tilastoista puuttuu 18,0 -vuotiaat. monistetaan 18,25 -vuotiaiden tiedot
+        # tilastoista puuttuu 18,0 -vuotiaat. monistetaan 18,25 -vuotiaiden tiedot (kopioon, ei tallennettuihin tietoihin)
+        gemp = gemp.copy()
         gemp[0,:,:] = gemp[1,:,:]
 
         if g is None:
@@ -4207,7 +4209,7 @@ class EpisodeStats():
         start = self.min_age
         end = min(75,self.max_age)
         min_cage = self.map_age(start)
-        max_cage = self.map_age(end)+1
+        max_cage = self.map_age(end)+1 # kiinteä yläraja 75,0 v; vertailudata (naiset_in) on rajattu tähän
 
         scalex = demog2[min_cage:max_cage]/self.alive[min_cage:max_cage]
 
@@ -4470,7 +4472,7 @@ class EpisodeStats():
     def comp_state_stats(self,state,start=20,end=63.5):
 
         min_cage=self.map_age(start)
-        max_cage=self.map_age(end)+1
+        max_cage=self.map_age_end(end)
         demog2 = np.squeeze(self.empstats.get_demog())
         vaikutus = np.sum(demog2[min_cage:max_cage]*state[min_cage:max_cage])/np.sum(demog2[min_cage:max_cage])
 
@@ -4675,6 +4677,15 @@ class EpisodeStats():
         else:
             return round((age-self.min_age)*self.inv_timestep)
 
+    def map_age_end(self,end):
+        '''
+        Ikävälin loppurajan (poissuljettu) rivi-indeksi: kokonaisluku end tarkoittaa,
+        että koko ikävuosi end on mukana (esim. 20-64 sisältää iät 64,0-64,75)
+        '''
+        if float(end).is_integer():
+            return self.map_age(end+1)
+        return self.map_age(end)+1
+
     def map_t_to_age(self,t):
         return self.min_age+t/self.inv_timestep
 
@@ -4819,8 +4830,8 @@ class EpisodeStats():
         '''
         
         if gender is None:
-            alive=self.alive[-1]
-            maxnpv = np.sum(self.infostats_npv0)/alive # keskimääräinen npv ilman diskonttausta tarkasteluvälin lopussa
+            alive=self.alive[-1,0]
+            maxnpv = np.sum(self.infostats_npv0)/max(1,alive) # keskimääräinen npv ilman diskonttausta tarkasteluvälin lopussa
 
             agg_premium = np.sum(self.infostats_pop_tyelpremium,axis=1)
             agg_pensions_reduced = np.sum(self.infostats_paid_tyel_pension,axis=1)
@@ -4828,20 +4839,18 @@ class EpisodeStats():
             agg_irr_tyel_full=self.reaalinen_palkkojenkasvu*100+self.comp_annual_irr(maxnpv,agg_premium,agg_pensions_full)
             agg_irr_tyel_reduced=self.reaalinen_palkkojenkasvu*100+self.comp_annual_irr(maxnpv,agg_premium,agg_pensions_reduced)
         else:
+            # valitun sukupuolen henkilöt (get_gendermask maskaa toisen sukupuolen)
+            selected = (~self.get_gendermask(gender,time=False).astype(bool)[:,0]).astype(float)
             if gender==1: # naiset
-                gendermask = self.get_gendermask(2).astype(float).T
-                #gendermask = (self.infostats_group>2).astype(float).T
                 alive = np.sum(self.galive[-1,3:6])
             else: # miehet
-                gendermask = self.get_gendermask(1).astype(float).T
-                #gendermask = (self.infostats_group<3).astype(float).T
                 alive = np.sum(self.galive[-1,0:3])
         
-            maxnpv = np.sum(self.infostats_npv0.T*gendermask)/alive # keskimääräinen npv ilman diskonttausta tarkasteluvälin lopussa
+            maxnpv = np.sum(self.infostats_npv0[:,0]*selected)/max(1,alive) # keskimääräinen npv ilman diskonttausta tarkasteluvälin lopussa
 
-            agg_premium = np.sum(self.infostats_pop_tyelpremium*gendermask,axis=1)
-            agg_pensions_reduced = np.sum(self.infostats_paid_tyel_pension*gendermask,axis=1)
-            agg_pensions_full = np.sum(self.infostats_pop_tyoelake*gendermask,axis=1)
+            agg_premium = np.sum(self.infostats_pop_tyelpremium*selected[None,:],axis=1)
+            agg_pensions_reduced = np.sum(self.infostats_paid_tyel_pension*selected[None,:],axis=1)
+            agg_pensions_full = np.sum(self.infostats_pop_tyoelake*selected[None,:],axis=1)
             agg_irr_tyel_full=self.reaalinen_palkkojenkasvu*100+self.comp_annual_irr(maxnpv,agg_premium,agg_pensions_full)
             agg_irr_tyel_reduced=self.reaalinen_palkkojenkasvu*100+self.comp_annual_irr(maxnpv,agg_premium,agg_pensions_reduced)
 
@@ -4964,8 +4973,9 @@ class EpisodeStats():
         n = np.zeros(5)
 
         for k in range(self.n_pop):
-            prev_state=popempstate[0,k]
-            prev_trans=0
+            # rivi 0 (18,0 v) jää tallentamatta; aloitetaan ensimmäisestä tallennetusta rivistä
+            prev_state=popempstate[1,k]
+            prev_trans=1
             for t in range(1,self.n_time):
                 age=self.min_age+t*self.timestep
                 if age<=max_age:
@@ -5040,8 +5050,9 @@ class EpisodeStats():
             popempstate=self.popempstate
 
         for k in range(self.n_pop):
-            prev_state=popempstate[0,k]
-            prev_trans=0
+            # rivi 0 (18,0 v) jää tallentamatta; aloitetaan ensimmäisestä tallennetusta rivistä
+            prev_state=popempstate[1,k]
+            prev_trans=1
             for t in range(1,self.n_time):
                 age=self.min_age+t*self.timestep
                 if age<=max_age:
@@ -5087,9 +5098,10 @@ class EpisodeStats():
             popunemprightleft=self.popunemprightleft
 
         for k in range(self.n_pop):
-            prev_state=popempstate[0,k]
-            prev_trans=0
-            for t in range(1,self.n_time):
+            # rivi 0 (18,0 v) jää tallentamatta ja on nolla; aloitetaan ensimmäisestä tallennetusta rivistä
+            prev_state=popempstate[1,k]
+            prev_trans=1
+            for t in range(2,self.n_time):
                 age=self.min_age+t*self.timestep
                 if age<=max_age:
                     if popempstate[t,k]!=prev_state:
@@ -5098,6 +5110,8 @@ class EpisodeStats():
                             tyoll_distrib_bu.append(popunemprightleft[t,k])
                             prev_state=popempstate[t,k]
                             prev_trans=t
+                        elif prev_state in unempset and popempstate[t,k] in unempset: # sama työttömyysjakso jatkuu
+                            prev_state=popempstate[t,k]
                         else: # some other state
                             prev_state=popempstate[t,k]
                             prev_trans=t
@@ -5134,8 +5148,9 @@ class EpisodeStats():
             popunemprightleft=self.popunemprightleft
 
         for k in range(self.n_pop):
-            prev_state=popempstate[0,k]
-            prev_trans=0
+            # rivi 0 (18,0 v) jää tallentamatta; aloitetaan ensimmäisestä tallennetusta rivistä
+            prev_state=popempstate[1,k]
+            prev_trans=1
             passed = False
             for t in range(1,self.n_time):
                 age=self.min_age+t*self.timestep
@@ -5178,8 +5193,9 @@ class EpisodeStats():
         unempset=set(unempset)
 
         for k in range(self.n_pop):
-            prev_state=popempstate[0,k]
-            prev_trans=0
+            # rivi 0 (18,0 v) jää tallentamatta; aloitetaan ensimmäisestä tallennetusta rivistä
+            prev_state=popempstate[1,k]
+            prev_trans=1
             for t in range(1,self.n_time):
                 age=self.min_age+t*self.timestep
                 if age<=max_age:
@@ -5221,18 +5237,21 @@ class EpisodeStats():
         unempset=set(unempset)
 
         for k in range(self.n_pop):
-            prev_state=popempstate[0,k]
-            prev_trans=0
-            for t in range(1,self.n_time):
+            # rivi 0 (18,0 v) jää tallentamatta ja on nolla; aloitetaan ensimmäisestä tallennetusta rivistä
+            prev_state=popempstate[1,k]
+            prev_trans=1
+            for t in range(2,self.n_time):
                 age=self.min_age+t*self.timestep
                 if age<=max_age:
-                    if self.popempstate[t,k]!=prev_state:
+                    if popempstate[t,k]!=prev_state:
                         if prev_state in unempset and popempstate[t,k] not in unempset:
                             unemp_distrib.append((t-prev_trans)*self.timestep)
                             unemp_distrib_bu.append(popunemprightleft[t,k])
 
                             prev_state=popempstate[t,k]
                             prev_trans=t
+                        elif prev_state in unempset and popempstate[t,k] in unempset: # sama työttömyysjakso jatkuu
+                            prev_state=popempstate[t,k]
                         elif prev_state in empset and popempstate[t,k] not in unempset:
                             emp_distrib.append((t-prev_trans)*self.timestep)
                             prev_state=popempstate[t,k]
@@ -5284,8 +5303,9 @@ class EpisodeStats():
         not_unempset = full_set - unempset
 
         for k in range(self.n_pop):
-            prev_state = popempstate[0,k]
-            prev_trans = 0
+            # rivi 0 (18,0 v) jää tallentamatta; aloitetaan ensimmäisestä tallennetusta rivistä
+            prev_state = popempstate[1,k]
+            prev_trans = 1
             start_unemp = False
             for t in range(1,self.n_time):
                 age = self.min_age+t*self.timestep
@@ -5558,6 +5578,9 @@ class EpisodeStats():
         agg_ftsuhde = np.empty((3,3))
         agg_combisuhde = np.empty((3,6))
 
+        a1 = 0 # self.map_age(minage)
+        e1 = self.n_time # self.map_age(maxage)
+
         for g in range(3):
             if g==0:
                 gset=[0,1,2,3,4,5]
@@ -5567,16 +5590,18 @@ class EpisodeStats():
                 gset=[3,4,5]
             agg_ptsuhde[g,:] = np.sum(self.infostats_pt_act[:,10,gset,:],axis=(0,1)) / np.sum(self.infostats_pt_act[:,10,gset,:],axis=(0,1,2))
             agg_ftsuhde[g,:] = np.sum(self.infostats_pt_act[:,1,gset,:],axis=(0,1)) / np.sum(self.infostats_pt_act[:,1,gset,:],axis=(0,1,2))
-            s_pt = np.sum(self.infostats_pt_act[:,10,gset,:],axis=1)
-            s_ft = np.sum(self.infostats_pt_act[:,1,gset,:],axis=1)
-            agg_combisuhde[g,0:3] = np.sum(s_pt,axis=0) / (np.sum(self.infostats_pt_act[:,10,gset,:],axis=(0,1,2))+np.sum(self.infostats_pt_act[:,10,gset,:],axis=(0,1,2)))
-            agg_combisuhde[g,3:6] = np.sum(s_ft,axis=0) / (np.sum(self.infostats_pt_act[:,1,gset,:],axis=(0,1,2))+np.sum(self.infostats_pt_act[:,1,gset,:],axis=(0,1,2)))
-            ptsuhde[g,:,:] = s_pt / np.sum(self.infostats_pt_act[:,10,gset,:],axis=(1,2))[:,None]
-            ftsuhde[g,:,:] = s_ft / np.sum(self.infostats_pt_act[:,1,gset,:],axis=(1,2))[:,None]
-            combisuhde[g,:,0:3] = s_pt/np.sum(s_pt+s_ft)
-            combisuhde[g,:,3:6] = s_ft/np.sum(s_pt+s_ft)
-            veptsuhde[g,:,:] = np.sum(self.infostats_pt_act[:,8,gset,:],axis=1) / np.sum(self.infostats_pt_act[:,8,gset,:],axis=(1,2))[:,None]
-            veftsuhde[g,:,:] = np.sum(self.infostats_pt_act[:,9,gset,:],axis=1) / np.sum(self.infostats_pt_act[:,9,gset,:],axis=(1,2))[:,None]
+
+            s_pt = np.sum(self.infostats_pt_act[a1:e1,10,gset,:],axis=1)
+            s_ft = np.sum(self.infostats_pt_act[a1:e1,1,gset,:],axis=1)
+            s_ptft = (np.sum(self.infostats_pt_act[a1:e1,1,gset,:],axis=(0,1,2))+np.sum(self.infostats_pt_act[a1:e1,10,gset,:],axis=(0,1,2)))
+            agg_combisuhde[g,0:3] = np.sum(s_pt,axis=0) / s_ptft
+            agg_combisuhde[g,3:6] = np.sum(s_ft,axis=0) / s_ptft
+            ptsuhde[g,a1:e1,:] = s_pt / np.sum(self.infostats_pt_act[a1:e1,10,gset,:],axis=(1,2))[:,None]
+            ftsuhde[g,a1:e1,:] = s_ft / np.sum(self.infostats_pt_act[a1:e1,1,gset,:],axis=(1,2))[:,None]
+            combisuhde[g,a1:e1,0:3] = s_pt/np.sum(s_pt+s_ft)
+            combisuhde[g,a1:e1,3:6] = s_ft/np.sum(s_pt+s_ft)
+            veptsuhde[g,a1:e1,:] = np.sum(self.infostats_pt_act[a1:e1,8,gset,:],axis=1) / np.sum(self.infostats_pt_act[a1:e1,8,gset,:],axis=(1,2))[:,None]
+            veftsuhde[g,a1:e1,:] = np.sum(self.infostats_pt_act[a1:e1,9,gset,:],axis=1) / np.sum(self.infostats_pt_act[a1:e1,9,gset,:],axis=(1,2))[:,None]
 
         return agg_ptsuhde,agg_ftsuhde,ptsuhde,ftsuhde,veptsuhde,veftsuhde,combisuhde,agg_combisuhde
         

@@ -375,8 +375,8 @@ class PlotStats():
             q_stat_group = self.empstats.comp_participants_by_group(scale = True,lkm = True,g = 0)
             q_days_group = self.empstats.stat_days()
         else:
-            q_stat_group = cc.episodestats.comp_participants_by_sex(scale = True,lkm = True,g = 0)
-            q_days_group = cc.episodestats.comp_participants_by_sex(scale = True,lkm = False,g = 0)
+            q_stat_group = cc.episodestats.comp_participants_by_group(scale = True,lkm = True,g = g)
+            q_days_group = cc.episodestats.comp_participants_by_group(scale = True,lkm = False,g = g)
 
         df1_men = pd.DataFrame.from_dict(q_group,orient = 'index',columns = [selftext+f' g{g} (py)'])
         df2_men = pd.DataFrame.from_dict(q_days_group,orient = 'index',columns = [cctext+f' g{g} (py)'])
@@ -408,7 +408,7 @@ class PlotStats():
             print(tabulate(df, headers = 'keys', tablefmt = 'psql', floatfmt = ",.0f"))
         
         df = df4_men.copy()
-        df[cctext+' m (#)'] = df5_men[cctext+' men (#)']
+        df[cctext+f' g{g} (#)'] = df5_men[cctext+f' g{g} (#)']
         if to_latex:
             print(df.to_latex(float_format="{:,.0f}".format))
         else:
@@ -794,30 +794,21 @@ class PlotStats():
     def plot_pt_act(self):
         agg_pt,agg_ft,pt,ft,vept,veft,cpt,agg_combi = self.episodestats.comp_ptproportions()
 
-        #x = np.linspace(0,2,3)
-        #plt.bar(x,agg_pt[0,:])
-        #plt.title('Osa-aika, pt-tila: ave {}'.format(ma.mean(agg_pt[0,:])))
-        #plt.show()
-
-        #plt.bar(x,agg_ft[0,:])
-        #plt.title('Kokoaika, pt-tila')
-        #plt.show()
-
         x = np.linspace(self.min_age,self.max_age,self.n_time)
         plt.stackplot(x,pt[0,:,:].T)
-        plt.legend(labels = ['25%','50%','75%'])
+        plt.legend(labels = ['8h','16h','24h'])
         plt.title('Osa-aika, pt-tila')
         plt.show()
         plt.stackplot(x,ft[0,:,:].T)
-        plt.legend(labels = ['100%','125%','150%'])
+        plt.legend(labels = ['32h','40h','48h'])
         plt.title('Kokoaika, pt-tila')
         plt.show()
         plt.stackplot(x,vept[0,:,:].T)
-        plt.legend(labels = ['25%','50%','75%'])
+        plt.legend(labels = ['8h','16h','24h'])
         plt.title('Ve+Osa-aika, pt-tila')
         plt.show()
         plt.stackplot(x,veft[0,:,:].T)
-        plt.legend(labels = ['100%','125%','150%'])
+        plt.legend(labels = ['32h','40h','48h'])
         plt.title('Ve+Kokoaika, pt-tila')
         plt.show()
 
@@ -847,11 +838,11 @@ class PlotStats():
         ax.set_xlabel(self.labels['Työaika [h]'])
         plt.show()
 
-        print('osa-aika','miehet',agg_pt[2,:])
-        print('naiset',agg_pt[1,:])
+        print('osa-aika','miehet',agg_pt[1,:])
+        print('naiset',agg_pt[2,:])
         print('yht',agg_pt[0,:])
-        print('kokoaika','miehet',agg_ft[2,:])
-        print('naiset',agg_ft[1,:])
+        print('kokoaika','miehet',agg_ft[1,:])
+        print('naiset',agg_ft[2,:])
         print('yht',agg_ft[0,:])
 
     def plot_unemp_after_ra(self):
@@ -990,7 +981,7 @@ class PlotStats():
         nn_time = int(np.round((max_time)*self.inv_timestep))+1
         x = np.linspace(0,max_time,nn_time)
         scaled,x2 = np.histogram(emp_distrib,x)
-        scaled = scaled/np.sum(emp_distrib)
+        scaled = scaled/max(1,len(emp_distrib))
         #ax.hist(emp_distrib)
         ax.bar(x2[1:-1],scaled[1:],align = 'center')
         plt.show()
@@ -1015,10 +1006,10 @@ class PlotStats():
         scalex = demog2/self.episodestats.alive #n_pop
         tyoelake_meno = self.episodestats.infostats_tyoelake*scalex
         kansanelake_meno = self.episodestats.infostats_kansanelake*scalex
-        print('työeläkemeno alle 63: {:.2f} vs tilasto {:.2f}'.format(np.sum(tyoelake_meno[:self.map_age(63)]),1_807.1))
-        print('työeläkemeno yli 63: {:.2f} vs tilasto {:.2f}'.format(np.sum(tyoelake_meno[self.map_age(63):]),24_227.2))
-        print('kansaneläkemeno alle 63: {:.2f} vs tilasto {:.2f}'.format(np.sum(kansanelake_meno[:self.map_age(63)]),679.6))
-        print('kansaneläkemeno yli 63: {:.2f} vs tilasto {:.2f}'.format(np.sum(kansanelake_meno[self.map_age(63):]),1_419.9))
+        print('työeläkemeno alle 63: {:.2f} vs tilasto {:.2f} M€'.format(np.sum(tyoelake_meno[:self.map_age(63)])/1e6,1_807.1))
+        print('työeläkemeno yli 63: {:.2f} vs tilasto {:.2f} M€'.format(np.sum(tyoelake_meno[self.map_age(63):])/1e6,24_227.2))
+        print('kansaneläkemeno alle 63: {:.2f} vs tilasto {:.2f} M€'.format(np.sum(kansanelake_meno[:self.map_age(63)])/1e6,679.6))
+        print('kansaneläkemeno yli 63: {:.2f} vs tilasto {:.2f} M€'.format(np.sum(kansanelake_meno[self.map_age(63):])/1e6,1_419.9))
         
         self.plot_y(self.episodestats.infostats_kansanelake,label = 'kansaneläke',
             ylabel = 'kansaneläke [e/v]',
@@ -1041,7 +1032,7 @@ class PlotStats():
         x = np.linspace(0,max_pen,51)
         scaled,x2 = np.histogram(pens_distrib.compressed(),x)
         
-        scaled = scaled/np.sum(pens_distrib)
+        scaled = scaled/max(1,pens_distrib.count())
         ax.plot(x2[1:],scaled)
         axvcolor = 'gray'
         lstyle = '--'
@@ -1064,10 +1055,10 @@ class PlotStats():
         nn_time = int(np.round((max_time)*self.inv_timestep))+1
         x = np.linspace(0,max_time,nn_time)
         scaled,x2 = np.histogram(emp_distrib,x)
-        scaled = scaled/np.sum(emp_distrib)
+        scaled = scaled/max(1,len(emp_distrib))
         x = np.linspace(0,max_time,nn_time)
         scaled3,x3 = np.histogram(emp_distrib2,x)
-        scaled3 = scaled3/np.sum(emp_distrib2)
+        scaled3 = scaled3/max(1,len(emp_distrib2))
 
         ax.plot(x3[1:-1],scaled3[1:],label = label1)
         ax.plot(x2[1:-1],scaled[1:],label = label2)
@@ -1192,7 +1183,7 @@ class PlotStats():
             scaled2 = scaled0_2
             scaled_tyoll2,x2_2 = np.histogram(tyoll_distrib2,x)
             jaljella2 = np.cumsum(scaled0_2[::-1])[::-1] # jäljellä olevien summa
-            scaled2 = scaled2/jaljella
+            scaled2 = scaled2/jaljella2
             jaljella_tyoll2 = np.cumsum(scaled0_2[::-1])[::-1] # jäljellä olevien summa
             scaled_tyoll2 = scaled_tyoll2/jaljella_tyoll2
         
@@ -2220,19 +2211,19 @@ class PlotStats():
         vero_ratio = 100*(self.episodestats.infostats_kunnallisvero_distrib+self.episodestats.infostats_valtionvero_distrib)/(np.reshape(np.sum(self.episodestats.infostats_valtionvero_distrib,1),(-1,1))+np.reshape(np.sum(self.episodestats.infostats_kunnallisvero_distrib,1),(-1,1)))
 
         if figname is not None:
-            self.plot_states(vero_ratio,ylabel = 'Valtioneronmaksajien osuus tilassa [%]',stack = True,figname = figname+'_stack')
+            self.plot_states(vero_ratio,ylabel = 'Osuus veroista tilassa [%]',stack = True,figname = figname+'_stack')
         else:
-            self.plot_states(vero_ratio,ylabel = 'Valtioneronmaksajien osuus tilassa [%]',stack = True)
+            self.plot_states(vero_ratio,ylabel = 'Osuus veroista tilassa [%]',stack = True)
 
         if figname is not None:
-            self.plot_states(valtionvero_ratio,ylabel = 'Veronmaksajien osuus tilassa [%]',stack = True,figname = figname+'_stack')
+            self.plot_states(valtionvero_ratio,ylabel = 'Osuus valtionverosta tilassa [%]',stack = True,figname = figname+'_stack')
         else:
-            self.plot_states(valtionvero_ratio,ylabel = 'Veronmaksajien osuus tilassa [%]',stack = True)
+            self.plot_states(valtionvero_ratio,ylabel = 'Osuus valtionverosta tilassa [%]',stack = True)
 
         if figname is not None:
-            self.plot_states(kunnallisvero_ratio,ylabel = 'Kunnallisveron maksajien osuus tilassa [%]',stack = True,figname = figname+'_stack')
+            self.plot_states(kunnallisvero_ratio,ylabel = 'Osuus kunnallisverosta tilassa [%]',stack = True,figname = figname+'_stack')
         else:
-            self.plot_states(kunnallisvero_ratio,ylabel = 'Kunnallisveron maksajien osuus tilassa [%]',stack = True)
+            self.plot_states(kunnallisvero_ratio,ylabel = 'Osuus kunnallisverosta tilassa [%]',stack = True)
 
         valtionvero_osuus,kunnallisvero_osuus,vero_osuus = self.episodestats.comp_taxratios()
 
@@ -2244,7 +2235,7 @@ class PlotStats():
         if len(ratios.shape)>1:
             vv_osuus = np.zeros((ratios.shape[0],5))
             vv_osuus[:,0] = ratios[:,0]+ratios[:,4]+ratios[:,5]+ratios[:,6]+\
-                          ratios[:,7]+ratios[:,8]+ratios[:,9]+ratios[:,11]+\
+                          ratios[:,7]+ratios[:,11]+\
                           ratios[:,12]+ratios[:,13]+ratios[:,16]
             vv_osuus[:,1] = ratios[:,1]+ratios[:,10]
             vv_osuus[:,2] = ratios[:,2]+ratios[:,3]+ratios[:,8]+ratios[:,9]
@@ -2252,7 +2243,7 @@ class PlotStats():
         else:
             vv_osuus = np.zeros((4))
             vv_osuus[0] = ratios[0]+ratios[4]+ratios[5]+ratios[6]+\
-                          ratios[7]+ratios[8]+ratios[9]+ratios[11]+\
+                          ratios[7]+ratios[11]+\
                           ratios[12]+ratios[13]+ratios[16]
             vv_osuus[1] = ratios[1]+ratios[10]
             vv_osuus[2] = ratios[2]+ratios[3]+ratios[8]+ratios[9]
@@ -2939,10 +2930,8 @@ class PlotStats():
 
         if end_at is None:
             end_at = max_age
-        x_n = end_at-start_from+1
-        x_t = int(np.round((x_n-1)*self.inv_timestep))#+2
-        x = np.linspace(start_from,max_age,x_t)
         y1 = y1[self.map_age(start_from):self.map_age(end_at)]
+        x = start_from+np.arange(y1.shape[0])*self.timestep
         if y2 is not None:
             y2 = y2[self.map_age(start_from):self.map_age(end_at)]
         if y3 is not None:
@@ -3393,8 +3382,8 @@ class PlotStats():
         for k in range(16):
             print(k,np.mean(self.episodestats.stat_wage_reduction[self.map_age(30):self.map_age(60),k]))
         self.plot_y(gen_red,ylabel = 'Average wage reduction')
-        gen_red_w = np.sum(np.sum(self.episodestats.stat_wage_reduction_g[:,:,0:3]*self.episodestats.gempstate[:,:,0:3],axis = 2),axis = 1)[:,None]/np.maximum(1,np.sum(self.episodestats.galive[:,0:3],axis = 1))[:,None]
-        gen_red_m = np.sum(np.sum(self.episodestats.stat_wage_reduction_g[:,:,3:6]*self.episodestats.gempstate[:,:,3:6],axis = 2),axis = 1)[:,None]/np.maximum(1,np.sum(self.episodestats.galive[:,3:6],axis = 1))[:,None]
+        gen_red_m = np.sum(np.sum(self.episodestats.stat_wage_reduction_g[:,:,0:3]*self.episodestats.gempstate[:,:,0:3],axis = 2),axis = 1)[:,None]/np.maximum(1,np.sum(self.episodestats.galive[:,0:3],axis = 1))[:,None]
+        gen_red_w = np.sum(np.sum(self.episodestats.stat_wage_reduction_g[:,:,3:6]*self.episodestats.gempstate[:,:,3:6],axis = 2),axis = 1)[:,None]/np.maximum(1,np.sum(self.episodestats.galive[:,3:6],axis = 1))[:,None]
         self.plot_y(gen_red_w,ylabel = 'Average wage reduction by gender',label = 'women',y2 = gen_red_m,label2 = 'men',show_legend = True)
         #gen_red = np.sum(self.episodestats.stat_wage_reduction[:,emp]*self.episodestats.empstate[:,emp],axis = 1)[:,None]/np.maximum(1,np.sum(self.episodestats.empstate[:,emp],axis = 1))
         #gen_red = self.episodestats.stat_wage_reduction[:,emp]/np.maximum(1,self.episodestats.empstate[:,emp])
@@ -3406,12 +3395,12 @@ class PlotStats():
         self.plot_states(self.episodestats.stat_wage_reduction,ylabel = 'wage-reduction tilassa',stack = False,unemp = True)
         self.plot_states(self.episodestats.stat_wage_reduction,ylabel = 'wage-reduction tilassa',stack = False,emp = True)
         #self.plot_ratiostates(np.log(1.0+self.episodestats.stat_wage_reduction),ylabel = 'log 5wage-reduction tilassa',stack = False)
-        self.plot_states(np.mean(self.episodestats.stat_wage_reduction_g[:,:,0:3],axis = 2),ylabel = 'wage-reduction tilassa naiset',stack = False)
-        self.plot_states(np.mean(self.episodestats.stat_wage_reduction_g[:,:,3:6],axis = 2),ylabel = 'wage-reduction tilassa miehet',stack = False)
-        self.plot_states(np.mean(self.episodestats.stat_wage_reduction_g[:,:,0:3],axis = 2),ylabel = 'wage-reduction tilassa, naiset',stack = False,unemp = True)
-        self.plot_states(np.mean(self.episodestats.stat_wage_reduction_g[:,:,3:6],axis = 2),ylabel = 'wage-reduction tilassa, miehet',stack = False,unemp = True)
-        self.plot_states(np.mean(self.episodestats.stat_wage_reduction_g[:,:,0:3],axis = 2),ylabel = 'wage-reduction tilassa, naiset',stack = False,emp = True)
-        self.plot_states(np.mean(self.episodestats.stat_wage_reduction_g[:,:,3:6],axis = 2),ylabel = 'wage-reduction tilassa, miehet',stack = False,emp = True)
+        self.plot_states(np.mean(self.episodestats.stat_wage_reduction_g[:,:,0:3],axis = 2),ylabel = 'wage-reduction tilassa miehet',stack = False)
+        self.plot_states(np.mean(self.episodestats.stat_wage_reduction_g[:,:,3:6],axis = 2),ylabel = 'wage-reduction tilassa naiset',stack = False)
+        self.plot_states(np.mean(self.episodestats.stat_wage_reduction_g[:,:,0:3],axis = 2),ylabel = 'wage-reduction tilassa, miehet',stack = False,unemp = True)
+        self.plot_states(np.mean(self.episodestats.stat_wage_reduction_g[:,:,3:6],axis = 2),ylabel = 'wage-reduction tilassa, naiset',stack = False,unemp = True)
+        self.plot_states(np.mean(self.episodestats.stat_wage_reduction_g[:,:,0:3],axis = 2),ylabel = 'wage-reduction tilassa, miehet',stack = False,emp = True)
+        self.plot_states(np.mean(self.episodestats.stat_wage_reduction_g[:,:,3:6],axis = 2),ylabel = 'wage-reduction tilassa, naiset',stack = False,emp = True)
 
     def plot_distrib(self,label = '',plot_emp = False,plot_bu = False,ansiosid = False,tmtuki = False,putki = False,outsider = False,max_age = 500,laaja = False,max = 4,
                      figname = None,v2=False):
@@ -3533,7 +3522,7 @@ class PlotStats():
             irr_distrib = cc.episodestats.infostats_irr_tyel_full
         
         gendername = self.get_gendername(gender)
-        gendermask = self.episodestats.get_gendermask(gender)
+        gendermask = cc.episodestats.get_gendermask(gender,time = False) # (n_pop,1) kuten irr-taulukot
         #if gender is None:
         #    gendermask = np.ones_like(irr_distrib)
         #else:
@@ -3576,7 +3565,7 @@ class PlotStats():
         mortstate = self.env.get_mortstate()
         
         gendername = self.get_gendername(gender)
-        gendermask = self.episodestats.get_gendermask(gender)
+        gendermask = self.episodestats.get_gendermask(gender,time = False) # (n_pop,1) kuten irr-taulukot
         
         nanmask = ma.mask_or(np.isnan(irr_distrib),gendermask.astype(bool))
         #nanmask = (np.isnan(irr_distrib).astype(int)+gendermask.astype(int)).astype(bool)
@@ -3641,6 +3630,7 @@ class PlotStats():
         print('Osuus työeläkettä ei lainkaan maksussa {:.2f} %'.format(100*percent))
         
         nopremium = (np.sum(self.episodestats.infostats_tyelpremium,axis = 0)<0.1)
+        count = nopremium.sum(axis = 0)
         percent = np.true_divide(count,irr_distrib.shape[0])
         print('Osuus työeläke ei lainkaan maksua maksettu {:.2f} %'.format(100*percent))
         
@@ -3654,13 +3644,15 @@ class PlotStats():
         print('Osuus työeläke ei lainkaan maksua eikä maksettua eläkettä {:.2f} %'.format(100*percent))
 
         print('\nOsuudet\n')
-        arri = ma.sum(ma.array(self.episodestats.infostats_pop_paidpension[self.map_age(ika),:],mask = alivemask))<0.1
-        percent = np.true_divide(ma.sum(arri),self.episodestats.alive[self.map_age(ika),0])
+        # elossa ikävuonna ika ja valitun sukupuolen henkilöt
+        selected = (self.episodestats.popempstate[self.map_age(ika),:] != mortstate) & ~gendermask.astype(bool).ravel()
+        n_selected = max(1,np.sum(selected))
+        arri = (self.episodestats.infostats_pop_paidpension[self.map_age(ika),:]<0.1) & selected
+        percent = np.true_divide(np.sum(arri),n_selected)
         print('{}v osuus eläke ei maksussa, ei kuollut {:.2f} %'.format(ika,100*percent))
 
-        alivemask = self.episodestats.popempstate[self.map_age(ika),:] != mortstate
-        count = (np.sum(self.episodestats.infostats_pop_tyoelake,axis = 0)<0.1).sum(axis = 0)
-        percent = np.true_divide(count,self.episodestats.alive[self.map_age(ika),0])
+        count = np.sum((np.sum(self.episodestats.infostats_pop_tyoelake,axis = 0)<0.1) & selected)
+        percent = np.true_divide(count,n_selected)
         print('{}v osuus ei työeläkekarttumaa, ei kuollut {:.2f} %'.format(ika,100*percent))
 
         count = 1-self.episodestats.alive[self.map_age(ika),0]/self.episodestats.n_pop
@@ -3977,8 +3969,8 @@ class PlotStats():
 
         self.compare_disab(cc = cc2, xstart = None,xend = None, label1 = label1,label2 = label2,ax=ax[1,0])
 
-        emp_htv1 = np.sum(cc2.episodestats.emp_htv,axis = 1)
-        emp_htv2 = np.sum(self.episodestats.emp_htv,axis = 1)
+        emp_htv1 = np.sum(self.episodestats.emp_htv,axis = 1)
+        emp_htv2 = np.sum(cc2.episodestats.emp_htv,axis = 1)
 
         if self.minimal>0:
             s = 20
@@ -5288,8 +5280,8 @@ class PlotStats():
             print(f'{label2:s} Työllisyyden keskiarvo keskiarvo {mean_htv2:.0f} htv, med. {median_htv2:.0f} htv, lkm {mean_tyoll2:.0f}, std {std_htv2:.0f} htv\n'
                   f'keskiarvo {mean_tyoll2:.0f} työllistä, mediaani {median_tyoll2:.0f} työllistä, std {std_tyoll2:.0f} työllistä')
             N1 = agg_htv1.shape[0]
-            N2 = agg_htv1.shape[0]
-            diff0 = np.abs(mean_tyoll1-mean_tyoll2)
+            N2 = agg_htv2.shape[0]
+            diff0 = np.abs(mean_htv1-mean_htv2)
             std0 = np.sqrt(std_htv1**2/N1+std_htv2**2/N2)
             t95=norm.ppf(0.95)
             t99=norm.ppf(0.99)
@@ -5584,8 +5576,8 @@ class PlotStats():
             s = 21
             e = 60 #63.5
 
-        emp_htv1 = np.sum(cc2.episodestats.emp_htv,axis = 1)
-        emp_htv2 = np.sum(self.episodestats.emp_htv,axis = 1)
+        emp_htv1 = np.sum(self.episodestats.emp_htv,axis = 1)
+        emp_htv2 = np.sum(cc2.episodestats.emp_htv,axis = 1)
 
         tyoll_osuus1,htv_osuus1,tyot_osuus1,kokotyo_osuus1,osatyo_osuus1 = \
             self.episodestats.comp_employed_ratio(self.episodestats.empstate,emp_htv = emp_htv1)
