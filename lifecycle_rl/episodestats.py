@@ -240,6 +240,11 @@ class EpisodeStats():
         self.infostats_opintotuki_group = np.zeros((self.n_time,self.n_groups))
         self.infostats_isyyspaivaraha = np.zeros((self.n_time,1))
         self.infostats_aitiyspaivaraha = np.zeros((self.n_time,1))
+        # ryhmittäin, jotta menot voidaan jakaa sukupuolittain (comp_budget gender=True)
+        self.infostats_lapsilisa_group = np.zeros((self.n_time,self.n_groups))
+        self.infostats_elatustuki_group = np.zeros((self.n_time,self.n_groups))
+        self.infostats_isyyspaivaraha_group = np.zeros((self.n_time,self.n_groups))
+        self.infostats_aitiyspaivaraha_group = np.zeros((self.n_time,self.n_groups))
         self.infostats_kotihoidontuki = np.zeros((self.n_time,1))
         self.infostats_kotihoidontuki_group = np.zeros((self.n_time,self.n_groups))
         self.infostats_sairauspaivaraha = np.zeros((self.n_time,1))
@@ -367,10 +372,14 @@ class EpisodeStats():
         self.infostats_kokoelake_group[t,g] += q[person+'kokoelake']*scale
         self.infostats_lapsilisa[t] += q[person+'lapsilisa']*scale # tämä taidetaan skaalata väärin FIXME
         self.infostats_elatustuki[t] += q[person+'elatustuki']*scale
+        self.infostats_lapsilisa_group[t,g] += q[person+'lapsilisa']*scale
+        self.infostats_elatustuki_group[t,g] += q[person+'elatustuki']*scale
         self.infostats_opintotuki[t] += q[person+'opintotuki']*scale
         self.infostats_opintotuki_group[t,g] += q[person+'opintotuki']*scale
         self.infostats_isyyspaivaraha[t] += q[person+'isyyspaivaraha']*scale
         self.infostats_aitiyspaivaraha[t] += q[person+'aitiyspaivaraha']*scale
+        self.infostats_isyyspaivaraha_group[t,g] += q[person+'isyyspaivaraha']*scale
+        self.infostats_aitiyspaivaraha_group[t,g] += q[person+'aitiyspaivaraha']*scale
         self.infostats_kotihoidontuki[t] += q[person+'kotihoidontuki']*scale
         self.infostats_kotihoidontuki_group[t,g] += q[person+'kotihoidontuki']*scale
         self.infostats_sairauspaivaraha[t] += q[person+'sairauspaivaraha']*scale
@@ -428,9 +437,24 @@ class EpisodeStats():
             self.infostats_alv[t] += q[person+'alv']*scale
             self.infostats_alv_group[t,g] += q[person+'alv']*scale
             
+    # scale_sim():n tilakohtaisiksi keskiarvoiksi muuttamat muuttujat ja niiden painot
+    AVERAGED_BY_EMPSTATE = ('stat_tyoura','time_in_state','stat_wage_reduction','stat_unemp_after_ra',
+                            'stat_paidpension','stat_pension','salaries_emp')
+    AVERAGED_BY_GEMPSTATE = ('stat_wage_reduction_g','infostats_ove_g')
+
     def append_episodestat(self,cc):
+        '''
+        Lisää toisen prosessin tulokset. Molemmat on skaalattu scale_sim():llä, joten keskiarvot
+        yhdistetään tilamäärillä painottaen; summat lasketaan yhteen. Tehtävä ennen kuin
+        empstate ja gempstate summataan.
+        '''
         n_emps1=self.n_employment
         n_emps2=cc.n_employment
+
+        for name in self.AVERAGED_BY_EMPSTATE:
+            setattr(self,name,self.weighted_mean(getattr(self,name),self.empstate,getattr(cc,name),cc.empstate))
+        for name in self.AVERAGED_BY_GEMPSTATE:
+            setattr(self,name,self.weighted_mean(getattr(self,name),self.gempstate,getattr(cc,name),cc.gempstate))
         
         self.empstate += cc.empstate
         self.emp_htv += cc.emp_htv
@@ -440,19 +464,14 @@ class EpisodeStats():
         self.galive += cc.galive
         self.rewstate += cc.rewstate
         self.poprewstate = np.append(self.poprewstate,cc.poprewstate,axis=1)
-        self.salaries_emp += cc.salaries_emp
         self.siirtyneet += cc.siirtyneet
         self.siirtyneet_det += cc.siirtyneet_det
         self.pysyneet += cc.pysyneet
         #self.siirtyneet_det += cc.siirtyneet_det
         if self.minimal:
             self.aveV = np.append(self.aveV[:,:self.n_pop],cc.aveV[:,:cc.n_pop],axis=1)
-        self.time_in_state += cc.time_in_state
-        self.stat_tyoura += cc.stat_tyoura
         self.stat_toe += cc.stat_toe
         self.out_of_work += cc.out_of_work
-        self.stat_wage_reduction += cc.stat_wage_reduction
-        self.stat_wage_reduction_g += cc.stat_wage_reduction_g
         self.infostats_taxes += cc.infostats_taxes
         self.infostats_taxes_group += cc.infostats_taxes_group
         self.infostats_wagetaxes += cc.infostats_wagetaxes
@@ -502,6 +521,10 @@ class EpisodeStats():
         self.infostats_opintotuki_group += cc.infostats_opintotuki_group
         self.infostats_isyyspaivaraha += cc.infostats_isyyspaivaraha
         self.infostats_aitiyspaivaraha += cc.infostats_aitiyspaivaraha
+        self.infostats_lapsilisa_group += cc.infostats_lapsilisa_group
+        self.infostats_elatustuki_group += cc.infostats_elatustuki_group
+        self.infostats_isyyspaivaraha_group += cc.infostats_isyyspaivaraha_group
+        self.infostats_aitiyspaivaraha_group += cc.infostats_aitiyspaivaraha_group
         self.infostats_kotihoidontuki += cc.infostats_kotihoidontuki
         self.infostats_kotihoidontuki_group += cc.infostats_kotihoidontuki_group
         self.infostats_sairauspaivaraha += cc.infostats_sairauspaivaraha
@@ -515,9 +538,6 @@ class EpisodeStats():
         self.infostats_pinkslip += cc.infostats_pinkslip
         self.infostats_tyelpremium += cc.infostats_tyelpremium
         self.infostats_tyelpremium_group += cc.infostats_tyelpremium_group
-        self.stat_paidpension += cc.stat_paidpension
-        self.stat_pension += cc.stat_pension
-        self.stat_unemp_after_ra += cc.stat_unemp_after_ra
         self.popempstate = np.append(self.popempstate,cc.popempstate,axis=1)
 
         if self.save_pop:
@@ -571,7 +591,6 @@ class EpisodeStats():
         self.infostats_children_under18 += cc.infostats_children_under18
         self.infostats_toe += cc.infostats_toe
         self.infostats_ove += cc.infostats_ove
-        self.infostats_ove_g += cc.infostats_ove_g
         self.infostats_kassanjasen += cc.infostats_kassanjasen
         self.infostats_equivalent_income += cc.infostats_equivalent_income
         self.infostats_alv += cc.infostats_alv
@@ -854,6 +873,12 @@ class EpisodeStats():
                     newemp=2
                 if p_tila==3:
                     p_tila=2
+            # edellinen tila samalla luokittelulla, muuten jokainen neljännes näkyisi siirtymänä 3->2
+            if a>self.min_retirementage:
+                if emp==3:
+                    emp=2
+                if p_tila_vanha==3:
+                    p_tila_vanha=2
                     
             self.empstate[t,newemp] += 1
             self.empstate[t,p_tila] += 1
@@ -990,6 +1015,12 @@ class EpisodeStats():
                     newemp=2
                 if p_tila==3:
                     p_tila=2
+            # edellinen tila samalla luokittelulla, muuten jokainen neljännes näkyisi siirtymänä 3->2
+            if a>self.min_retirementage:
+                if emp==3:
+                    emp=2
+                if p_tila_vanha==3:
+                    p_tila_vanha=2
                     
             self.empstate[t,newemp] += 1
             self.empstate[t,p_tila] += 1
@@ -1132,6 +1163,12 @@ class EpisodeStats():
                     newemp=2
                 if p_tila==3:
                     p_tila=2
+            # edellinen tila samalla luokittelulla, muuten jokainen neljännes näkyisi siirtymänä 3->2
+            if a>self.min_retirementage:
+                if emp==3:
+                    emp=2
+                if p_tila_vanha==3:
+                    p_tila_vanha=2
                     
             self.empstate[t,newemp] += 1
             self.empstate[t,p_tila] += 1
@@ -1279,6 +1316,12 @@ class EpisodeStats():
                     newemp=2
                 if p_tila==3:
                     p_tila=2
+            # edellinen tila samalla luokittelulla, muuten jokainen neljännes näkyisi siirtymänä 3->2
+            if a>self.min_retirementage:
+                if emp==3:
+                    emp=2
+                if p_tila_vanha==3:
+                    p_tila_vanha=2
 
             if newemp==12 and act[0]>0: # töissä oleva opiskelija
                 newemp=16
@@ -1444,6 +1487,12 @@ class EpisodeStats():
                     newemp=2
                 if p_tila==3:
                     p_tila=2
+            # edellinen tila samalla luokittelulla, muuten jokainen neljännes näkyisi siirtymänä 3->2
+            if a>self.min_retirementage:
+                if emp==3:
+                    emp=2
+                if p_tila_vanha==3:
+                    p_tila_vanha=2
 
             if newemp==12 and act[0]>0: # töissä oleva opiskelija
                 newemp=16
@@ -1621,6 +1670,12 @@ class EpisodeStats():
                     newemp=2
                 if p_tila==3:
                     p_tila=2
+            # edellinen tila samalla luokittelulla, muuten jokainen neljännes näkyisi siirtymänä 3->2
+            if a>self.min_retirementage:
+                if emp==3:
+                    emp=2
+                if p_tila_vanha==3:
+                    p_tila_vanha=2
 
             #if newemp==12 and act[0]>0: # töissä oleva opiskelija
             #    newemp=16
@@ -1796,6 +1851,12 @@ class EpisodeStats():
                     newemp=2
                 if p_tila==3:
                     p_tila=2
+            # edellinen tila samalla luokittelulla, muuten jokainen neljännes näkyisi siirtymänä 3->2
+            if a>self.min_retirementage:
+                if emp==3:
+                    emp=2
+                if p_tila_vanha==3:
+                    p_tila_vanha=2
 
             #if newemp==12 and act[0]>0: # töissä oleva opiskelija
             #    newemp=16
@@ -1972,6 +2033,12 @@ class EpisodeStats():
                     newemp=2
                 if p_tila==3:
                     p_tila=2
+            # edellinen tila samalla luokittelulla, muuten jokainen neljännes näkyisi siirtymänä 3->2
+            if a>self.min_retirementage:
+                if emp==3:
+                    emp=2
+                if p_tila_vanha==3:
+                    p_tila_vanha=2
 
             #if newemp==12 and act[0]>0: # töissä oleva opiskelija
             #    newemp=16
@@ -2150,6 +2217,12 @@ class EpisodeStats():
                     newemp=2
                 if p_tila==3:
                     p_tila=2
+            # edellinen tila samalla luokittelulla, muuten jokainen neljännes näkyisi siirtymänä 3->2
+            if a>self.min_retirementage:
+                if emp==3:
+                    emp=2
+                if p_tila_vanha==3:
+                    p_tila_vanha=2
 
             #if newemp==12 and act[0]>0: # töissä oleva opiskelija
             #    newemp=16
@@ -2369,6 +2442,12 @@ class EpisodeStats():
                     newemp=2
                 if p_tila==3:
                     p_tila=2
+            # edellinen tila samalla luokittelulla, muuten jokainen neljännes näkyisi siirtymänä 3->2
+            if a>self.min_retirementage:
+                if emp==3:
+                    emp=2
+                if p_tila_vanha==3:
+                    p_tila_vanha=2
                     
             if q is not None:
                 mod_sav_action=q['mod_sav_action']
@@ -2489,6 +2568,13 @@ class EpisodeStats():
         elif newemp<0:
             self.deceiced[t] += 1 
       
+    @staticmethod
+    def weighted_mean(x1,n1,x2,n2):
+        '''
+        Kahden keskiarvon yhdistelmä havaintomäärillä n1, n2 painottaen; tyhjissä soluissa 0
+        '''
+        return (x1*n1+x2*n2)/np.maximum(1,n1+n2)
+
     def scale_sim(self):
         '''
         Scale results as needed after single_sim
@@ -2510,27 +2596,15 @@ class EpisodeStats():
 
     def rescale_sim_with_procs(self,procs):
         '''
-        Scale results with multiple processes
+        Viimeistele usean prosessin yhdistetyt tulokset. append_episodestat() yhdistää keskiarvot
+        jo painotettuina, joten prosessien määrällä ei enää jaeta (procs säilytetty yhteensopivuuden vuoksi).
         '''
-        self.stat_tyoura=self.stat_tyoura/np.maximum(1,procs)
-        self.time_in_state=self.time_in_state/np.maximum(1,procs)
-        self.stat_wage_reduction=self.stat_wage_reduction/np.maximum(1,procs)
-        #self.infostats_ove=self.infostats_ove/np.maximum(1,procs)
-        self.stat_unemp_after_ra=self.stat_unemp_after_ra/np.maximum(1,procs)
-        self.stat_paidpension=self.stat_paidpension/np.maximum(1,procs)
-        #self.infostats_pinkslip=self.infostats_pinkslip
-        self.stat_pension=self.stat_pension/np.maximum(1,procs)
-        self.salaries_emp=self.salaries_emp/np.maximum(1,procs)
-        
-        self.stat_wage_reduction_g=self.stat_wage_reduction_g/np.maximum(1,procs)
-        self.infostats_ove_g=self.infostats_ove_g/np.maximum(1,procs)
-
         self.gini_coef = self.comp_gini()
         self.update_reward_stats()
 
     def update_reward_stats(self):
         r=self.comp_presentvalue()
-        self.initial_reward = np.mean(r[0,:])
+        self.initial_reward = np.mean(r[1,:]) # rivi 0 (18,0 v) ei ole tallennettu
         self.average_discounted_reward = self.comp_total_reward(discounted=True)
         self.average_undiscounted_reward = self.comp_total_reward(discounted=False)
         #print('disco reward: {} undiscounted reward: {}'.format(self.average_discounted_reward,self.average_undiscounted_reward))
@@ -2646,6 +2720,10 @@ class EpisodeStats():
         _ = f.create_dataset('infostats_opintotuki_group', data=self.infostats_opintotuki_group, dtype=ftype,compression="gzip", compression_opts=9)
         _ = f.create_dataset('infostats_isyyspaivaraha', data=self.infostats_isyyspaivaraha, dtype=ftype)
         _ = f.create_dataset('infostats_aitiyspaivaraha', data=self.infostats_aitiyspaivaraha, dtype=ftype)
+        _ = f.create_dataset('infostats_lapsilisa_group', data=self.infostats_lapsilisa_group, dtype=ftype,compression="gzip", compression_opts=9)
+        _ = f.create_dataset('infostats_elatustuki_group', data=self.infostats_elatustuki_group, dtype=ftype,compression="gzip", compression_opts=9)
+        _ = f.create_dataset('infostats_isyyspaivaraha_group', data=self.infostats_isyyspaivaraha_group, dtype=ftype,compression="gzip", compression_opts=9)
+        _ = f.create_dataset('infostats_aitiyspaivaraha_group', data=self.infostats_aitiyspaivaraha_group, dtype=ftype,compression="gzip", compression_opts=9)
         _ = f.create_dataset('infostats_kotihoidontuki', data=self.infostats_kotihoidontuki, dtype=ftype)
         _ = f.create_dataset('infostats_kotihoidontuki_group', data=self.infostats_kotihoidontuki_group, dtype=ftype)
         _ = f.create_dataset('infostats_sairauspaivaraha', data=self.infostats_sairauspaivaraha, dtype=ftype)
@@ -2882,6 +2960,12 @@ class EpisodeStats():
             self.infostats_lapsilisa=f['infostats_lapsilisa'][()]
             self.infostats_elatustuki=f['infostats_elatustuki'][()]
 
+        # vanhoissa tuloksissa näitä ei ole; None kertoo comp_budgetille, että ryhmäjako puuttuu
+        self.infostats_lapsilisa_group = f['infostats_lapsilisa_group'][()] if 'infostats_lapsilisa_group' in f.keys() else None
+        self.infostats_elatustuki_group = f['infostats_elatustuki_group'][()] if 'infostats_elatustuki_group' in f.keys() else None
+        self.infostats_isyyspaivaraha_group = f['infostats_isyyspaivaraha_group'][()] if 'infostats_isyyspaivaraha_group' in f.keys() else None
+        self.infostats_aitiyspaivaraha_group = f['infostats_aitiyspaivaraha_group'][()] if 'infostats_aitiyspaivaraha_group' in f.keys() else None
+
         if 'spouseactions' in f.keys():
             self.spouseactions=f['spouseactions'][()]
         if 'infostats_etuustulo_group' in f.keys():
@@ -3067,10 +3151,9 @@ class EpisodeStats():
         if 'infostats_lleft' in f.keys():
             self.infostats_lleft = f['infostats_lleft'][()]
 
-        if 'gini_coef' in f.keys():
-            self.gini_coef=f['gini_coef'][()]
-        else:
-            self.gini_coef=None
+        # tallennettu gini_coef voi olla laskettu vanhalla määritelmällä (henkilöiden neljännesvuositulot),
+        # joten se lasketaan tarvittaessa uudelleen comp_gini():llä
+        self.gini_coef=None
 
         if n_pop is not None:
             self.n_pop=n_pop
@@ -3102,21 +3185,13 @@ class EpisodeStats():
         return rr
         
     def comp_total_netincome(self):
-        if True:
-            #alivemask=(self.popempstate==self.env.get_mortstate())
-            alivemask = self.get_alivemask()
-            alive = np.sum(self.alive)
-        
-            multiplier = np.sum(self.infostats_npv0)/alive
-            rr = np.sum(self.infostats_tulot_netto)/(alive*multiplier)
-            eq = np.sum(self.infostats_equivalent_income)/(alive*multiplier)
-        elif False:
-            multiplier = np.sum(self.infostats_npv0)/self.n_pop
-            rr = np.sum(self.infostats_tulot_netto)/(self.n_pop*multiplier)
-            eq = np.sum(self.infostats_equivalent_income)/(self.n_pop*multiplier)
-        else:
-            rr = np.sum(self.infostats_tulot_netto)/(self.n_pop*(self.n_time*self.timestep+21.0)) # 21 years approximates the time in pension
-            eq = np.sum(self.infostats_equivalent_income)/(self.n_pop*(self.n_time*self.timestep+21.0)) # 21 years approximates the time in pension
+        '''
+        Keskimääräiset vuotuiset nettotulot ja ekvivalenttitulot elossa olevaa henkilövuotta kohti.
+        Rivi 0 (18,0 v) ei ole tallennettu, joten se jätetään pois.
+        '''
+        person_years = np.sum(self.alive[1:])*self.timestep
+        rr = np.sum(self.infostats_tulot_netto[1:])/person_years
+        eq = np.sum(self.infostats_equivalent_income[1:])/person_years
         return rr,eq
 
 
@@ -3160,7 +3235,7 @@ class EpisodeStats():
             q[self.labels['tyotulosumma']] = np.sum(self.infostats_palkkatulo*scalex)
             q[self.labels['tyotulosumma eielakkeella']] = np.sum(self.infostats_palkkatulo_eielakkeella*scalex)
             q[self.labels['tyotulosumma, eläkkeellä']] = q[self.labels['tyotulosumma']] - q[self.labels['tyotulosumma eielakkeella']]
-            q[self.labels['tyotulosumma opiskelijat']] = np.sum(self.infostats_palkkatulo_emp[:,16]*scalex[:,0])
+            q[self.labels['tyotulosumma opiskelijat']] = np.sum(self.infostats_palkkatulo_emp[:,12]*scalex[:,0]) # tila 16 (työssä oleva opiskelija) ei ole käytössä
             q[self.labels['tyotulosumma osa-aika']] = np.sum((self.infostats_palkkatulo_emp[:,10]+self.infostats_palkkatulo_emp[:,8])*scalex[:,0])
             q[self.labels['tyotulosumma kokoaika']] = np.sum((self.infostats_palkkatulo_emp[:,1]+self.infostats_palkkatulo_emp[:,9])*scalex[:,0])
             q[self.labels['etuusmeno']] = np.sum(self.infostats_etuustulo*scalex)
@@ -3194,8 +3269,15 @@ class EpisodeStats():
 
         q[self.labels['takuuelakemeno']] = q[self.labels['kokoelakemeno']]-q[self.labels['tyoelakemeno']]-q[self.labels['kansanelakemeno']]
 
-        q[self.labels['isyyspaivaraha']] = np.sum(self.infostats_isyyspaivaraha*scalex)
-        q[self.labels['aitiyspaivaraha']] = np.sum(self.infostats_aitiyspaivaraha*scalex)
+        if gender:
+            q[self.labels['isyyspaivaraha']] = self.sum_group_by_sex(self.infostats_isyyspaivaraha_group,self.infostats_isyyspaivaraha,gr,scalex,fallback=(g==0))
+            q[self.labels['aitiyspaivaraha']] = self.sum_group_by_sex(self.infostats_aitiyspaivaraha_group,self.infostats_aitiyspaivaraha,gr,scalex,fallback=(g!=0))
+            if self.infostats_lapsilisa_group is not None:
+                q[self.labels['elatustuki']] = np.sum(np.sum(self.infostats_elatustuki_group[:,gr],axis=1,keepdims=True)*scalex)
+                q[self.labels['lapsilisa']] = np.sum(np.sum(self.infostats_lapsilisa_group[:,gr],axis=1,keepdims=True)*scalex)
+        else:
+            q[self.labels['isyyspaivaraha']] = np.sum(self.infostats_isyyspaivaraha*scalex)
+            q[self.labels['aitiyspaivaraha']] = np.sum(self.infostats_aitiyspaivaraha*scalex)
         pt = np.sum(self.infostats_perustulo*scalex)
         if pt>0.0:
             q[self.labels['perustulo']] = pt
@@ -3246,6 +3328,19 @@ class EpisodeStats():
         
         return q
 
+    def sum_group_by_sex(self,var_group,var_total,gr,scalex,fallback):
+        '''
+        Sukupuolen menot ryhmittäisestä taulukosta. Vanhoissa tuloksissa ryhmäjakoa ei ole:
+        silloin koko meno kohdistetaan sukupuoleen, jolle fallback on tosi (äitiyspäiväraha naisille,
+        isyyspäiväraha miehille), muuten nolla.
+        '''
+        if var_group is not None:
+            return np.sum(np.sum(var_group[:,gr],axis=1,keepdims=True)*scalex)
+        elif fallback:
+            return np.sum(var_total*self.get_scalex())
+        else:
+            return 0.0
+
     def comp_ps_norw(self):
         return self.salaries_emp[:,1]+self.salaries_emp[:,10]
         
@@ -3275,65 +3370,73 @@ class EpisodeStats():
 
         print('cross-sections',df)
 
-    def prep_ginidata(self):
+    def comp_household_incomes(self):
         '''
-        painota perheiden tulot
+        Vuotuiset ekvivalentit käytettävissä olevat tulot ja henkilöpainot tulonjakotilastojen tapaan.
+
+        - vuositulo = neljän neljänneksen nettotulojen summa (rivit 1-4 = ikä 18,25-19,0 jne.);
+          rivi 0 (18,0 v) ei ole tallennettu, joten se jää pois
+        - kotitalous ja lapset vuoden viimeisen neljänneksen tilanteen mukaan; vuoden lopussa kuolleet jäävät pois
+        - pariskunnan tulot yhteen, OECD:n muunnettu asteikko 1 + 0,5 (puoliso) + 0,3 lasta kohti
+          (mallissa vain alle 18-vuotiaiden määrä, joten 14-17-vuotiaat saavat painon 0,3 eikä 0,5)
+        - yksinasuvien lapset ovat naisen kotitaloudessa, ellei nainen ole kuollut (kuten add_v12:ssa)
+        - jokainen kotitalous painotetaan henkilömäärällään (aikuiset+lapset) ja ikärakenteella get_scalex()
+
+        Ilman save_pop-tietoja (puoliso, lapset) jokainen henkilö on oma kotitaloutensa.
+
+        Palauttaa (tulot, painot) vuositasolla
         '''
-        data = np.empty(self.n_time,self.n_pop)
-        n_fam = np.zeros(self.n_time)
+        n_years = (self.n_time-1)//4
+        rows = 1+4*np.arange(n_years)[:,None]+np.arange(4)[None,:] # (vuosi, neljännes)
+        te = rows[:,-1] # vuoden viimeinen neljännes
+        annual = self.infostats_poptulot_netto[rows,:].sum(axis=1) # (vuosi, henkilö)
+        alive = ~(self.get_alivemask()[te,:])
+        agew = np.broadcast_to(np.asarray(self.get_scalex())[te,:1],(n_years,self.n_pop//2))
 
+        puoliso = getattr(self,'infostats_pop_puoliso',None)
+        lapset = getattr(self,'infostats_pop_children_under18',None)
+        if not self.save_pop or puoliso is None or lapset is None:
+            w = np.broadcast_to(np.asarray(self.get_scalex())[te,:1],annual.shape)
+            return annual[alive],w[alive]
 
-        for t in range(0,self.n_time):
-            for k in range(0,self.n_pop,2):
-                if self.infostats_pop_puoliso[t,k]>0:
-                    if self.popempstate[t,k] != 15 and self.popempstate[t,k+1] != 15:
-                        paino = 1.0 + 0.5 + 0.3 * self.infostats_pop_children_under18[t,k]
-                        data[t,n_fam] = (self.infostats_poptulot_netto[t,k]+self.infostats_poptulot_netto[t,k+1])/paino
-                        n_fam[t] += 1
-                    else:
-                        if self.popempstate[t,k+1] != 15:
-                            paino = 1.0 + 0.3 * self.infostats_pop_children_under18[t,k]
-                            data[t,n_fam] = (self.infostats_poptulot_netto[t,k+1])/paino
-                            n_fam[t] += 1
-                        else:
-                            paino = 1.0 + 0.3 * self.infostats_pop_children_under18[t,k]
-                            data[t,n_fam] = (self.infostats_poptulot_netto[t,k])/paino
-                            n_fam[t] += 1
-                else:
-                    if self.popempstate[t,k+1] != 15:
-                        paino = 1.0 + 0.3 * self.infostats_pop_children_under18[t,k]
-                        data[t,n_fam] = (self.infostats_poptulot_netto[t,k+1])/paino
-                        n_fam[t] += 1
-                    if self.popempstate[t,k] != 15:
-                        paino = 1.0 + 0.3 * self.infostats_pop_children_under18[t,k]
-                        data[t,n_fam] = (self.infostats_poptulot_netto[t,k])/paino
-                        n_fam[t] += 1
+        m_inc,s_inc = annual[:,0::2],annual[:,1::2]
+        m_alive,s_alive = alive[:,0::2],alive[:,1::2]
+        c = lapset[te,0::2].astype(float)
+        married = (puoliso[te,0::2]>0) & m_alive & s_alive
 
-        return n_fam,data
-    
-    def reprep_ginidata(self,n_fam,data):
+        # pariskunnat
+        inc_c = (m_inc+s_inc)[married]/(1.5+0.3*c[married])
+        w_c = ((2.0+c)*agew)[married]
+        # yksin asuvat
+        single_m = m_alive & ~married
+        single_s = s_alive & ~married
+        c_m = np.where(s_alive,0.0,c) # miehellä lapset vain, jos nainen on kuollut
+        c_s = c
+        inc_m = m_inc[single_m]/(1.0+0.3*c_m[single_m])
+        w_m = ((1.0+c_m)*agew)[single_m]
+        inc_s = s_inc[single_s]/(1.0+0.3*c_s[single_s])
+        w_s = ((1.0+c_s)*agew)[single_s]
+
+        return np.concatenate([inc_c,inc_m,inc_s]),np.concatenate([w_c,w_m,w_s])
+
+    @staticmethod
+    def weighted_gini(x,w):
         '''
-        Tee 2d-taulukosta jono
+        Painotettu Gini-kerroin (%)
         '''
-        data2 = ma.ravel(data).compressed()
-        return data2
-        
-    def comp_gini_v3(self):
-        '''
-        Laske Gini-kerroin populaatiolle kotitalouksien tuloista. Toimiiko?
-        '''
-        n_fam,data = self.prep_ginidata()
-        data2 = self.reprep_ginidata(n_fam,data)
-        income = ma.sort(data2,axis=None)
+        order = np.argsort(x)
+        x,w = np.asarray(x,dtype=float)[order],np.asarray(w,dtype=float)[order]
+        cw = np.cumsum(w)
+        W = cw[-1]
+        G = np.sum(w*(2*cw-w)*x)/(W*np.sum(w*x))-1.0
+        return 100*G
 
-        n=len(income)
-        L = np.arange(1,n+1,1)
-        A = np.sum(L*income)/np.sum(income)
-        G = 2*A/n-(n+1)/n
-        G *= 100
-
-        return G        
-
+    @staticmethod
+    def weighted_median(x,w):
+        order = np.argsort(x)
+        x,w = np.asarray(x,dtype=float)[order],np.asarray(w,dtype=float)[order]
+        cw = np.cumsum(w)
+        return x[np.searchsorted(cw,0.5*cw[-1])]
 
     def comp_uncertainty(self,emp,emp_htv=None,start=19,end=68):
         min_cage=max(0,self.map_age(start))
@@ -3343,35 +3446,41 @@ class EpisodeStats():
         haj = np.mean(np.std(tyollosuus[min_cage:max_cage]))
         return haj
 
-    def comp_gini(self):
+    def comp_gini(self,household=True):
         '''
-        Laske Gini-kerroin populaatiolle
+        Laske Gini-kerroin (%) vuotuisista ekvivalenteista kotitaloustuloista (comp_household_incomes).
+        household=False: henkilöiden omat vuositulot, painotettuna ikärakenteella
         '''
-        alivemask = self.get_alivemask()
-        netto=ma.array(self.infostats_poptulot_netto[:-1,:],mask=alivemask[:-1,:])
-        income=ma.sort(netto,axis=None).compressed()
+        if household:
+            income,w = self.comp_household_incomes()
+        else:
+            n_years = (self.n_time-1)//4
+            rows = 1+4*np.arange(n_years)[:,None]+np.arange(4)[None,:]
+            te = rows[:,-1]
+            annual = self.infostats_poptulot_netto[rows,:].sum(axis=1)
+            alive = ~(self.get_alivemask()[te,:])
+            wall = np.broadcast_to(np.asarray(self.get_scalex())[te,:1],annual.shape)
+            income,w = annual[alive],wall[alive]
 
-        n=len(income)
-        L = np.arange(1,n+1,1)
-        A = np.sum(L*income)/np.sum(income)
-        G = 2*A/n-(n+1)/n
-        G *= 100
+        return self.weighted_gini(income,w)
 
-        return G
+    def comp_gini_v3(self):
+        '''
+        Vanha nimi kotitalouksien Gini-kertoimelle
+        '''
+        return self.comp_gini(household=True)
 
-    def comp_pienituloisuus(self,level=1_000):
-        #alivemask=(self.popempstate==self.env.get_mortstate())
-        alivemask = self.get_alivemask()
-        netto=ma.array(self.infostats_poptulot_netto/self.timestep,mask=alivemask) # vuositasolle
-        alive = np.sum(self.alive)
-        #level=level/self.timestep
-        median=ma.median(netto)
-        mean=ma.mean(netto)
-        med60=0.60*median
-        med50=0.50*median
-        ratio_med50=ma.sum(netto<med50)/alive
-        ratio_med60=ma.sum(netto<med60)/alive
-        pt_levl=ma.sum(netto<level)/alive
+    def comp_pienituloisuus(self,level=12_000):
+        '''
+        Pienituloisuus vuotuisista ekvivalenteista kotitaloustuloista, henkilöpainoin:
+        osuudet alle 50 % ja 60 % mediaanista sekä alle level euroa vuodessa
+        '''
+        income,w = self.comp_household_incomes()
+        W = np.sum(w)
+        median = self.weighted_median(income,w)
+        ratio_med50 = np.sum(w[income<0.50*median])/W
+        ratio_med60 = np.sum(w[income<0.60*median])/W
+        pt_levl = np.sum(w[income<level])/W
         
         return ratio_med50,ratio_med60,pt_levl
                 
@@ -4166,9 +4275,9 @@ class EpisodeStats():
         scalex_women = np.squeeze(demog2[:,1]/np.maximum(1,alive_women)*self.timestep)
 
         if g is None:
-            summa = np.sum(var[:,0:3]*scalex_men,axis=1)+np.sum(var[:,3:6,:]*scalex_women,axis=1)            
+            summa = np.sum(var[:,0:3],axis=1)*scalex_men+np.sum(var[:,3:6],axis=1)*scalex_women
         else: # a single group g
-            summa = np.sum(var[:,g]*scalex_women,axis=1)
+            summa = var[:,g]*(scalex_men if g<3 else scalex_women)
 
         return summa    
 
@@ -4900,36 +5009,37 @@ class EpisodeStats():
                 age=self.min_age+t*self.timestep
                 if age<=max_age:
                     if popempstate[t,k] in unempset:
-                        if age<29:
-                            l=0
-                        elif age<39:
-                            l=1
-                        elif age<49:
-                            l=2
-                        elif age<59:
-                            l=3
-                        else:
-                            l=4
+                        l=self.duration_agegroup(age)
+                        if l is None:
+                            continue
 
                         n[l] += 1
-                        if self.popunemprightused[t,k]<=0.51:
+                        if popunemprightused[t,k]<=0.51:
                             keskikesto[l,0] += 1
-                        elif self.popunemprightused[t,k]<=1.01:
+                        elif popunemprightused[t,k]<=1.01:
                             keskikesto[l,1] += 1
-                        elif self.popunemprightused[t,k]<=1.51:
+                        elif popunemprightused[t,k]<=1.51:
                             keskikesto[l,2] += 1
-                        elif self.popunemprightused[t,k]<=2.01:
+                        elif popunemprightused[t,k]<=2.01:
                             keskikesto[l,3] += 1
                         else:
                             keskikesto[l,4] += 1
 
         for k in range(5):
-            keskikesto[k,:] /= n[k]
+            keskikesto[k,:] /= max(1,n[k])
 
         if return_q:
             return self.empdur_to_dict(keskikesto)
         else:
             return keskikesto
+
+    def duration_agegroup(self,age):
+        '''
+        Ikäryhmä 20-29, 30-39, 40-49, 50-59, 60-69 (0-4) kuten TYJ:n tilastossa; muut iät None
+        '''
+        if age<20 or age>=70:
+            return None
+        return int((age-20)//10)
 
     def empdur_to_dict(self,empdur):
         q={}
@@ -4980,21 +5090,17 @@ class EpisodeStats():
                 age=self.min_age+t*self.timestep
                 if age<=max_age:
                     if popempstate[t,k]!=prev_state:
-                        if prev_state in unempset and popempstate[t,k] not in unempset:
+                        if prev_state in unempset and popempstate[t,k] in unempset:
+                            # siirtymä työttömyystilasta toiseen (esim. 0 -> 4) jatkaa samaa jaksoa
+                            prev_state=popempstate[t,k]
+                        elif prev_state in unempset and popempstate[t,k] not in unempset:
                             prev_state=popempstate[t,k]
                             duration=(t-prev_trans)*self.timestep
                             prev_trans=t
 
-                            if age<29:
-                                l=0
-                            elif age<39:
-                                l=1
-                            elif age<49:
-                                l=2
-                            elif age<59:
-                                l=3
-                            else:
-                                l=4
+                            l=self.duration_agegroup(age)
+                            if l is None:
+                                continue
 
                             n[l] += 1
                             if duration<=0.51:
@@ -5015,7 +5121,7 @@ class EpisodeStats():
                             prev_trans=t
 
         for k in range(5):
-            keskikesto[k,:] /= n[k]
+            keskikesto[k,:] /= max(1,n[k])
 
         if return_q:
             return self.empdur_to_dict(keskikesto)
