@@ -176,7 +176,7 @@ class Empstats():
             print('Empstats, unknown year',self.year)
             
         f = interp1d(x, emp,fill_value='extrapolate')
-        jasenyys_x = np.linspace(self.min_age, self.max_age+1, num=self.max_age-self.min_age+1, endpoint=True)
+        jasenyys_x = np.arange(self.min_age, self.max_age+1)+0.5 # ikävuosien keskikohdat; yksi arvo ikävuotta kohti map_ratiosille
         rate=f(jasenyys_x)
 
         return self.map_ratios(rate)
@@ -296,14 +296,19 @@ class Empstats():
         return self.map_ratios(ratio)
 
     def get_gini(self,year):
-        if year==2018:
-            return 28.1
-        elif year==2019:
-            return 27.9
-        elif year==2020:
-            return 27.7
+        '''
+        Gini-kerroin (%), käytettävissä olevat rahatulot ilman myyntivoittoja (kv-vertailukelpoinen käsite, otosaineisto)
+        Lähde: Tilastokeskus, tulonjakotilasto, taulukko 11x3 (päivitetty 2025-12-16)
+        Mallissa ei ole myyntivoittoja, joten tämä käsite vastaa mallia parhaiten.
+        Vuoden 2024 otosaineiston arvoa ei ole vielä julkaistu; vuodesta 2024 alkaen käytetään vuotta 2023.
+        '''
+        gini={2015: 25.5, 2016: 25.4, 2017: 26.0, 2018: 26.3, 2019: 26.6, 2020: 25.8, 2021: 26.7, 2022: 26.7, 2023: 26.2}
+        if year in gini:
+            return gini[year]
+        elif year>2023:
+            return gini[2023]
         else:
-            return 27.8
+            return gini[2015]
             
     def get_kassanjasenyys_rate(self):
         rate_age=np.array([18,30,40,50,60,74])
@@ -785,7 +790,7 @@ class Empstats():
             print('Empstats, unknown year',self.year)
             
         f = interp1d(x, emp,fill_value='extrapolate')
-        jasenyys_x = np.linspace(self.min_age, self.max_age+1, num=self.max_age-self.min_age+1, endpoint=True)
+        jasenyys_x = np.arange(self.min_age, self.max_age+1)+0.5 # ikävuosien keskikohdat; yksi arvo ikävuotta kohti map_ratiosille
         rate=f(jasenyys_x)
 
         return self.map_ratios(rate)
@@ -1281,7 +1286,8 @@ class Empstats():
     def map_ratios(self,ratio,min_age=18,max_age=70,smoothen=True):
         if smoothen:
             a=np.arange(min_age,self.max_age,self.timestep)
-            b=np.arange(min_age,min_age+ratio.shape[0],1)
+            # ikävuoden a arvo (esim. 18-vuotiaat) kuvaa ikiä a...a+1, joten se sijoitetaan kohtaan a+0,5
+            b=np.arange(min_age,min_age+ratio.shape[0],1)+0.5
             emp_ratio = np.zeros(self.n_time)
             emp_ratio[:-1] = np.interp(a,b,ratio)
         else:

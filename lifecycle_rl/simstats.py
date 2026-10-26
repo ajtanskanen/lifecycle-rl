@@ -15,7 +15,7 @@ from scipy.stats import norm
 import locale
 from tabulate import tabulate
 import pandas as pd
-from tqdm import tqdm_notebook as tqdm
+from tqdm.auto import tqdm # notebookissa widget, skriptissä tekstipalkki
 from .episodestats import EpisodeStats
 import fin_benefits
     
@@ -23,227 +23,158 @@ class SimStats(EpisodeStats):
     def run_simstats(self,results,save,n,startn=0,max_age=65,singlefile=False,grouped=False,group=0,include_distrib=True):
         '''
         Laskee statistiikat ajoista
+
+        singlefile=True: yksi tiedosto results
+        muuten ajot results+'_repeat_'+str(i)+'_combined', i = startn,...,n-1
         '''
         
         print('computing simulation statistics...')
-        #n=self.load_hdf(results+'_simut','n')
-        e_rate=np.zeros((n,self.n_time))
-        agg_htv=np.zeros(n)
-        agg_tyoll=np.zeros(n)
-        agg_tyottomyysaste=np.zeros(n)
-        agg_rew=np.zeros(n)
-        agg_discounted_rew=np.zeros(n)
-        t_aste=np.zeros(self.n_time)
-        emps=np.zeros((n,self.n_time,self.n_states))
-        gemps=np.zeros((n,self.n_time,self.n_states,self.n_groups))
-        emp_tyolliset=np.zeros((n,self.n_time))
-        emp_tyottomat=np.zeros((n,self.n_time))
-        emp_tyottomyysaste=np.zeros((n,self.n_time))
-        emp_tyolliset_osuus=np.zeros((n,self.n_time))
-        emp_tyottomat_osuus=np.zeros((n,self.n_time))
-        emp_htv=np.zeros((n,self.n_time))
-        tyoll_virta=np.zeros((n,self.n_time))
-        tyot_virta=np.zeros((n,self.n_time))
-        tyot_virta_ansiosid=np.zeros((n,self.n_time))
-        tyot_virta_tm=np.zeros((n,self.n_time))
-        unemp_dur=np.zeros((n,5,5))
-        unemp_lastdur=np.zeros((n,5,5))
-        agg_netincome=np.zeros(n)
-        agg_equivalent_netincome=np.zeros(n)
-        alives=np.zeros((n,self.n_time),dtype = np.int64)
-        galives=np.zeros((n,self.n_time,self.n_groups),dtype = np.int64)
+        if singlefile:
+            run_files = [results]
+        else:
+            run_files = [results+'_repeat_'+str(i)+'_combined' for i in range(startn,n)]
+        n_runs = len(run_files)
+
+        e_rate=np.zeros((n_runs,self.n_time))
+        agg_htv=np.zeros(n_runs)
+        agg_tyoll=np.zeros(n_runs)
+        agg_tyottomyysaste=np.zeros(n_runs)
+        agg_rew=np.zeros(n_runs)
+        agg_discounted_rew=np.zeros(n_runs)
+        t_aste=np.zeros(n_runs)
+        emps=np.zeros((n_runs,self.n_time,self.n_states))
+        gemps=np.zeros((n_runs,self.n_time,self.n_states,self.n_groups))
+        emp_tyolliset=np.zeros((n_runs,self.n_time))
+        emp_tyottomat=np.zeros((n_runs,self.n_time))
+        emp_tyottomyysaste=np.zeros((n_runs,self.n_time))
+        emp_tyolliset_osuus=np.zeros((n_runs,self.n_time))
+        emp_tyottomat_osuus=np.zeros((n_runs,self.n_time))
+        emp_htv=np.zeros((n_runs,self.n_time))
+        tyoll_virta=np.zeros((n_runs,self.n_time))
+        tyot_virta=np.zeros((n_runs,self.n_time))
+        tyot_virta_ansiosid=np.zeros((n_runs,self.n_time))
+        tyot_virta_tm=np.zeros((n_runs,self.n_time))
+        unemp_dur=np.zeros((n_runs,5,5))
+        unemp_lastdur=np.zeros((n_runs,5,5))
+        agg_netincome=np.zeros(n_runs)
+        agg_equivalent_netincome=np.zeros(n_runs)
+        alives=np.zeros((n_runs,self.n_time),dtype = np.int64)
+        galives=np.zeros((n_runs,self.n_time,self.n_groups),dtype = np.int64)
         agg_alives = np.zeros((self.n_time,1),dtype = np.float64)
         agg_empstate = np.zeros((self.n_time,self.n_states),dtype = np.float64)
         agg_galives = np.zeros((self.n_time,self.n_groups),dtype = np.float64)
         agg_gempstate = np.zeros((self.n_time,self.n_states,self.n_groups),dtype = np.float64)
-        pt_agg = np.zeros((n,6),dtype = np.float64)
-        pt_agegroup = np.zeros((n,self.n_time,6),dtype = np.float64)
+        pt_agg = np.zeros((n_runs,6),dtype = np.float64)
+        pt_agegroup = np.zeros((n_runs,self.n_time,6),dtype = np.float64)
 
-        if singlefile:
-            self.load_sim(results,print_pop=False)
-        else:
-            self.load_sim(results+'_repeat_'+str(startn)+'_combined',print_pop=False)
+        unemp_distrib,emp_distrib,unemp_distrib_bu = [],[],[]
+        unemp_basis_distrib = []
+        tyoll_distrib,tyoll_distrib_bu = [],[]
+        budget,htv_budget,participants = None,None,None
 
-        if grouped:
-            empstate = self.gempstate[:,:,group]
-            base_empstate=empstate/self.alive #/self.n_pop
-        else:
-            empstate = self.empstate
-            base_empstate=empstate/self.alive #self.n_pop
-        
-        emps[0,:,:] = self.empstate
-        gemps[0,:,:] = self.gempstate
-        agg_empstate = self.empstate
-        agg_gempstate = self.gempstate
-        alives[0,:] = self.alive[:,0]
-        galives[0,:,:] = self.galive[:,:]
-        emp_htv2 = np.sum(self.emp_htv,axis=1)
-        htv_ika,tyolliset_ika,tyottomat_ika,osatyolliset_ika,kokotyollvaikutus_ika,tyoll_osuus,osatyoll_osuus,kokotyoll_osuus,tyottomien_osuus,tyottomyys_aste \
-            = self.comp_unemp_simstats_agegroups(empstate,start=self.min_age,end=self.max_age,scale_time=True,emp_htv=emp_htv2)
-        htv,tyolliset,tyottomat,osatyolliset,kokotyollvaikutus,tyollaste,osatyollaste,kokotyollaste,kokotyottomyysaste \
-            = self.comp_unemp_simstats_aggregate(empstate,start=self.min_age,end=self.max_age,scale_time=True,emp_htv=emp_htv2)
-
-        q=self.comp_budget(scale=True)
-        budget = pd.DataFrame.from_dict(q,orient='index',columns=['e/v'])
-        q=self.comp_participants(scale=True,lkm=False)
-        htv_budget = pd.DataFrame.from_dict(q,orient='index',columns=['htv'])
-        q_lkm=self.comp_participants(scale=True,lkm=True)
-        participants = pd.DataFrame.from_dict(q_lkm,orient='index',columns=['lkm'])
-
-        if include_distrib:
-            agg_netincome[0],agg_equivalent_netincome[0]=self.comp_total_netincome()
-        else:   
-            agg_netincome[0],agg_equivalent_netincome[0]=0,0
-
-        agg_htv[0]=htv
-        agg_tyoll[0]=tyolliset
-        agg_tyottomyysaste[0]=kokotyottomyysaste
-        agg_discounted_rew[0],agg_rew[0]=self.get_reward()
-
-        best_rew=agg_rew[0]
-        best_emp=0
-        t_aste[0]=tyollaste
-
-        emp_tyolliset[0,:]=tyolliset_ika[:,0]
-        emp_tyottomat[0,:]=tyottomat_ika[:,0]
-        emp_tyottomyysaste[0,:] = tyottomyys_aste[:,0]
-        emp_tyolliset_osuus[0,:]=tyoll_osuus[:,0]
-        emp_tyottomat_osuus[0,:]=tyottomien_osuus[:,0]
-        emp_htv[0,:]=htv_ika[:,0]
-        
         include_ansiosid = True
         include_tmtuki = False
         include_putki = True
 
-        if include_distrib:
-            unemp_distrib,emp_distrib,unemp_distrib_bu = self.comp_empdistribs_v2(ansiosid=include_ansiosid,tmtuki=include_tmtuki,putki=include_putki,outsider=False,max_age=max_age)
-            unemp_basis_distrib = self.comp_unempbasis_distribs_v2(ansiosid=include_ansiosid,putki=True,max_age=max_age)
-            tyoll_distrib,tyoll_distrib_bu = self.comp_tyollistymisdistribs(ansiosid=include_ansiosid,tmtuki=include_tmtuki,putki=include_putki,outsider=False,max_age=max_age)
-        else:
-            unemp_distrib,emp_distrib,unemp_distrib_bu = [],[],[]
-            tyoll_distrib,tyoll_distrib_bu = [],[]
+        best_rew = -np.inf
+        best_emp = 0
 
-        if include_distrib:
-            # virrat työllisyyteen ja työttömyyteen
-            tyoll_virta0,tyot_virta0 = self.comp_virrat(ansiosid=True,tmtuki=True,putki=True,outsider=False)
-            tyoll_virta_ansiosid0,tyot_virta_ansiosid0 = self.comp_virrat(ansiosid=True,tmtuki=False,putki=True,outsider=False)
-            tyoll_virta_tm0,tyot_virta_tm0 = self.comp_virrat(ansiosid=False,tmtuki=True,putki=False,outsider=False)
+        tqdm_e = tqdm(range(n_runs), desc='Sim', leave=True, unit=" ")
+        for j,filename in enumerate(run_files):
+            self.load_sim(filename,print_pop=False)
 
-            tyoll_virta[0,:]=tyoll_virta0[:,0]
-            tyot_virta[0,:]=tyot_virta0[:,0]
-            tyot_virta_ansiosid[0,:]=tyot_virta_ansiosid0[:,0]
-            tyot_virta_tm[0,:]=tyot_virta_tm0[:,0]
-        
-            unemp_dur0=self.comp_unemp_durations(return_q=False)
-            unemp_lastdur0=self.comp_unemp_durations_v2(return_q=False)
-            unemp_dur[0,:,:]=unemp_dur0[:,:]
-            unemp_lastdur[0,:,:]=unemp_lastdur0[:,:]
-
-        _,_,_,_,_,_,combisuhde,agg_combisuhde = self.comp_ptproportions()
-        pt_agg[0,:] = agg_combisuhde[0,:]
-        pt_agegroup[0,:,:] = combisuhde[0,:,:]
-
-        if not singlefile:
-            tqdm_e = tqdm(range(int(n-1)), desc='Sim', leave=True, unit=" ")
-
-            for i in range(startn+1,n): 
-                self.load_sim(results+'_repeat_'+str(i)+'_combined',print_pop=False)
-
-                q=self.comp_budget(scale=True)
-                budget2 = pd.DataFrame.from_dict(q,orient='index',columns=['e/v'])
+            q=self.comp_budget(scale=True)
+            budget2 = pd.DataFrame.from_dict(q,orient='index',columns=['e/v'])
+            q=self.comp_participants(scale=True,lkm=False)
+            htv2 = pd.DataFrame.from_dict(q,orient='index',columns=['htv'])
+            q_lkm=self.comp_participants(scale=True,lkm=True)
+            participants2 = pd.DataFrame.from_dict(q_lkm,orient='index',columns=['lkm'])
+            if j == 0:
+                budget,htv_budget,participants = budget2,htv2,participants2
+            else:
                 budget += budget2
-                q=self.comp_participants(scale=True,lkm=False)
-                htv2 = pd.DataFrame.from_dict(q,orient='index',columns=['htv'])
                 htv_budget += htv2
-                q_lkm=self.comp_participants(scale=True,lkm=True)
-                participants2 = pd.DataFrame.from_dict(q_lkm,orient='index',columns=['lkm'])
                 participants += participants2
 
-                if grouped:
-                    empstate=self.gempstate[:,:,group]#/self.alive #self.n_pop
-                else:
-                    empstate=self.empstate#/self.alive #self.n_pop
-                
-                emps[i,:,:] = self.empstate
-                gemps[i,:,:,:] = self.gempstate
-                agg_empstate += self.empstate
-                agg_gempstate += self.gempstate
-                alives[i,:] = self.alive[:,0]
-                galives[i,:] = self.galive[:,:]
-                agg_discounted_rew[i],agg_rew[i] = self.get_reward()
-                
-                if include_distrib:
-                    net,equiv = self.comp_total_netincome()
-                else:
-                    net,equiv = 0,0
+            if grouped:
+                empstate = self.gempstate[:,:,group]
+            else:
+                empstate = self.empstate
 
-                if agg_rew[i]>best_rew:
-                    best_rew = agg_rew[i]
-                    best_emp = i
+            emps[j,:,:] = self.empstate
+            gemps[j,:,:,:] = self.gempstate
+            agg_empstate += self.empstate
+            agg_gempstate += self.gempstate
+            alives[j,:] = self.alive[:,0]
+            galives[j,:,:] = self.galive[:,:]
+            agg_discounted_rew[j],agg_rew[j] = self.get_reward()
 
-                emp_htv2 = np.sum(self.emp_htv,axis=1)
+            if include_distrib:
+                agg_netincome[j],agg_equivalent_netincome[j] = self.comp_total_netincome()
 
-                htv_ika,tyolliset_ika,tyottomat_ika,osatyolliset_ika,kokotyollvaikutus_ika,tyoll_osuus,osatyoll_osuus,\
-                    kokotyoll_osuus,tyottomien_osuus,tyottomyys_aste = self.comp_unemp_simstats_agegroups(empstate,start=self.min_age,end=self.max_age,scale_time=True,emp_htv=emp_htv2)
-                htv,tyolliset,tyottomat,osatyolliset,kokotyollvaikutus,tyollaste,osatyollaste,\
-                    kokotyollaste,kokotyottomyysaste = self.comp_unemp_simstats_aggregate(empstate,scale_time=True,start=self.min_age,end=self.max_age,emp_htv=emp_htv2)
-    
-                agg_htv[i]=htv
-                agg_tyoll[i]=tyolliset
-                agg_tyottomyysaste[i]=kokotyottomyysaste
+            if agg_rew[j]>best_rew:
+                best_rew = agg_rew[j]
+                best_emp = j
 
-                agg_netincome[i]=net
-                agg_equivalent_netincome[i]=equiv
-                t_aste[i]=tyollaste
+            emp_htv2 = np.sum(self.emp_htv,axis=1)
 
-                emp_tyolliset[i,:] = tyolliset_ika[:,0]
-                emp_tyottomat[i,:] = tyottomat_ika[:,0]
-                emp_tyottomyysaste[i,:] = tyottomyys_aste[:,0]
-                emp_tyolliset_osuus[i,:] = tyoll_osuus[:,0]
-                emp_tyottomat_osuus[i,:] = tyottomien_osuus[:,0]
-                emp_htv[i,:] = htv_ika[:,0]
+            htv_ika,tyolliset_ika,tyottomat_ika,osatyolliset_ika,kokotyollvaikutus_ika,tyoll_osuus,osatyoll_osuus,\
+                kokotyoll_osuus,tyottomien_osuus,tyottomyys_aste = self.comp_unemp_simstats_agegroups(empstate,start=self.min_age,end=self.max_age,scale_time=True,emp_htv=emp_htv2)
+            htv,tyolliset,tyottomat,osatyolliset,kokotyollvaikutus,tyollaste,osatyollaste,\
+                kokotyollaste,kokotyottomyysaste = self.comp_unemp_simstats_aggregate(empstate,scale_time=True,start=self.min_age,end=self.max_age,emp_htv=emp_htv2)
 
-                if include_distrib:
-                    unemp_distrib2,emp_distrib2,unemp_distrib_bu2 = self.comp_empdistribs_v2(ansiosid=include_ansiosid,tmtuki=include_tmtuki,putki=include_putki,outsider=False,max_age=max_age)
-                    tyoll_distrib2,tyoll_distrib_bu2 = self.comp_tyollistymisdistribs_v2(ansiosid=include_ansiosid,tmtuki=include_tmtuki,putki=include_putki,outsider=False,max_age=max_age)
-                    unemp_basis_distrib2 = self.comp_unempbasis_distribs(ansiosid=include_ansiosid,putki=True,max_age=max_age)
+            agg_htv[j]=htv
+            agg_tyoll[j]=tyolliset
+            agg_tyottomyysaste[j]=kokotyottomyysaste
+            t_aste[j]=tyollaste
 
-                    unemp_distrib.extend(unemp_distrib2)
-                    unemp_basis_distrib.extend(unemp_basis_distrib2)
-                    emp_distrib.extend(emp_distrib2)
-                    unemp_distrib_bu.extend(unemp_distrib_bu2)
-                    tyoll_distrib.extend(tyoll_distrib2)
-                    tyoll_distrib_bu.extend(tyoll_distrib_bu2)
-            
-                    # virrat työllisyyteen ja työttömyyteen
-                    tyoll_virta0,tyot_virta0 = self.comp_virrat(ansiosid=True,tmtuki=True,putki=True,outsider=False)
-                    tyoll_virta_ansiosid0,tyot_virta_ansiosid0 = self.comp_virrat(ansiosid=True,tmtuki=False,putki=True,outsider=False)
-                    tyoll_virta_tm0,tyot_virta_tm0 = self.comp_virrat(ansiosid=False,tmtuki=True,putki=False,outsider=False)
+            emp_tyolliset[j,:] = tyolliset_ika[:,0]
+            emp_tyottomat[j,:] = tyottomat_ika[:,0]
+            emp_tyottomyysaste[j,:] = tyottomyys_aste[:,0]
+            emp_tyolliset_osuus[j,:] = tyoll_osuus[:,0]
+            emp_tyottomat_osuus[j,:] = tyottomien_osuus[:,0]
+            emp_htv[j,:] = htv_ika[:,0]
 
-                    tyoll_virta[i,:] = tyoll_virta0[:,0]
-                    tyot_virta[i,:] = tyot_virta0[:,0]
-                    tyot_virta_ansiosid[i,:] = tyot_virta_ansiosid0[:,0]
-                    tyot_virta_tm[i,:] = tyot_virta_tm0[:,0]
+            if include_distrib:
+                # samat jakaumafunktiot kaikille ajoille
+                unemp_distrib2,emp_distrib2,unemp_distrib_bu2 = self.comp_empdistribs_v2(ansiosid=include_ansiosid,tmtuki=include_tmtuki,putki=include_putki,outsider=False,max_age=max_age)
+                tyoll_distrib2,tyoll_distrib_bu2 = self.comp_tyollistymisdistribs(ansiosid=include_ansiosid,tmtuki=include_tmtuki,putki=include_putki,outsider=False,max_age=max_age)
+                unemp_basis_distrib2 = self.comp_unempbasis_distribs(ansiosid=include_ansiosid,putki=True,max_age=max_age)
 
-                    unemp_dur0=self.comp_unemp_durations(return_q=False)
-                    unemp_lastdur0=self.comp_unemp_durations_v2(return_q=False)
-                    unemp_dur[i,:,:]=unemp_dur0[:,:]
-                    unemp_lastdur[i,:,:]=unemp_lastdur0[:,:]
+                unemp_distrib.extend(unemp_distrib2)
+                unemp_basis_distrib.extend(unemp_basis_distrib2)
+                emp_distrib.extend(emp_distrib2)
+                unemp_distrib_bu.extend(unemp_distrib_bu2)
+                tyoll_distrib.extend(tyoll_distrib2)
+                tyoll_distrib_bu.extend(tyoll_distrib_bu2)
+        
+                # virrat työllisyyteen ja työttömyyteen
+                tyoll_virta0,tyot_virta0 = self.comp_virrat(ansiosid=True,tmtuki=True,putki=True,outsider=False)
+                tyoll_virta_ansiosid0,tyot_virta_ansiosid0 = self.comp_virrat(ansiosid=True,tmtuki=False,putki=True,outsider=False)
+                tyoll_virta_tm0,tyot_virta_tm0 = self.comp_virrat(ansiosid=False,tmtuki=True,putki=False,outsider=False)
 
-                tqdm_e.update(1)
-                tqdm_e.set_description("Pop " + str(n))
+                tyoll_virta[j,:] = tyoll_virta0[:,0]
+                tyot_virta[j,:] = tyot_virta0[:,0]
+                tyot_virta_ansiosid[j,:] = tyot_virta_ansiosid0[:,0]
+                tyot_virta_tm[j,:] = tyot_virta_tm0[:,0]
 
-                _,_,_,_,_,_,combisuhde,agg_combisuhde = self.comp_ptproportions()
-                pt_agg[i,:] = agg_combisuhde[0,:]
-                pt_agegroup[i,:,:] = combisuhde[0,:,:]
+                unemp_dur[j,:,:] = self.comp_unemp_durations(return_q=False)
+                unemp_lastdur[j,:,:] = self.comp_unemp_durations_v2(return_q=False)
 
-            budget /= n
-            participants /= n
-            htv_budget /= n
-            agg_empstate = agg_empstate / n
-            agg_gempstate = agg_gempstate / n
-            agg_alives[:,0] = (np.sum(alives,axis=0)/n)
-            agg_galives[:,:] = (np.sum(galives,axis=0)/n)
+            _,_,_,_,_,_,combisuhde,agg_combisuhde = self.comp_ptproportions()
+            pt_agg[j,:] = agg_combisuhde[0,:]
+            pt_agegroup[j,:,:] = combisuhde[0,:,:]
+
+            tqdm_e.update(1)
+            tqdm_e.set_description("Sim " + str(j+1))
+
+        budget /= n_runs
+        participants /= n_runs
+        htv_budget /= n_runs
+        agg_empstate = agg_empstate / n_runs
+        agg_gempstate = agg_gempstate / n_runs
+        agg_alives[:,0] = np.sum(alives,axis=0)/n_runs
+        agg_galives[:,:] = np.sum(galives,axis=0)/n_runs
 
         self.save_simstats(save,agg_htv,agg_tyoll,agg_rew,agg_discounted_rew,\
                             emp_tyolliset,emp_tyolliset_osuus,\
@@ -259,13 +190,7 @@ class SimStats(EpisodeStats):
                             pt_agg,pt_agegroup,galives,agg_galives,gemps,agg_gempstate,\
                             unemp_basis_distrib)
                     
-        #if not singlefile:
-        #    # save the best
-        #    self.load_sim(results+'_'+str(100+best_emp))
-        #    self.save_sim(results+'_best')
-                    
         print('done')
-        #print('best_emp',best_emp)
         
     def run_optimize_x(self,target,results,n,startn=0,averaged=False):
         '''
@@ -309,7 +234,7 @@ class SimStats(EpisodeStats):
         mean_tyoll=np.mean(agg_tyoll)
         median_tyoll=np.median(agg_tyoll)
         std_htv=np.std(agg_htv)
-        std_tyoll=np.std(emp_tyolliset)
+        std_tyoll=np.std(agg_tyoll) # ajojen välinen hajonta
         diff_htv=agg_htv-mean_htv
         diff_tyoll=agg_tyoll-mean_tyoll
         mean_rew = np.mean(agg_rew)
@@ -318,7 +243,7 @@ class SimStats(EpisodeStats):
         m_mean=np.mean(emp_tyolliset_osuus,axis=0)
         m_median=np.median(emp_tyolliset_osuus,axis=0)
         mn_median=np.median(emp_tyolliset,axis=0)
-        mn_mean=np.median(emp_tyolliset,axis=0)
+        mn_mean=np.mean(emp_tyolliset,axis=0)
         s_tyoll=np.std(emp_tyolliset_osuus,axis=0)
         m_best=emp_tyolliset_osuus[best_emp,:]
 
@@ -601,7 +526,6 @@ class SimStats(EpisodeStats):
 
     def comp_elasticity(self,x,y,diff=False):
         xl=x.shape[0]
-        yl=x.shape[0]    
         el=np.zeros((xl-2,1))
         elx=np.zeros((xl-2,1))
     
