@@ -176,7 +176,7 @@ class runner_stablebaselines3():
                 if vf is not None:
                     vf_coef=vf
                 else:
-                    vf_coef=0.1
+                    vf_coef=0.01
                 if entcoef is None:
                     # palkkioerot ovat pieniä ja ACKTR ei normalisoi diskreettien toimintojen
                     # advantageja, joten 0.01:n entropiabonus pitää politiikan lähes tasajakaumana
@@ -213,7 +213,7 @@ class runner_stablebaselines3():
                 if vf is not None:
                     vf_coef=vf
                 else:
-                    vf_coef=0.1
+                    vf_coef=0.01
 
                 if entcoef is None:
                     ent_coef=0.0 # ks. yllä: 0.01 pitää politiikan lähes tasajakaumana
