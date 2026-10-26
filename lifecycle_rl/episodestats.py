@@ -4418,7 +4418,7 @@ class EpisodeStats():
             q[self.labels['eläkkeellä']] = eläkkeellä + np.sum(emp[:retage,3]*scalex_lkm[:retage])
             q[self.labels['vanhuuseläkkeellä']] = eläkkeellä
             q[self.labels['työssä ja eläkkeellä']] = osa_aika_kerroin*np.sum(osa_aika_kerroin*emp[:,8]*scalex_lkm)+np.sum(emp[:,9]*scalex_lkm)
-            q[self.labels['työssä yli 63v']] = np.sum(np.sum(emp[self.map_age(63):,[1,9]],axis=1)*scalex_lkm[self.map_age(63):])+osa_aika_kerroin*np.sum(np.sum(emp[self.map_age(63):,[8,10]],axis=1)*scalex_lkm[self.map_age(63):])
+            q[self.labels.get('työssä yli 63v','työssä yli 63v')] = np.sum(np.sum(emp[self.map_age(63):,[1,9]],axis=1)*scalex_lkm[self.map_age(63):])+osa_aika_kerroin*np.sum(np.sum(emp[self.map_age(63):,[8,10]],axis=1)*scalex_lkm[self.map_age(63):])
             if include_retwork:
                 q[self.labels['palkansaajia']] = np.sum((emp[:,1]+osa_aika_kerroin*emp[:,10]+osa_aika_kerroin*emp[:,8]+emp[:,9])*scalex)
             else:
@@ -4528,13 +4528,13 @@ class EpisodeStats():
             q[self.labels['aikuisia']] = aikuisia
             q[self.labels['lapsia']] = None
             q[self.labels['työikäisiä 18-62']] = np.sum(emp[self.map_age(18):self.map_age(63),kaikkitilat])
-            q[self.labels['työikäisiä 18-65']] = np.sum(emp[self.map_age(18):self.map_age(65),kaikkitilat])
+            q[self.labels.get('työikäisiä 18-65','työikäisiä 18-65')] = np.sum(emp[self.map_age(18):self.map_age(65),kaikkitilat])
 
         q[self.labels['työllisiä 18-62']] = np.sum(emp[self.map_age(18):self.map_age(63),[1,8,9,10]])
-        q[self.labels['työllisiä 18-65']] = np.sum(emp[self.map_age(18):self.map_age(65),[1,8,9,10]])
+        q[self.labels.get('työllisiä 18-65','työllisiä 18-65')] = np.sum(emp[self.map_age(18):self.map_age(65),[1,8,9,10]]) # nimikettä ei ole Labels-sanakirjassa
         q[self.labels['työllisiä']] = np.sum(emp[:,[1,8,9,10]]) 
         q[self.labels['työssä 63+']] = np.sum(emp[self.map_age(63):,[1,8,9,10]]) 
-        q[self.labels['työssä 65+']] = np.sum(emp[self.map_age(65):,[1,8,9,10]]) 
+        q[self.labels.get('työssä 65+','työssä 65+')] = np.sum(emp[self.map_age(65):,[1,8,9,10]]) 
         q[self.labels['työssä ja eläkkeellä']] = np.sum(emp[:,[8,9]]) 
         if lkm:
             q[self.labels['eläkkeellä']] = np.sum(emp[:,[2,3,8,9]])
@@ -4589,13 +4589,13 @@ class EpisodeStats():
             q[self.labels['aikuisia']] = aikuisia
             q[self.labels['lapsia']] = None
             q[self.labels['työikäisiä 18-62']] = np.sum(emp[self.map_age(18):self.map_age(63),kaikkitilat])
-            q[self.labels['työikäisiä 18-65']] = np.sum(emp[self.map_age(18):self.map_age(65),kaikkitilat])
+            q[self.labels.get('työikäisiä 18-65','työikäisiä 18-65')] = np.sum(emp[self.map_age(18):self.map_age(65),kaikkitilat])
 
         q[self.labels['työllisiä 18-62']] = np.sum(emp[self.map_age(18):self.map_age(63),[1,8,9,10]])
-        q[self.labels['työllisiä 18-65']] = np.sum(emp[self.map_age(18):self.map_age(65),[1,8,9,10]])
+        q[self.labels.get('työllisiä 18-65','työllisiä 18-65')] = np.sum(emp[self.map_age(18):self.map_age(65),[1,8,9,10]]) # nimikettä ei ole Labels-sanakirjassa
         q[self.labels['työllisiä']] = np.sum(emp[:,[1,8,9,10]]) 
         q[self.labels['työssä 63+']] = np.sum(emp[self.map_age(63):,[1,8,9,10]]) 
-        q[self.labels['työssä 65+']] = np.sum(emp[self.map_age(65):,[1,8,9,10]]) 
+        q[self.labels.get('työssä 65+','työssä 65+')] = np.sum(emp[self.map_age(65):,[1,8,9,10]]) 
         q[self.labels['työssä ja eläkkeellä']] = np.sum(emp[:,[8,9]]) 
         if lkm:
             q[self.labels['eläkkeellä']] = np.sum(emp[:,[2,3,8,9]])
