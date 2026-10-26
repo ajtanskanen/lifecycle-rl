@@ -2275,48 +2275,45 @@ class PlotStats():
         x,c3,c7,c18,c_vrt = self.episodestats.comp_children_ages()
         vrt_c18 = self.empstats.children_ages()
         fig,ax = plt.subplots()
-        plt.title('lasten lkm vrt havainto')
-        ax.plot(x,c3,label = 'alle 3v lapset')
-        ax.plot(x,c_vrt,label = 'vrt syntyneet')
-        ax.plot(vrt_c18[:,0],vrt_c18[:,1],label = 'syntyneet, havainto')
+        plt.title('syntyneet äidin iän mukaan')
+        if self.episodestats.save_pop:
+            xb,births = self.episodestats.comp_births_by_age()
+            print('Syntyneitä vuodessa: malli {:.0f}, mallin naiset x hedelmällisyys {:.0f}, havainto {:.0f}'.format(np.sum(births),np.sum(c_vrt),np.sum(vrt_c18[:,1])))
+            ax.plot(xb,births,label = 'malli')
+        ax.plot(x,c_vrt,label = 'mallin naiset x hedelmällisyys')
+        ax.plot(vrt_c18[:,0],vrt_c18[:,1],label = 'havainto')
+        ax.set_xlabel(self.labels['age'])
+        ax.set_ylabel('syntyneitä vuodessa')
         ax.legend(bbox_to_anchor = (1.05, 1), loc = 2, borderaxespad = 0.)
         plt.show()
 
         if self.episodestats.save_pop:
             h, edges = self.episodestats.comp_children_hist()
-            plt.title('Lapsia per kotitalous')
-            plt.bar(edges[:-1], h)
+            centers = (edges[:-1]+edges[1:])/2
+            plt.title('Lapsiperheet alle 18v lasten lukumäärän mukaan')
+            plt.bar(centers, h)
+            plt.xlabel('lapsia (viimeinen luokka 11+)')
+            plt.ylabel('kotitalouksia')
             plt.show()
 
             h, edges = self.episodestats.comp_children_age_hist()
-            plt.title('Lapsia per kotitalous 40 vuoden iässä')
-            plt.bar(edges[:-1], h)
+            centers = (edges[:-1]+edges[1:])/2
+            plt.title('Kotitaloudet lasten lukumäärän mukaan 40 vuoden iässä')
+            plt.bar(centers, h)
+            plt.xlabel('lapsia (viimeinen luokka 11+)')
+            plt.ylabel('kotitalouksia')
             plt.show()
 
             cemp_n,cemp_htv = self.episodestats.comp_emp_by_children()
+            groups = ['alle 3v','3-6v','7-17v','ei lapsia'] # nuorimman lapsen ikä
+            columns = ['yhteensä','naiset','miehet'] # comp_emp_by_children: sarakkeet 0 = kaikki, 1 = naiset, 2 = miehet
 
-            df_cemp_n = pd.DataFrame(cemp_n,columns = ['naiset','miehet','yhteensä'])
-            df_cemp_n.index = ['alle 3v','3-6v','7-18v','ei lapsia']
-            df_cemp_n.plot.bar(ylim = (65,95))
-
-            df_cemp_htv = pd.DataFrame(cemp_htv,columns = ['naiset','miehet','yhteensä'])
-            df_cemp_htv.index = ['alle 3v','3-6v','7-18v','ei lapsia']
-            df_cemp_htv.plot.bar(ylim = (65,95))
-
-            fig,ax = plt.subplots()
-            plt.title('työllisyysaste lasten lkm mukaan')
-            #ax.plot(cemp_n[:,0],label = 'yhteensä')
-            #ax.plot(cemp_n[:,1],label = 'naiset')
-            #ax.plot(cemp_n[:,2],label = 'miehet')
-            ax.legend(bbox_to_anchor = (1.05, 1), loc = 2, borderaxespad = 0.)
+            df_cemp_n = pd.DataFrame(100*cemp_n,columns = columns,index = groups)
+            df_cemp_n.plot.bar(ylim = (0,100),title = 'työllisyysaste (%) nuorimman lapsen iän mukaan, 18-49v')
             plt.show()
 
-            fig,ax = plt.subplots()
-            plt.title('htv lasten lkm mukaan')
-            ax.plot(cemp_htv[:,0],label = 'yhteensä')
-            ax.plot(cemp_htv[:,1],label = 'naiset')
-            ax.plot(cemp_htv[:,2],label = 'miehet')
-            ax.legend(bbox_to_anchor = (1.05, 1), loc = 2, borderaxespad = 0.)
+            df_cemp_htv = pd.DataFrame(100*cemp_htv,columns = columns,index = groups)
+            df_cemp_htv.plot.bar(ylim = (0,100),title = 'htv-aste (%) nuorimman lapsen iän mukaan, 18-49v')
             plt.show()
 
     def plot_emp_vs_workforce(self,empstate=None,alive=None,figname = None,ax = None,legend_infig = False):

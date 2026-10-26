@@ -3817,31 +3817,71 @@ class EpisodeStats():
         
         return x,c3,c7,c18,c_vrt
 
-    def comp_children_hist(self):
-        demog2=self.empstats.get_demog()
+    def comp_household_children(self,rows):
+        '''
+        Kotitalouksien määrä alle 18-vuotiaiden lasten lukumäärän mukaan (0...10, viimeinen luokka 11+),
+        riveiltä rows väestötasolle ja vuositasolle skaalattuna.
+        Pariskunta on yksi kotitalous; yksin asuvien lapset ovat naisen kotitaloudessa, ellei nainen ole kuollut
+        (kuten add_v12:ssa ja comp_household_incomes:ssa). Kuolleet jäävät pois.
+        '''
+        dead = self.get_alivemask()
+        sx = np.asarray(self.get_scalex(),dtype=float)[:,0]
+        counts = np.zeros(12)
+        for t in rows:
+            c = self.infostats_pop_children_under18[t,0::2].astype(int)
+            m_alive,s_alive = ~dead[t,0::2],~dead[t,1::2]
+            married = (self.infostats_pop_puoliso[t,0::2]>0) & m_alive & s_alive
+            w = sx[t]*self.timestep # rivit ovat neljänneksiä, demografia vuosikohorttia
+            single_w = s_alive & ~married
+            single_m = m_alive & ~married
+            c_m = np.where(s_alive,0,c)
+            np.add.at(counts,np.minimum(c[married],11),w)
+            np.add.at(counts,np.minimum(c[single_w],11),w)
+            np.add.at(counts,np.minimum(c_m[single_m],11),w)
+        return counts
 
-        start=self.min_age
-        end=min(75,self.max_age)
-        min_cage=self.map_age(start)
-        max_cage=self.map_age(end)+2
-        scalex=np.sum(demog2[min_cage:max_cage])/np.sum(self.alive[min_cage:max_cage])
-        
-        data = np.ravel(self.infostats_pop_children_under18[min_cage:max_cage,:])
-        h, edges = np.histogram(data,density=False,range=(0.5,10.5),bins=9)     
-
-        return h*scalex, edges
+    def comp_children_hist(self,max_age=75):
+        '''
+        Lapsiperheet (vähintään yksi alle 18v lapsi) lasten lukumäärän mukaan, vanhemmat 18-max_age-vuotiaita.
+        Palauttaa määrät luokille 1,...,10,11+ ja luokkarajat
+        '''
+        rows = range(1,self.map_age(min(max_age,self.max_age))+1) # rivi 0 (18,0 v) ei ole tallennettu
+        counts = self.comp_household_children(rows)
+        return counts[1:], np.arange(0.5,12.5,1.0)
 
     def comp_children_age_hist(self,age=40):
-        demog2=self.empstats.get_demog()
+        '''
+        Kotitaloudet lasten lukumäärän mukaan, kun vanhemmat ovat age-vuotiaita (neljä neljännestä).
+        Palauttaa määrät luokille 0,...,10,11+ ja luokkarajat
+        '''
+        t0 = max(1,self.map_age(age))
+        counts = self.comp_household_children(range(t0,t0+self.inv_timestep))
+        return counts, np.arange(-0.5,12.5,1.0)
 
-        min_cage=self.map_age(age)
-        max_cage=self.map_age(age)+2
-        scalex=np.sum(demog2[min_cage:max_cage])/np.sum(self.alive[min_cage:max_cage])
-        
-        data = np.ravel(self.infostats_pop_children_under18[min_cage:max_cage,:])
-        h, edges = np.histogram(data,density=False,range=(0.0,10.5),bins=10)
-
-        return h*scalex, edges
+    def comp_births_by_age(self,max_age=75):
+        '''
+        Mallin syntyneet vuodessa äidin iän mukaan, väestötasolle skaalattuna.
+        Syntymät päätellään lasten lukumäärien kasvusta neljänneksessä: max(0, Δalle3v, Δalle7v, Δalle18v),
+        jolloin lapsen vanheneminen ryhmästä toiseen ei peitä samalla neljänneksellä syntynyttä.
+        Palauttaa iät (18,...,max_age) ja syntyneet
+        '''
+        dead = self.get_alivemask()
+        c3,c7,c18 = (getattr(self,f'infostats_pop_children_under{k}')[:,1::2].astype(int) for k in (3,7,18))
+        births = np.maximum.reduce([np.zeros_like(c3[1:]),np.diff(c3,axis=0),np.diff(c7,axis=0),np.diff(c18,axis=0)])
+        demog_women = self.empstats.get_demog_bysex()[:,1]
+        ages = np.arange(self.min_age,max_age+1)
+        out = np.zeros(len(ages))
+        for k,a in enumerate(ages):
+            rates = []
+            for t in range(self.map_age(a),self.map_age(a)+self.inv_timestep):
+                if t<2 or t>=self.n_time: # rivit 0 ja 1: ei edellistä tallennettua neljännestä
+                    continue
+                alive_w = ~dead[t,1::2]
+                if alive_w.sum()>0:
+                    rates.append(np.sum(births[t-1][alive_w])/alive_w.sum())
+            if rates: # syntyneitä naista kohti vuodessa (puuttuvat neljännekset keskiarvolla) kertaa naisten määrä
+                out[k] = np.mean(rates)*self.inv_timestep*demog_women[self.map_age(a)]
+        return ages,out
 
     # työttömyys
 
@@ -4100,11 +4140,15 @@ class EpisodeStats():
         '''
         lasketaan työllisyysaste maskatuista alkioista
         '''
-        scalex = self.empstats.get_demog(1/self.alive)
         n_time = self.map_age(maxage)
         tyoll_osuus,htv_osuus = self.comp_popemployed_ratio_by_age(mask=mask,maxage=maxage)
-        tyoll_osuus = np.nansum(tyoll_osuus[:n_time] * scalex[:n_time])/np.sum(scalex[:n_time])
-        htv_osuus = np.nansum(htv_osuus[:n_time] * scalex[:n_time])/np.sum(scalex[:n_time])
+        # ikäkohtaisten osuuksien keskiarvo väestöllä painottaen; rivi 0 (18,0 v) ei ole tallennettu
+        w = self.empstats.get_demog()[1:n_time,0]
+        t = np.asarray(tyoll_osuus[1:n_time],dtype=float)
+        h = np.asarray(htv_osuus[1:n_time],dtype=float)
+        ok = np.isfinite(t)
+        tyoll_osuus = np.sum(t[ok]*w[ok])/np.sum(w[ok])
+        htv_osuus = np.sum(h[ok]*w[ok])/np.sum(w[ok])
 
         return tyoll_osuus,htv_osuus         
 
@@ -4328,7 +4372,11 @@ class EpisodeStats():
         
         w = np.sum(self.galive[min_cage:max_cage,3:6],axis=1,keepdims=True)*scalex # eri ikäisiä naisia kvartaalilla
         naiset_in = np.array([0.005727417359024218,0.01059128848986463,0.01890046459242574,0.02426763737216155,0.03430309811874956,0.04005336001334001,0.04828193258133925,0.0616650502143103,0.06816135422294255,0.08110212638514526,0.08670537010159651,0.09630583689479538,0.1017242873234555,0.1049780682386882,0.09842716448625606,0.0926950575069941,0.08550675779214809,0.07716610533218086,0.06553524804177546,0.05361265498076101,0.04137449445721435,0.03453863465866466,0.02571906863491097,0.01716422485134555,0.01061106141460255,0.007058537179019107,0.00411962160512664,0.002444757874941232,0.001108792068875555,0.000507964152244113,0.0002458210422812193,0.0001691474966170501,0.0001316872427983539,3.270538984824699e-05,0.0,3.007066606525334e-05,6.002400960384154e-05,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
-        c_vrt = w[min_cage:max_cage:4] * naiset_in[:,None]
+        # naisten määrä ikävuotta kohti neljännesten keskiarvona; rivi 0 (18,0 v) ei ole tallennettu
+        w2 = w[:,0].copy()
+        w2[0] = w2[1]
+        w_year = np.array([np.mean(w2[4*k:4*k+4]) for k in range(naiset_in.shape[0])])
+        c_vrt = w_year[:,None] * naiset_in[:,None]
 
         return c3,c7,c18,c_vrt
 
@@ -4911,25 +4959,26 @@ class EpisodeStats():
         return gendermask
 
     def get_childmask(self,childg=0,g=None):
+        '''
+        Maski (True = jätetään pois) lapsiryhmälle: 0 = alle 3v lapsi, 1 = nuorin 3-6v, 2 = nuorin 7-17v,
+        muu = ei alle 18v lapsia. g: sukupuoli kuten get_gendermask (1 naiset, 2 miehet, -1 kaikki)
+        '''
+        u3 = self.infostats_pop_children_under3
+        u7 = self.infostats_pop_children_under7
+        u18 = self.infostats_pop_children_under18
         if childg==0: # alle 3v
-            gendermask = self.infostats_pop_children_under3<1
-        elif childg==1: # 3-7v
-            gendermask1 = self.infostats_pop_children_under7<1 
-            gendermask2 = self.infostats_pop_children_under3>0
-            gendermask = np.logical_and(gendermask1, gendermask2) 
-            #gendermask = ma.mask_and(gendermask1,gendermask2)
-        elif childg==2: # 7-18v
-            gendermask1 = self.infostats_pop_children_under18<1 
-            gendermask2 = self.infostats_pop_children_under7>0
-            gendermask = np.logical_and(gendermask1, gendermask2) 
-            #gendermask = ma.mask_and(gendermask1,gendermask2)
+            childmask = u3<1
+        elif childg==1: # nuorin 3-6v: alle 7v lapsia, ei alle 3v lapsia
+            childmask = (u7<1) | (u3>0)
+        elif childg==2: # nuorin 7-17v: alle 18v lapsia, ei alle 7v lapsia
+            childmask = (u18<1) | (u7>0)
         else: # ei lapsia
-            gendermask = self.infostats_pop_children_under18>0
+            childmask = u18>0
 
-        if g is not None:
-            gendermask = gendermask * self.get_gendermask(g,time=True)
+        if g is not None: # pois, jos lapsiryhmä TAI sukupuoli rajaa pois
+            childmask = childmask | (self.get_gendermask(g,time=True)>0)
 
-        return gendermask
+        return childmask
 
     def comp_aggirr(self,gender=None,full=False):
         '''
