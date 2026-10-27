@@ -44,7 +44,9 @@ class runner_stablebaselines3():
         self.gym_kwargs=gym_kwargs.copy()
         self.gym_kwargs['silent']=True
         self.share_features_extractor = True
-        self.default_arch = [256, 256, 64] # [256, 256, 16] # [dict(pi=[64, 32, 16],vf=[256, 192, 16])] # [dict(pi=[128, 128, 16],vf=[256, 256, 16])] # 
+        # ACKTR: lista antaa actorille ja criticille samankokoiset erilliset rungot,
+        # dict(pi=[...],vf=[...]) eri kokoiset, esim. dict(pi=[256, 256, 64],vf=[512, 256, 64])
+        self.default_arch = [256, 256, 64] # [256, 256, 16] 
         
         self.env = gym.make(self.environment,kwargs=self.gym_kwargs)
         self.n_employment,self.n_acts=self.env.unwrapped.get_n_states()
@@ -224,6 +226,8 @@ class runner_stablebaselines3():
                 acktr_policy_kwargs = dict(policy_kwargs)
                 activation_fn = acktr_policy_kwargs.pop('activation_fn', th.nn.Tanh)
                 if rlmodel=='lnacktr':
+                    if isinstance(self.default_arch,dict):
+                        raise ValueError('lnacktr tukee vain samankokoisia runkoja (default_arch lista)')
                     # koko runko (Linear -> LayerNorm -> aktivointi) on extractorissa, joten
                     # ACKTR:n oma MLP jätetään tyhjäksi
                     trunk = dict(net_arch=(),features_extractor_class=LayerNormMlpExtractor,
