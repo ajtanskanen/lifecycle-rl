@@ -46,7 +46,7 @@ class runner_stablebaselines3():
         self.share_features_extractor = True
         # ACKTR: lista antaa actorille ja criticille samankokoiset erilliset rungot,
         # dict(pi=[...],vf=[...]) eri kokoiset, esim. dict(pi=[256, 256, 64],vf=[512, 256, 64])
-        self.default_arch = [256, 256, 64] # [256, 256, 16] 
+        self.default_arch = dict(pi=[128, 128, 16], vf=[256, 256, 16]) # [256, 256, 64] # [256, 256, 16] 
         
         self.env = gym.make(self.environment,kwargs=self.gym_kwargs)
         self.n_employment,self.n_acts=self.env.unwrapped.get_n_states()
